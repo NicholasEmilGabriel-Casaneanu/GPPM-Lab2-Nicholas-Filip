@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Collatz Conjecture — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Collatz Conjecture</h1>
+      <div class="sim-meta">Mathematics · Unsolved Problems</div>
+    </div>
+
+    <div class="sim-description">
+      Pick any positive integer. If it's even, halve it; if it's odd, triple it and add one. Every number tested so far eventually reaches 1 — but nobody has proven it always will. Watch the famous "hailstone" trajectory.
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>Starting number</label>
+        <input type="number" id="startNum" value="27" min="1" max="100000">
+      </div>
+      <div class="control">
+        <label>&nbsp;</label>
+        <div class="btn-row">
+          <button class="btn" id="run">Run</button>
+          <button class="btn secondary" id="random">Random</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="canvas" width="820" height="420"></canvas>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">Steps to reach 1</span><span class="stat-value" id="steps">—</span></div>
+      <div class="stat"><span class="stat-label">Peak value</span><span class="stat-value" id="peak">—</span></div>
+      <div class="stat"><span class="stat-label">Current</span><span class="stat-value" id="current">—</span></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const startInput = document.getElementById('startNum');
+      const runBtn = document.getElementById('run');
+      const randomBtn = document.getElementById('random');
+      const stepsEl = document.getElementById('steps');
+      const peakEl = document.getElementById('peak');
+      const currentEl = document.getElementById('current');
+
+      let animHandle = null;
+
+      function computeSequence(start) {
+        const seq = [start];
+        let x = start;
+        while (x !== 1 && seq.length < 100000) {
+          x = x % 2 === 0 ? x / 2 : 3 * x + 1;
+          seq.push(x);
+        }
+        return seq;
+      }
+
+      function draw(seq, index) {
+        const w = canvas.width;
+        const h = canvas.height;
+        ctx.clearRect(0, 0, w, h);
+
+        // padding
+        const padL = 50, padR = 20, padT = 20, padB = 30;
+        const plotW = w - padL - padR;
+        const plotH = h - padT - padB;
+
+        const maxVal = Math.max(...seq);
+        const n = seq.length;
+
+        // axes
+        ctx.strokeStyle = '#cfdde9';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(padL, padT);
+        ctx.lineTo(padL, padT + plotH);
+        ctx.lineTo(padL + plotW, padT + plotH);
+        ctx.stroke();
+
+        // gridlines (y)
+        ctx.fillStyle = '#8ba9c0';
+        ctx.font = '11px system-ui';
+        ctx.textAlign = 'right';
+        for (let i = 0; i <= 4; i++) {
+          const y = padT + (plotH * i) / 4;
+          const val = Math.round(maxVal * (1 - i / 4));
+          ctx.fillText(val, padL - 6, y + 4);
+          ctx.strokeStyle = '#eef4fa';
+          ctx.beginPath();
+          ctx.moveTo(padL, y);
+          ctx.lineTo(padL + plotW, y);
+          ctx.stroke();
+        }
+
+        // x-axis labels
+        ctx.textAlign = 'center';
+        for (let i = 0; i <= 5; i++) {
+          const x = padL + (plotW * i) / 5;
+          const idx = Math.round((n - 1) * (i / 5));
+          ctx.fillText(idx, x, padT + plotH + 16);
+        }
+
+        const xFor = (i) => padL + (plotW * i) / Math.max(1, n - 1);
+        const yFor = (v) => padT + plotH - (plotH * v) / maxVal;
+
+        // full curve (light)
+        ctx.strokeStyle = '#cfe0ee';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let i = 0; i < n; i++) {
+          const x = xFor(i), y = yFor(seq[i]);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        // highlighted progress
+        ctx.strokeStyle = '#2c7aa0';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let i = 0; i <= index; i++) {
+          const x = xFor(i), y = yFor(seq[i]);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        // current point
+        const cx = xFor(index), cy = yFor(seq[index]);
+        ctx.fillStyle = '#f5b342';
+        ctx.beginPath();
+        ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#e09a20';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
+      function run() {
+        if (animHandle) cancelAnimationFrame(animHandle);
+        const start = Math.max(1, parseInt(startInput.value || '27', 10));
+        const seq = computeSequence(start);
+
+        stepsEl.textContent = seq.length - 1;
+        peakEl.textContent = Math.max(...seq);
+        currentEl.textContent = seq[0];
+
+        let i = 0;
+        const step = () => {
+          draw(seq, i);
+          currentEl.textContent = seq[i];
+          if (i < seq.length - 1) {
+            i++;
+            animHandle = requestAnimationFrame(() => setTimeout(step, 25));
+          } else {
+            currentEl.textContent = '1 (reached)';
+            animHandle = null;
+          }
+        };
+        step();
+      }
+
+      runBtn.addEventListener('click', run);
+
+      randomBtn.addEventListener('click', () => {
+        startInput.value = Math.floor(Math.random() * 2000) + 2;
+        run();
+      });
+
+      // initial render (static)
+      (function init() {
+        const start = parseInt(startInput.value, 10);
+        const seq = computeSequence(start);
+        stepsEl.textContent = seq.length - 1;
+        peakEl.textContent = Math.max(...seq);
+        currentEl.textContent = seq[0];
+        draw(seq, seq.length - 1);
+      })();
+    })();
+  </script>
+</body>
+</html>

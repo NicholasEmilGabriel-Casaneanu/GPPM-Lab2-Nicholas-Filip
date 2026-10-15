@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monty Hall Problem — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Monty Hall Problem</h1>
+      <div class="sim-meta">Mathematics · Probability</div>
+    </div>
+
+    <div class="sim-description">
+      Three doors, one prize. Pick one, the host opens a losing door, and you may switch. Run thousands of trials with "always stay" vs "always switch" and watch the win rates settle at 1/3 and 2/3.
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>Number of trials</label>
+        <input type="number" id="trials" value="1000" min="1" max="1000000" step="100">
+      </div>
+      <div class="control">
+        <label>&nbsp;</label>
+        <div class="btn-row">
+          <button class="btn" id="run">Run trials</button>
+          <button class="btn secondary" id="reset">Reset</button>
+        </div>
+      </div>
+      <div class="control">
+        <label>Play interactively</label>
+        <div class="btn-row">
+          <button class="btn secondary" id="playStay">Play: Stay</button>
+          <button class="btn secondary" id="playSwitch">Play: Switch</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="chart" width="820" height="300"></canvas>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">Stay win rate</span><span class="stat-value" id="stayRate">—</span></div>
+      <div class="stat"><span class="stat-label">Switch win rate</span><span class="stat-value" id="switchRate">—</span></div>
+      <div class="stat"><span class="stat-label">Theory</span><span class="stat-value">1/3 vs 2/3</span></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('chart');
+      const ctx = canvas.getContext('2d');
+      const trialsInput = document.getElementById('trials');
+      const runBtn = document.getElementById('run');
+      const resetBtn = document.getElementById('reset');
+      const playStayBtn = document.getElementById('playStay');
+      const playSwitchBtn = document.getElementById('playSwitch');
+      const stayRateEl = document.getElementById('stayRate');
+      const switchRateEl = document.getElementById('switchRate');
+
+      let stayWins = 0, stayTotal = 0;
+      let switchWins = 0, switchTotal = 0;
+
+      function playOne(switchChoice) {
+        const prize = Math.floor(Math.random() * 3);
+        const firstPick = Math.floor(Math.random() * 3);
+
+        // Host opens a door that's not the prize and not firstPick
+        const available = [0, 1, 2].filter((d) => d !== firstPick && d !== prize);
+        // If firstPick is the prize, host can open either of the other two (randomly)
+        const opened = available[Math.floor(Math.random() * available.length)];
+
+        const finalPick = switchChoice
+          ? [0, 1, 2].find((d) => d !== firstPick && d !== opened)
+          : firstPick;
+
+        return finalPick === prize;
+      }
+
+      function runTrials(n) {
+        for (let i = 0; i < n; i++) {
+          if (playOne(false)) stayWins++;
+          stayTotal++;
+          if (playOne(true)) switchWins++;
+          switchTotal++;
+        }
+        updateStats();
+        drawChart();
+      }
+
+      function updateStats() {
+        stayRateEl.textContent = stayTotal
+          ? ((stayWins / stayTotal) * 100).toFixed(2) + '%'
+          : '—';
+        switchRateEl.textContent = switchTotal
+          ? ((switchWins / switchTotal) * 100).toFixed(2) + '%'
+          : '—';
+      }
+
+      function drawChart() {
+        const w = canvas.width, h = canvas.height;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+
+        const padL = 60, padR = 40, padT = 30, padB = 50;
+        const plotW = w - padL - padR;
+        const plotH = h - padT - padB;
+
+        // axes
+        ctx.strokeStyle = '#cfdde9';
+        ctx.beginPath();
+        ctx.moveTo(padL, padT);
+        ctx.lineTo(padL, padT + plotH);
+        ctx.lineTo(padL + plotW, padT + plotH);
+        ctx.stroke();
+
+        // gridlines
+        ctx.fillStyle = '#6f8da3';
+        ctx.font = '11px system-ui';
+        ctx.textAlign = 'right';
+        for (let i = 0; i <= 4; i++) {
+          const y = padT + (plotH * i) / 4;
+          const val = (1 - i / 4);
+          ctx.fillText((val * 100).toFixed(0) + '%', padL - 6, y + 4);
+          ctx.strokeStyle = '#eef4fa';
+          ctx.beginPath();
+          ctx.moveTo(padL, y);
+          ctx.lineTo(padL + plotW, y);
+          ctx.stroke();
+        }
+
+        const barW = plotW / 3;
+        const barH = (rate) => plotH * rate;
+
+        // Stay bar
+        const stayRate = stayTotal ? stayWins / stayTotal : 0;
+        ctx.fillStyle = '#8db3d0';
+        ctx.fillRect(padL + barW * 0.3, padT + plotH - barH(stayRate), barW * 0.8, barH(stayRate));
+
+        // Switch bar
+        const switchRate = switchTotal ? switchWins / switchTotal : 0;
+        ctx.fillStyle = '#2c7aa0';
+        ctx.fillRect(padL + barW * 1.6, padT + plotH - barH(switchRate), barW * 0.8, barH(switchRate));
+
+        // Labels
+        ctx.fillStyle = '#1b4a6b';
+        ctx.font = 'bold 13px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('Stay', padL + barW * 0.7, padT + plotH + 20);
+        ctx.fillText('Switch', padL + barW * 2.0, padT + plotH + 20);
+
+        // Target dashed lines
+        ctx.strokeStyle = '#f5b342';
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(padL, padT + plotH - plotH * (1 / 3));
+        ctx.lineTo(padL + plotW, padT + plotH - plotH * (1 / 3));
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(padL, padT + plotH - plotH * (2 / 3));
+        ctx.lineTo(padL + plotW, padT + plotH - plotH * (2 / 3));
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Current bar labels
+        ctx.fillStyle = '#0b2b3f';
+        ctx.font = 'bold 14px system-ui';
+        if (stayTotal) ctx.fillText((stayRate * 100).toFixed(1) + '%', padL + barW * 0.7, padT + plotH - barH(stayRate) - 6);
+        if (switchTotal) ctx.fillText((switchRate * 100).toFixed(1) + '%', padL + barW * 2.0, padT + plotH - barH(switchRate) - 6);
+      }
+
+      runBtn.addEventListener('click', () => {
+        const n = Math.max(1, Math.min(1000000, parseInt(trialsInput.value, 10) || 1000));
+        runTrials(n);
+      });
+
+      resetBtn.addEventListener('click', () => {
+        stayWins = stayTotal = switchWins = switchTotal = 0;
+        updateStats();
+        drawChart();
+      });
+
+      playStayBtn.addEventListener('click', () => {
+        const won = playOne(false);
+        stayTotal++;
+        if (won) stayWins++;
+        updateStats();
+        drawChart();
+      });
+
+      playSwitchBtn.addEventListener('click', () => {
+        const won = playOne(true);
+        switchTotal++;
+        if (won) switchWins++;
+        updateStats();
+        drawChart();
+      });
+
+      drawChart();
+    })();
+  </script>
+</body>
+</html>

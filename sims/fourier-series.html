@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fourier Series — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Fourier Series</h1>
+      <div class="sim-meta">Mathematics · Harmonic Analysis</div>
+    </div>
+
+    <div class="sim-description">
+      Any repeating shape can be built from sine waves. Add harmonics one at a time and watch a square wave, sawtooth, or triangle emerge from spinning circles. Increase the count to see where the Gibbs overshoot refuses to disappear.
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="canvas" width="820" height="360"></canvas>
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>Waveform</label>
+        <select id="wave">
+          <option value="square">Square wave</option>
+          <option value="sawtooth">Sawtooth</option>
+          <option value="triangle">Triangle</option>
+        </select>
+      </div>
+      <div class="control">
+        <label>Harmonics: <span id="harmLabel">5</span></label>
+        <input type="range" id="harmonics" min="1" max="60" value="5" step="1">
+      </div>
+      <div class="control">
+        <label>&nbsp;</label>
+        <div class="btn-row">
+          <button class="btn" id="toggle">Pause</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const waveSel = document.getElementById('wave');
+      const harmInput = document.getElementById('harmonics');
+      const harmLabel = document.getElementById('harmLabel');
+      const toggleBtn = document.getElementById('toggle');
+
+      let t = 0;
+      let running = true;
+      let rafId = null;
+
+      function fourierSum(theta, n, wave) {
+        let s = 0;
+        for (let k = 1; k <= n; k++) {
+          let term = 0;
+          if (wave === 'square') {
+            if (k % 2 === 1) term = Math.sin(k * theta) / k;
+          } else if (wave === 'sawtooth') {
+            term = Math.sin(k * theta) / k;
+          } else if (wave === 'triangle') {
+            if (k % 2 === 1) term = (Math.sin(k * theta) / (k * k)) * (k % 4 === 1 ? 1 : -1);
+          }
+          s += term;
+        }
+        if (wave === 'square') return (4 / Math.PI) * s;
+        if (wave === 'sawtooth') return (2 / Math.PI) * s;
+        if (wave === 'triangle') return (8 / (Math.PI * Math.PI)) * s;
+        return s;
+      }
+
+      function draw() {
+        const w = canvas.width, h = canvas.height;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+
+        const midY = h / 2;
+        const padL = 40, padR = 20;
+        const plotW = w - padL - padR;
+
+        // baseline
+        ctx.strokeStyle = '#eef4fa';
+        ctx.beginPath();
+        ctx.moveTo(padL, midY);
+        ctx.lineTo(padL + plotW, midY);
+        ctx.stroke();
+
+        // circle part on left
+        const circleX = 100;
+        const circleR = 60;
+        const n = parseInt(harmInput.value, 10);
+        const wave = waveSel.value;
+
+        // draw spinning circles
+        ctx.strokeStyle = '#cfdde9';
+        ctx.lineWidth = 1;
+        let radius = circleR;
+        let cx = circleX;
+        let cy = midY;
+        for (let k = 1; k <= n; k++) {
+          let r = 0;
+          if (wave === 'square' && k % 2 === 1) r = (4 / Math.PI) * (circleR / k);
+          else if (wave === 'sawtooth') r = (2 / Math.PI) * (circleR / k);
+          else if (wave === 'triangle' && k % 2 === 1) r = (8 / (Math.PI * Math.PI)) * (circleR / (k * k));
+          if (r === 0) continue;
+
+          ctx.beginPath();
+          ctx.arc(cx, cy, Math.abs(r), 0, Math.PI * 2);
+          ctx.stroke();
+
+          const angle = k * t;
+          cx += Math.abs(r) * Math.cos(angle);
+          cy -= Math.abs(r) * Math.sin(angle);
+        }
+
+        // arrow to current point
+        ctx.strokeStyle = '#2c7aa0';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(circleX, midY);
+        ctx.lineTo(cx, cy);
+        ctx.stroke();
+
+        // dot
+        ctx.fillStyle = '#f5b342';
+        ctx.beginPath();
+        ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // draw wave
+        const scaleY = 100;
+        const rangeX = plotW - circleX - 60;
+
+        // reference target
+        ctx.strokeStyle = '#e0eaf2';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let i = 0; i <= rangeX; i++) {
+          const theta = (i / 40);
+          const targetVal = {
+            square: Math.sign(Math.sin(theta)) * 1,
+            sawtooth: ((theta / Math.PI) % 2) - 1,
+            triangle: 1 - 2 * Math.abs(((theta / Math.PI) % 2) - 1)
+          }[wave];
+          const x = circleX + 80 + i;
+          const y = midY - targetVal * scaleY;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        // animated partial sum
+        ctx.strokeStyle = '#2c7aa0';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let i = 0; i <= rangeX; i++) {
+          const theta = t + i / 40;
+          const val = fourierSum(theta, n, wave);
+          const x = circleX + 80 + i;
+          const y = midY - val * scaleY;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        // connecting line from dot to wave start
+        ctx.strokeStyle = 'rgba(245, 179, 66, 0.5)';
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(circleX + 80, midY - fourierSum(t, n, wave) * scaleY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      function loop() {
+        if (running) {
+          t += 0.05;
+          draw();
+        }
+        rafId = requestAnimationFrame(loop);
+      }
+
+      harmInput.addEventListener('input', () => {
+        harmLabel.textContent = harmInput.value;
+      });
+
+      waveSel.addEventListener('change', () => { t = 0; });
+
+      toggleBtn.addEventListener('click', () => {
+        running = !running;
+        toggleBtn.textContent = running ? 'Pause' : 'Play';
+      });
+
+      loop();
+    })();
+  </script>
+</body>
+</html>

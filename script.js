@@ -11,14 +11,9 @@
   // ---------- DOM References ----------
   const loginBtn = document.getElementById('loginBtn');
   const stars = document.querySelectorAll('.star-icon');
-  const openLinks = document.querySelectorAll('.open-link');
 
   // ---------- Star / Favorites Logic ----------
 
-  /**
-   * Load starred sim IDs from localStorage.
-   * @returns {Set<string>}
-   */
   function loadStarred() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -29,10 +24,6 @@
     }
   }
 
-  /**
-   * Save starred sim IDs to localStorage.
-   * @param {Set<string>} set
-   */
   function saveStarred(set) {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify([...set]));
@@ -41,11 +32,6 @@
     }
   }
 
-  /**
-   * Apply the visual "starred" state to an icon.
-   * @param {HTMLElement} icon
-   * @param {boolean} isStarred
-   */
   function setStarVisual(icon, isStarred) {
     if (isStarred) {
       icon.classList.remove('far');
@@ -60,9 +46,6 @@
     }
   }
 
-  /**
-   * Initialize star icons based on saved state and wire up click handlers.
-   */
   function initStars() {
     const starred = loadStarred();
 
@@ -71,19 +54,14 @@
       const simId = card ? card.dataset.simId : null;
       if (!simId) return;
 
-      // Apply saved state on load
       setStarVisual(star, starred.has(simId));
 
-      // Toggle on click
       star.addEventListener('click', (e) => {
-        e.stopPropagation(); // prevent triggering the card's open-link
+        e.stopPropagation();
         const isNowStarred = !starred.has(simId);
 
-        if (isNowStarred) {
-          starred.add(simId);
-        } else {
-          starred.delete(simId);
-        }
+        if (isNowStarred) starred.add(simId);
+        else starred.delete(simId);
 
         setStarVisual(star, isNowStarred);
         saveStarred(starred);
@@ -94,48 +72,72 @@
   // ---------- Open Simulation Logic ----------
 
   /**
-   * Handle clicking an "Open sim" link.
-   * Currently a placeholder — replace with real navigation later.
-   * @param {Event} e
-   */
-  function handleOpenSim(e) {
-    e.preventDefault();
-    const card = e.currentTarget.closest('.sim-card');
-    const simName = card ? card.querySelector('h3')?.innerText : 'this simulation';
-    const simId = card ? card.dataset.simId : 'unknown';
-
-    // TODO: Replace with real navigation, e.g.:
-    // window.location.href = `sims/${simId}.html`;
-    alert(
-      `🚧 "${simName}" is not wired up yet.\n\n` +
-      `Sim ID: ${simId}\n\n` +
-      `This is a starting point — you can add the actual sim page later!`
-    );
-  }
-
-  /**
-   * Wire up all "Open sim" links.
+   * Only wire up the alert for <span> open-links (i.e. sims that
+   * don't have a real page yet). <a> open-links navigate normally.
    */
   function initOpenLinks() {
-    openLinks.forEach((link) => {
-      link.addEventListener('click', handleOpenSim);
+    const stubLinks = document.querySelectorAll('span.open-link');
+
+    stubLinks.forEach((link) => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const card = link.closest('.sim-card');
+        const simName = card ? card.querySelector('h3')?.innerText : 'this simulation';
+        const simId = card ? card.dataset.simId : 'unknown';
+
+        alert(
+          `🚧 "${simName}" is not wired up yet.\n\n` +
+          `Sim ID: ${simId}\n\n` +
+          `This is a starting point — you can add the actual sim page later!`
+        );
+      });
     });
   }
 
   // ---------- Login Button ----------
 
-  /**
-   * Handle login button click (placeholder).
-   */
   function initLogin() {
     if (!loginBtn) return;
 
     loginBtn.addEventListener('click', () => {
-      // TODO: Replace with real auth flow.
       alert(
         '🔐 Login / history feature coming soon.\n\n' +
         'For now, your stars are saved on this device.'
       );
+    });
+  }
+
+  // ---------- Subject Filtering ----------
+
+  function initSubjectFilter() {
+    const pills = document.querySelectorAll('.subject-pill');
+    const cards = document.querySelectorAll('.sim-card');
+    const resultsBar = document.querySelector('.results-bar');
+
+    if (!pills.length) return;
+
+    pills.forEach((pill) => {
+      pill.addEventListener('click', () => {
+        const subject = pill.dataset.subject;
+        let visible = 0;
+
+        cards.forEach((card) => {
+          const matches = subject === 'all' || card.dataset.subject === subject;
+          card.style.display = matches ? '' : 'none';
+          if (matches) visible++;
+        });
+
+        if (resultsBar) {
+          const label = pill.textContent.trim();
+          resultsBar.innerHTML =
+            `<i class="fas fa-flask"></i> <span>Results</span> ` +
+            `${visible} simulation${visible === 1 ? '' : 's'} in ${label}` +
+            (subject === 'all' ? ' · ready to explore' : '');
+        }
+
+        pills.forEach((p) => p.classList.remove('active'));
+        pill.classList.add('active');
+      });
     });
   }
 
@@ -145,9 +147,9 @@
     initStars();
     initOpenLinks();
     initLogin();
+    initSubjectFilter();
   }
 
-  // Run once DOM is ready
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Logistic Map &amp; Chaos — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Logistic Map &amp; Chaos</h1>
+      <div class="sim-meta">Mathematics · Dynamical Systems</div>
+    </div>
+
+    <div class="sim-description">
+      x<sub>n+1</sub> = r·x<sub>n</sub>·(1 − x<sub>n</sub>). One tiny equation, an entire zoo of behaviour. Drag <em>r</em> through the bifurcation diagram to watch order collapse into chaos.
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="bifurcation" width="820" height="360"></canvas>
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="cobweb" width="820" height="360"></canvas>
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>r: <span id="rLabel">3.20</span></label>
+        <input type="range" id="r" min="0" max="4" value="3.2" step="0.001">
+      </div>
+      <div class="control">
+        <label>x₀</label>
+        <input type="number" id="x0" value="0.3" min="0" max="1" step="0.01">
+      </div>
+      <div class="control">
+        <label>&nbsp;</label>
+        <div class="btn-row">
+          <button class="btn secondary" id="resetR">Reset r</button>
+          <button class="btn" id="animate">Animate r → 4</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">x₁₀₀</span><span class="stat-value" id="x100">—</span></div>
+      <div class="stat"><span class="stat-label">x₁₀₁</span><span class="stat-value" id="x101">—</span></div>
+      <div class="stat"><span class="stat-label">Regime</span><span class="stat-value" id="regime">—</span></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const bCanvas = document.getElementById('bifurcation');
+      const bCtx = bCanvas.getContext('2d');
+      const cCanvas = document.getElementById('cobweb');
+      const cCtx = cCanvas.getContext('2d');
+      const rSlider = document.getElementById('r');
+      const rLabel = document.getElementById('rLabel');
+      const x0Input = document.getElementById('x0');
+      const x100El = document.getElementById('x100');
+      const x101El = document.getElementById('x101');
+      const regimeEl = document.getElementById('regime');
+      const resetBtn = document.getElementById('resetR');
+      const animateBtn = document.getElementById('animate');
+
+      let animateHandle = null;
+
+      function drawBifurcation() {
+        const w = bCanvas.width, h = bCanvas.height;
+        bCtx.fillStyle = '#ffffff';
+        bCtx.fillRect(0, 0, w, h);
+
+        const rMin = 0, rMax = 4;
+        const padT = 10, padB = 25, padL = 40, padR = 10;
+        const plotW = w - padL - padR;
+        const plotH = h - padT - padB;
+
+        // axes
+        bCtx.strokeStyle = '#cfdde9';
+        bCtx.beginPath();
+        bCtx.moveTo(padL, padT);
+        bCtx.lineTo(padL, padT + plotH);
+        bCtx.lineTo(padL + plotW, padT + plotH);
+        bCtx.stroke();
+
+        bCtx.fillStyle = '#6f8da3';
+        bCtx.font = '11px system-ui';
+        bCtx.textAlign = 'center';
+        for (let rv = 0; rv <= 4; rv += 1) {
+          const x = padL + (plotW * (rv - rMin)) / (rMax - rMin);
+          bCtx.fillText(rv.toFixed(0), x, padT + plotH + 16);
+        }
+        bCtx.textAlign = 'right';
+        bCtx.fillText('1.0', padL - 6, padT + 12);
+        bCtx.fillText('0.0', padL - 6, padT + plotH + 4);
+
+        // plot
+        const img = bCtx.createImageData(plotW, plotH);
+        const data = img.data;
+        const step = 0.0005;
+        const rValues = [];
+        for (let rv = rMin; rv <= rMax; rv += step) rValues.push(rv);
+
+        for (let xi = 0; xi < plotW; xi++) {
+          const rv = rMin + (xi / plotW) * (rMax - rMin);
+          let x = 0.5;
+          for (let i = 0; i < 300; i++) x = rv * x * (1 - x);
+          for (let i = 0; i < 300; i++) {
+            x = rv * x * (1 - x);
+            const y = Math.floor(padT + plotH - x * plotH);
+            if (y >= padT && y < padT + plotH) {
+              const idx = ((y - padT) * plotW + xi) * 4;
+              data[idx] = 44;
+              data[idx + 1] = 122;
+              data[idx + 2] = 160;
+              data[idx + 3] = 255;
+            }
+          }
+        }
+
+        // We need to put image at padL, padT. Use putImageData with offset via temp canvas
+        const tmp = document.createElement('canvas');
+        tmp.width = plotW;
+        tmp.height = plotH;
+        tmp.getContext('2d').putImageData(img, 0, 0);
+        bCtx.drawImage(tmp, padL, padT);
+
+        // marker line at current r
+        const rv = parseFloat(rSlider.value);
+        const mx = padL + (plotW * (rv - rMin)) / (rMax - rMin);
+        bCtx.strokeStyle = '#f5b342';
+        bCtx.lineWidth = 1.5;
+        bCtx.beginPath();
+        bCtx.moveTo(mx, padT);
+        bCtx.lineTo(mx, padT + plotH);
+        bCtx.stroke();
+      }
+
+      function drawCobweb() {
+        const w = cCanvas.width, h = cCanvas.height;
+        cCtx.fillStyle = '#ffffff';
+        cCtx.fillRect(0, 0, w, h);
+
+        const pad = 40;
+        const size = Math.min(w - 2 * pad, h - 2 * pad);
+        const ox = (w - size) / 2;
+        const oy = (h - size) / 2;
+
+        // frame
+        cCtx.strokeStyle = '#cfdde9';
+        cCtx.strokeRect(ox, oy, size, size);
+
+        const rv = parseFloat(rSlider.value);
+        const x0 = parseFloat(x0Input.value) || 0.3;
+
+        // function curve
+        cCtx.strokeStyle = '#8db3d0';
+        cCtx.lineWidth = 2;
+        cCtx.beginPath();
+        for (let i = 0; i <= 200; i++) {
+          const x = i / 200;
+          const y = rv * x * (1 - x);
+          const px = ox + x * size;
+          const py = oy + size - y * size;
+          if (i === 0) cCtx.moveTo(px, py);
+          else cCtx.lineTo(px, py);
+        }
+        cCtx.stroke();
+
+        // diagonal
+        cCtx.strokeStyle = '#e0eaf2';
+        cCtx.beginPath();
+        cCtx.moveTo(ox, oy + size);
+        cCtx.lineTo(ox + size, oy);
+        cCtx.stroke();
+
+        // cobweb
+        let x = x0;
+        cCtx.strokeStyle = '#2c7aa0';
+        cCtx.lineWidth = 1.5;
+        cCtx.beginPath();
+        let px = ox + x * size;
+        let py = oy + size;
+        cCtx.moveTo(px, py);
+
+        for (let i = 0; i < 60; i++) {
+          const y = rv * x * (1 - x);
+          // vertical to curve
+          const cx = ox + x * size;
+          const cy = oy + size - y * size;
+          cCtx.lineTo(cx, cy);
+          // horizontal to diagonal
+          const dx = ox + y * size;
+          const dy = oy + size - y * size;
+          cCtx.lineTo(dx, dy);
+          x = y;
+        }
+        cCtx.stroke();
+
+        // start marker
+        cCtx.fillStyle = '#f5b342';
+        cCtx.beginPath();
+        cCtx.arc(ox + x0 * size, oy + size, 5, 0, Math.PI * 2);
+        cCtx.fill();
+      }
+
+      function update() {
+        const rv = parseFloat(rSlider.value);
+        rLabel.textContent = rv.toFixed(3);
+
+        let x = parseFloat(x0Input.value) || 0.3;
+        for (let i = 0; i < 100; i++) x = rv * x * (1 - x);
+        const x100 = x;
+        const x101 = rv * x100 * (1 - x100);
+
+        x100El.textContent = x100.toFixed(4);
+        x101El.textContent = x101.toFixed(4);
+
+        let regime;
+        if (rv < 1) regime = 'Extinction (0)';
+        else if (rv < 3) regime = 'Fixed point';
+        else if (rv < 3.449) regime = 'Period-2 cycle';
+        else if (rv < 3.544) regime = 'Period-4 cycle';
+        else if (rv < 3.569946) regime = 'Period-doubling';
+        else if (rv < 3.828) regime = 'Chaos (mostly)';
+        else regime = 'Chaos + windows';
+        regimeEl.textContent = regime;
+
+        drawBifurcation();
+        drawCobweb();
+      }
+
+      rSlider.addEventListener('input', update);
+      x0Input.addEventListener('input', update);
+
+      resetBtn.addEventListener('click', () => {
+        if (animateHandle) cancelAnimationFrame(animateHandle);
+        animateHandle = null;
+        rSlider.value = 3.2;
+        update();
+      });
+
+      animateBtn.addEventListener('click', () => {
+        if (animateHandle) cancelAnimationFrame(animateHandle);
+        let rv = parseFloat(rSlider.value);
+        const tick = () => {
+          rv += 0.01;
+          if (rv > 4) rv = 4;
+          rSlider.value = rv;
+          update();
+          if (rv < 4) animateHandle = requestAnimationFrame(tick);
+          else animateHandle = null;
+        };
+        tick();
+      });
+
+      update();
+    })();
+  </script>
+</body>
+</html>

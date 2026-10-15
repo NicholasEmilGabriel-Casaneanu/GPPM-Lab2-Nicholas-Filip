@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mandelbrot Set — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Mandelbrot Set</h1>
+      <div class="sim-meta">Mathematics · Fractals &amp; Complex Dynamics</div>
+    </div>
+
+    <div class="sim-description">
+      z<sub>n+1</sub> = z<sub>n</sub>² + c. For each point c in the plane, ask: does this stay bounded as we iterate? The answer paints one of mathematics' most famous fractals. <strong>Click anywhere on the image to zoom in</strong> — there's infinite detail at every scale.
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="canvas" width="800" height="600"></canvas>
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>Max iterations: <span id="iterLabel">80</span></label>
+        <input type="range" id="iterations" min="20" max="500" value="80" step="10">
+      </div>
+      <div class="control">
+        <label>Zoom</label>
+        <div class="btn-row">
+          <button class="btn secondary" id="zoomIn">Zoom in ×2</button>
+          <button class="btn secondary" id="zoomOut">Zoom out ×2</button>
+          <button class="btn" id="reset">Reset view</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">Center Re</span><span class="stat-value" id="cRe">-0.500</span></div>
+      <div class="stat"><span class="stat-label">Center Im</span><span class="stat-value" id="cIm">0.000</span></div>
+      <div class="stat"><span class="stat-label">Width</span><span class="stat-value" id="cW">3.000</span></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const iterInput = document.getElementById('iterations');
+      const iterLabel = document.getElementById('iterLabel');
+      const cReEl = document.getElementById('cRe');
+      const cImEl = document.getElementById('cIm');
+      const cWEl = document.getElementById('cW');
+
+      // View state
+      let centerRe = -0.5;
+      let centerIm = 0.0;
+      let width = 3.0;
+      let maxIter = 80;
+
+      function render() {
+        const w = canvas.width;
+        const h = canvas.height;
+        const aspect = w / h;
+        const height = width / aspect;
+        const reMin = centerRe - width / 2;
+        const imMin = centerIm - height / 2;
+        const reStep = width / w;
+        const imStep = height / h;
+
+        const img = ctx.createImageData(w, h);
+        const data = img.data;
+
+        for (let py = 0; py < h; py++) {
+          const cIm = imMin + py * imStep;
+          for (let px = 0; px < w; px++) {
+            const cRe = reMin + px * reStep;
+
+            let zRe = 0, zIm = 0;
+            let n = 0;
+            while (n < maxIter) {
+              const zRe2 = zRe * zRe;
+              const zIm2 = zIm * zIm;
+              if (zRe2 + zIm2 > 4) break;
+              const newRe = zRe2 - zIm2 + cRe;
+              zIm = 2 * zRe * zIm + cIm;
+              zRe = newRe;
+              n++;
+            }
+
+            let r, g, b;
+            if (n === maxIter) {
+              r = g = b = 0;
+            } else {
+              // Smooth-ish coloring
+              const t = n / maxIter;
+              r = Math.floor(9 * (1 - t) * t * t * t * 255);
+              g = Math.floor(15 * (1 - t) * (1 - t) * t * t * 255);
+              b = Math.floor(8.5 * (1 - t) * (1 - t) * (1 - t) * t * 255);
+            }
+
+            const idx = (py * w + px) * 4;
+            data[idx] = r;
+            data[idx + 1] = g;
+            data[idx + 2] = b;
+            data[idx + 3] = 255;
+          }
+        }
+
+        ctx.putImageData(img, 0, 0);
+
+        cReEl.textContent = centerRe.toFixed(4);
+        cImEl.textContent = centerIm.toFixed(4);
+        cWEl.textContent = width.toFixed(4);
+      }
+
+      canvas.addEventListener('click', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / rect.width;
+        const y = (e.clientY - rect.top) / rect.height;
+        const aspect = canvas.width / canvas.height;
+        const height = width / aspect;
+
+        const reMin = centerRe - width / 2;
+        const imMin = centerIm - height / 2;
+
+        centerRe = reMin + x * width;
+        centerIm = imMin + y * height;
+        width *= 0.5;
+        render();
+      });
+
+      document.getElementById('zoomIn').addEventListener('click', () => {
+        width *= 0.5;
+        render();
+      });
+
+      document.getElementById('zoomOut').addEventListener('click', () => {
+        width *= 2;
+        render();
+      });
+
+      document.getElementById('reset').addEventListener('click', () => {
+        centerRe = -0.5;
+        centerIm = 0.0;
+        width = 3.0;
+        render();
+      });
+
+      iterInput.addEventListener('input', () => {
+        maxIter = parseInt(iterInput.value, 10);
+        iterLabel.textContent = maxIter;
+        render();
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>

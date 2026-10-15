@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buffon's Needle — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Buffon's Needle</h1>
+      <div class="sim-meta">Mathematics · Monte Carlo Methods</div>
+    </div>
+
+    <div class="sim-description">
+      Drop needles onto a lined floor and count how often they cross a line. The fraction converges on 2/π — a way to estimate π by pure chance.
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>Needle length / line spacing</label>
+        <input type="range" id="ratio" min="0.1" max="1.0" value="0.8" step="0.05">
+        <small style="color:#6f8da3; font-size:0.75rem;">Length ratio: <span id="ratioLabel">0.80</span></small>
+      </div>
+      <div class="control">
+        <label>&nbsp;</label>
+        <div class="btn-row">
+          <button class="btn" id="drop1">Drop 1</button>
+          <button class="btn" id="drop100">Drop 100</button>
+          <button class="btn" id="drop1000">Drop 1000</button>
+          <button class="btn secondary" id="reset">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="canvas" width="820" height="420"></canvas>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">Drops</span><span class="stat-value" id="drops">0</span></div>
+      <div class="stat"><span class="stat-label">Hits</span><span class="stat-value" id="hits">0</span></div>
+      <div class="stat"><span class="stat-label">π estimate</span><span class="stat-value" id="piEst">—</span></div>
+      <div class="stat"><span class="stat-label">True π</span><span class="stat-value">3.14159</span></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const ratioInput = document.getElementById('ratio');
+      const ratioLabel = document.getElementById('ratioLabel');
+      const drop1 = document.getElementById('drop1');
+      const drop100 = document.getElementById('drop100');
+      const drop1000 = document.getElementById('drop1000');
+      const resetBtn = document.getElementById('reset');
+      const dropsEl = document.getElementById('drops');
+      const hitsEl = document.getElementById('hits');
+      const piEstEl = document.getElementById('piEst');
+
+      let drops = 0;
+      let hits = 0;
+      const droppedNeedles = [];
+
+      const SPACING = 60; // pixels between lines
+      const Y_MIN = 30;
+      const Y_MAX = 390;
+
+      function getLength() {
+        return SPACING * parseFloat(ratioInput.value);
+      }
+
+      function dropNeedles(n) {
+        const L = getLength();
+        for (let i = 0; i < n; i++) {
+          const x = Math.random() * canvas.width;
+          const y = Y_MIN + Math.random() * (Y_MAX - Y_MIN);
+          const theta = Math.random() * Math.PI;
+          const half = L / 2;
+
+          const x1 = x - half * Math.cos(theta);
+          const y1 = y - half * Math.sin(theta);
+          const x2 = x + half * Math.cos(theta);
+          const y2 = y + half * Math.sin(theta);
+
+          // Determine lines crossed
+          // Lines are horizontal at y = 0, SPACING, 2*SPACING, ...
+          const lineAt = (yy) => Math.round(yy / SPACING);
+          const crosses = lineAt(y1) !== lineAt(y2);
+
+          if (crosses) hits++;
+          drops++;
+          droppedNeedles.push({ x1, y1, x2, y2, cross: crosses });
+        }
+        updateStats();
+        draw();
+      }
+
+      function updateStats() {
+        dropsEl.textContent = drops;
+        hitsEl.textContent = hits;
+        if (hits > 0 && drops > 0) {
+          const ratio = parseFloat(ratioInput.value);
+          let estimate;
+          if (ratio <= 1) {
+            estimate = (2 * ratio) / (hits / drops);
+          } else {
+            estimate = (2 / (hits / drops)) * (ratio - Math.sqrt(ratio * ratio - 1) - Math.asin(1 / ratio) / ratio);
+          }
+          piEstEl.textContent = estimate.toFixed(4);
+        } else {
+          piEstEl.textContent = '—';
+        }
+      }
+
+      function draw() {
+        const w = canvas.width, h = canvas.height;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+
+        // Draw lines
+        ctx.strokeStyle = '#cfdde9';
+        ctx.lineWidth = 1.5;
+        for (let y = 0; y <= h; y += SPACING) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(w, y);
+          ctx.stroke();
+        }
+
+        // Draw needles
+        ctx.lineWidth = 2;
+        // Only draw the last 800 needles to keep visual noise manageable
+        const start = Math.max(0, droppedNeedles.length - 800);
+        for (let i = start; i < droppedNeedles.length; i++) {
+          const n = droppedNeedles[i];
+          ctx.strokeStyle = n.cross ? '#c76b3b' : 'rgba(44, 122, 160, 0.5)';
+          ctx.beginPath();
+          ctx.moveTo(n.x1, n.y1);
+          ctx.lineTo(n.x2, n.y2);
+          ctx.stroke();
+        }
+      }
+
+      ratioInput.addEventListener('input', () => {
+        ratioLabel.textContent = parseFloat(ratioInput.value).toFixed(2);
+      });
+
+      drop1.addEventListener('click', () => dropNeedles(1));
+      drop100.addEventListener('click', () => dropNeedles(100));
+      drop1000.addEventListener('click', () => dropNeedles(1000));
+      resetBtn.addEventListener('click', () => {
+        drops = 0;
+        hits = 0;
+        droppedNeedles.length = 0;
+        updateStats();
+        draw();
+      });
+
+      // init
+      ratioLabel.textContent = parseFloat(ratioInput.value).toFixed(2);
+      draw();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cellular Automata — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Cellular Automata</h1>
+      <div class="sim-meta">Mathematics · Emergence &amp; Complexity</div>
+    </div>
+
+    <div class="sim-description">
+      Start with a single black cell and apply a simple rule. Elementary rules (like Rule 30) make chaotic patterns from nothing; Conway's Game of Life turns it into a world of gliders and oscillators.
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>Rule set</label>
+        <select id="ruleSet">
+          <option value="elementary">Elementary (1D — Rule 30/90/110)</option>
+          <option value="life">Game of Life (2D)</option>
+        </select>
+      </div>
+      <div class="control" id="ruleControl">
+        <label>Rule number</label>
+        <select id="ruleNumber">
+          <option value="30">30 (chaotic)</option>
+          <option value="90">90 (Sierpiński)</option>
+          <option value="110">110 (Turing-complete)</option>
+          <option value="22">22</option>
+          <option value="60">60</option>
+          <option value="150">150</option>
+        </select>
+      </div>
+      <div class="control">
+        <label>&nbsp;</label>
+        <div class="btn-row">
+          <button class="btn" id="step">Step</button>
+          <button class="btn" id="auto">Auto play</button>
+          <button class="btn secondary" id="reset">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="canvas" width="820" height="500"></canvas>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">Generation</span><span class="stat-value" id="gen">0</span></div>
+      <div class="stat"><span class="stat-label">Live cells</span><span class="stat-value" id="live">1</span></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const ruleSetSel = document.getElementById('ruleSet');
+      const ruleControl = document.getElementById('ruleControl');
+      const ruleNumberSel = document.getElementById('ruleNumber');
+      const stepBtn = document.getElementById('step');
+      const autoBtn = document.getElementById('auto');
+      const resetBtn = document.getElementById('reset');
+      const genEl = document.getElementById('gen');
+      const liveEl = document.getElementById('live');
+
+      const COLS = 164;
+      const ROWS = 100;
+      const CELL = canvas.width / COLS;
+
+      let grid = [];
+      let generation = 0;
+      let autoHandle = null;
+      let mode = 'elementary';
+
+      function makeEmpty2D() {
+        return Array.from({ length: ROWS }, () => new Array(COLS).fill(0));
+      }
+
+      function resetElementary() {
+        grid = makeEmpty2D();
+        const mid = Math.floor(COLS / 2);
+        grid[0][mid] = 1;
+        generation = 0;
+      }
+
+      function resetLife() {
+        grid = makeEmpty2D();
+        // Random sprinkle
+        for (let y = 0; y < ROWS; y++) {
+          for (let x = 0; x < COLS; x++) {
+            grid[y][x] = Math.random() < 0.15 ? 1 : 0;
+          }
+        }
+        generation = 0;
+      }
+
+      function reset() {
+        mode = ruleSetSel.value;
+        if (mode === 'elementary') {
+          ruleControl.style.display = '';
+          resetElementary();
+        } else {
+          ruleControl.style.display = 'none';
+          resetLife();
+        }
+        draw();
+        updateStats();
+      }
+
+      function elementaryStep(rule) {
+        const newGrid = makeEmpty2D();
+        for (let x = 0; x < COLS; x++) {
+          const l = grid[generation % ROWS][(x - 1 + COLS) % COLS];
+          const c = grid[generation % ROWS][x];
+          const r = grid[generation % ROWS][(x + 1) % COLS];
+          const idx = (l << 2) | (c << 1) | r;
+          const bit = (rule >> idx) & 1;
+          if (generation + 1 < ROWS) {
+            newGrid[generation + 1][x] = bit;
+          }
+        }
+        // Copy new row into grid
+        for (let x = 0; x < COLS; x++) {
+          grid[generation + 1][x] = newGrid[generation + 1][x];
+        }
+        generation++;
+      }
+
+      function lifeStep() {
+        const newGrid = makeEmpty2D();
+        for (let y = 0; y < ROWS; y++) {
+          for (let x = 0; x < COLS; x++) {
+            let n = 0;
+            for (let dy = -1; dy <= 1; dy++) {
+              for (let dx = -1; dx <= 1; dx++) {
+                if (dx === 0 && dy === 0) continue;
+                const ny = y + dy, nx = x + dx;
+                if (ny >= 0 && ny < ROWS && nx >= 0 && nx < COLS) {
+                  n += grid[ny][nx];
+                }
+              }
+            }
+            const alive = grid[y][x] === 1;
+            if (alive && (n === 2 || n === 3)) newGrid[y][x] = 1;
+            else if (!alive && n === 3) newGrid[y][x] = 1;
+          }
+        }
+        grid = newGrid;
+        generation++;
+      }
+
+      function step() {
+        if (mode === 'elementary') {
+          const rule = parseInt(ruleNumberSel.value, 10);
+          elementaryStep(rule);
+        } else {
+          lifeStep();
+        }
+        draw();
+        updateStats();
+      }
+
+      function draw() {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#2c7aa0';
+        for (let y = 0; y < ROWS; y++) {
+          for (let x = 0; x < COLS; x++) {
+            if (grid[y] && grid[y][x]) {
+              ctx.fillRect(x * CELL, y * CELL, CELL, CELL);
+            }
+          }
+        }
+      }
+
+      function updateStats() {
+        genEl.textContent = generation;
+        let live = 0;
+        for (let y = 0; y < ROWS; y++) {
+          for (let x = 0; x < COLS; x++) {
+            live += grid[y][x];
+          }
+        }
+        liveEl.textContent = live;
+      }
+
+      function toggleAuto() {
+        if (autoHandle) {
+          cancelAnimationFrame(autoHandle);
+          autoHandle = null;
+          autoBtn.textContent = 'Auto play';
+        } else {
+          autoBtn.textContent = 'Pause';
+          const loop = () => {
+            // For elementary, reset when we hit the bottom
+            if (mode === 'elementary' && generation >= ROWS - 1) {
+              resetElementary();
+            }
+            step();
+            autoHandle = requestAnimationFrame(() => setTimeout(loop, 30));
+          };
+          loop();
+        }
+      }
+
+      stepBtn.addEventListener('click', step);
+      autoBtn.addEventListener('click', toggleAuto);
+      resetBtn.addEventListener('click', () => {
+        if (autoHandle) toggleAuto();
+        reset();
+      });
+      ruleSetSel.addEventListener('change', () => {
+        if (autoHandle) toggleAuto();
+        reset();
+      });
+
+      reset();
+    })();
+  </script>
+</body>
+</html>

@@ -28,7 +28,7 @@
     <!-- Results / search bar area -->
     <div class="results-bar">
       <i class="fas fa-flask"></i>
-      <span>Results</span> 12 simulations available · ready to explore
+      <span>Results</span> 22 simulations available · ready to explore
     </div>
 
     <!-- Subjects section -->
@@ -36,20 +36,21 @@
       <i class="fas fa-book-open"></i> Subjects
     </div>
     <div class="subject-grid">
-      <div class="subject-pill"><i class="fas fa-atom"></i> Physics</div>
-      <div class="subject-pill"><i class="fas fa-flask"></i> Chemistry</div>
-      <div class="subject-pill"><i class="fas fa-dna"></i> Biology</div>
-      <div class="subject-pill"><i class="fas fa-globe"></i> Earth & Space</div>
-      <div class="subject-pill"><i class="fas fa-laptop-code"></i> Computer Science</div>
-      <div class="subject-pill"><i class="fas fa-chart-bar"></i> Data Science</div>
-      <div class="subject-pill"><i class="fas fa-users"></i> Social Science</div>
-      <div class="subject-pill"><i class="fas fa-square-root-alt"></i> Mathematics</div>
-      <div class="subject-pill"><i class="fas fa-coins"></i> Finance & Economics</div>
-      <div class="subject-pill"><i class="fas fa-cogs"></i> Engineering</div>
-      <div class="subject-pill"><i class="fas fa-music"></i> Music & Acoustics</div>
-      <div class="subject-pill"><i class="fas fa-leaf"></i> Climate & Sustainability</div>
-      <div class="subject-pill"><i class="fas fa-brain"></i> Psychology</div>
-      <div class="subject-pill"><i class="fas fa-eye"></i> Cognitive Science</div>
+      <div class="subject-pill" data-subject="all"><i class="fas fa-layer-group"></i> All</div>
+      <div class="subject-pill" data-subject="physics"><i class="fas fa-atom"></i> Physics</div>
+      <div class="subject-pill" data-subject="chemistry"><i class="fas fa-flask"></i> Chemistry</div>
+      <div class="subject-pill" data-subject="biology"><i class="fas fa-dna"></i> Biology</div>
+      <div class="subject-pill" data-subject="earth-space"><i class="fas fa-globe"></i> Earth &amp; Space</div>
+      <div class="subject-pill" data-subject="computer-science"><i class="fas fa-laptop-code"></i> Computer Science</div>
+      <div class="subject-pill" data-subject="data-science"><i class="fas fa-chart-bar"></i> Data Science</div>
+      <div class="subject-pill" data-subject="social-science"><i class="fas fa-users"></i> Social Science</div>
+      <div class="subject-pill" data-subject="mathematics"><i class="fas fa-square-root-alt"></i> Mathematics</div>
+      <div class="subject-pill" data-subject="finance-economics"><i class="fas fa-coins"></i> Finance &amp; Economics</div>
+      <div class="subject-pill" data-subject="engineering"><i class="fas fa-cogs"></i> Engineering</div>
+      <div class="subject-pill" data-subject="music-acoustics"><i class="fas fa-music"></i> Music &amp; Acoustics</div>
+      <div class="subject-pill" data-subject="climate-sustainability"><i class="fas fa-leaf"></i> Climate &amp; Sustainability</div>
+      <div class="subject-pill" data-subject="psychology"><i class="fas fa-brain"></i> Psychology</div>
+      <div class="subject-pill" data-subject="cognitive-science"><i class="fas fa-eye"></i> Cognitive Science</div>
     </div>
 
     <!-- Favorites hint -->
@@ -66,7 +67,7 @@
 
     <div class="sims-grid">
       <!-- 1. Physics / Electric Field -->
-      <div class="sim-card" data-sim-id="electric-field">
+      <div class="sim-card" data-sim-id="electric-field" data-subject="physics">
         <div class="sim-subject-tag"><i class="fas fa-atom"></i> Physics</div>
         <h3>Electric Field & Charges</h3>
         <p>Drop and drag positive and negative charges on a 2D plane and see field vectors, field lines, or equipotentials update live. Move two opposite charges close together to see a clean dipole field.</p>
@@ -77,7 +78,7 @@
       </div>
 
       <!-- 2. Chemistry / Acid-Base Titration -->
-      <div class="sim-card" data-sim-id="acid-base-titration">
+      <div class="sim-card" data-sim-id="acid-base-titration" data-subject="chemistry">
         <div class="sim-subject-tag"><i class="fas fa-flask"></i> Chemistry 🧪 Lab</div>
         <h3>Acid-Base Titration</h3>
         <p>Drip a strong base into a strong or weak acid and watch the pH curve trace out as the equivalence point sweeps past. Pick an indicator and see when its color flips.</p>
@@ -88,7 +89,7 @@
       </div>
 
       <!-- 3. Biology / DNA -->
-      <div class="sim-card" data-sim-id="dna-transcription">
+      <div class="sim-card" data-sim-id="dna-transcription" data-subject="biology">
         <div class="sim-subject-tag"><i class="fas fa-dna"></i> Biology</div>
         <h3>DNA Transcription & Translation</h3>
         <p>Type or edit a DNA template strand and watch RNA polymerase transcribe it base-by-base, then a ribosome translate codons into amino acids. Stop and start at any position.</p>
@@ -99,7 +100,7 @@
       </div>
 
       <!-- 4. Earth & Space / Moon Phases -->
-      <div class="sim-card" data-sim-id="moon-phases">
+      <div class="sim-card" data-sim-id="moon-phases" data-subject="earth-space">
         <div class="sim-subject-tag"><i class="fas fa-globe"></i> Earth & Space 🧪 Lab</div>
         <h3>Moon Phases</h3>
         <p>Drag the Moon around Earth and see two views update together: the lit side from above, and how the Moon appears from Earth. The phase you see is just geometry.</p>
@@ -110,7 +111,7 @@
       </div>
 
       <!-- 5. Computer Science / Logic Gates -->
-      <div class="sim-card" data-sim-id="logic-gates">
+      <div class="sim-card" data-sim-id="logic-gates" data-subject="computer-science">
         <div class="sim-subject-tag"><i class="fas fa-laptop-code"></i> Computer Science</div>
         <h3>Logic Gates & Circuits</h3>
         <p>Click input switches and pick gate types in a small circuit. Wires light up green for true and gray for false in real time, and a truth table fills in alongside.</p>
@@ -121,7 +122,7 @@
       </div>
 
       <!-- 6. Data Science / Bayes -->
-      <div class="sim-card" data-sim-id="bayes-theorem">
+      <div class="sim-card" data-sim-id="bayes-theorem" data-subject="data-science">
         <div class="sim-subject-tag"><i class="fas fa-chart-bar"></i> Data Science</div>
         <h3>Bayes' Theorem</h3>
         <p>Watch the classic medical-test paradox: even an accurate test can give mostly false positives when the disease is rare. Drag prevalence, sensitivity, and specificity to see the posterior live.</p>
@@ -132,7 +133,7 @@
       </div>
 
       <!-- 7. Social Science / Schelling -->
-      <div class="sim-card" data-sim-id="schelling-segregation">
+      <div class="sim-card" data-sim-id="schelling-segregation" data-subject="social-science">
         <div class="sim-subject-tag"><i class="fas fa-users"></i> Social Science</div>
         <h3>Schelling's Segregation Model</h3>
         <p>Place two groups on a grid where each only wants a small fraction of similar neighbors. Watch surprising large-scale segregation emerge from gentle individual preferences.</p>
@@ -143,18 +144,106 @@
       </div>
 
       <!-- 8. Mathematics / Mandelbrot -->
-      <div class="sim-card" data-sim-id="mandelbrot-set">
+      <div class="sim-card" data-sim-id="mandelbrot-set" data-subject="mathematics">
         <div class="sim-subject-tag"><i class="fas fa-square-root-alt"></i> Mathematics</div>
         <h3>Mandelbrot Set</h3>
         <p>z_{n+1} = z_n² + c. For each point c in the plane, ask: does this stay bounded as we iterate? The answer paints one of mathematics' most famous fractals. Click anywhere to zoom in — there's infinite detail at every scale.</p>
         <div class="card-footer">
           <i class="far fa-star star-icon" title="Star this simulation"></i>
-          <span class="open-link">Open sim <i class="fas fa-arrow-right"></i></span>
+          <a class="open-link" href="sims/mandelbrot-set.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <!-- 8b. Mathematics / Prime Sieve -->
+      <div class="sim-card" data-sim-id="prime-sieve" data-subject="mathematics">
+        <div class="sim-subject-tag"><i class="fas fa-square-root-alt"></i> Mathematics</div>
+        <h3>Prime Sieve (Sieve of Eratosthenes)</h3>
+        <p>Watch Eratosthenes' ancient algorithm in action: start with a grid of numbers and strike out multiples of each prime as it's found. Adjust the range and step through the sieve to see which numbers survive — and why.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/prime-sieve.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <!-- 8c. Mathematics / Collatz Conjecture -->
+      <div class="sim-card" data-sim-id="collatz-conjecture" data-subject="mathematics">
+        <div class="sim-subject-tag"><i class="fas fa-square-root-alt"></i> Mathematics</div>
+        <h3>Collatz Conjecture</h3>
+        <p>Pick any positive integer. If it's even, halve it; if it's odd, triple it and add one. Every number tested so far eventually reaches 1 — but nobody has proven it always will. Plot the trajectory and watch the famous "hailstone" spikes.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/collatz-conjecture.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <!-- 8d. Mathematics / Chaos: Logistic Map -->
+      <div class="sim-card" data-sim-id="logistic-map" data-subject="mathematics">
+        <div class="sim-subject-tag"><i class="fas fa-square-root-alt"></i> Mathematics</div>
+        <h3>Logistic Map &amp; Chaos</h3>
+        <p>x_{n+1} = r·x_n·(1 − x_n). One tiny equation, an entire zoo of behaviour: fixed points, cycles, and the onset of chaos as r increases. Drag r through the bifurcation diagram and see order collapse into unpredictability.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/logistic-map.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <!-- 8e. Mathematics / Fourier Series -->
+      <div class="sim-card" data-sim-id="fourier-series" data-subject="mathematics">
+        <div class="sim-subject-tag"><i class="fas fa-square-root-alt"></i> Mathematics</div>
+        <h3>Fourier Series</h3>
+        <p>Any repeating shape can be built from sine waves. Add terms one by one and watch a square wave, sawtooth, or triangle emerge from spinning circles. Drag the number of harmonics to see where the Gibbs overshoot refuses to disappear.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/fourier-series.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <!-- 8f. Mathematics / Pascal's Triangle & Fractals -->
+      <div class="sim-card" data-sim-id="pascal-fractals" data-subject="mathematics">
+        <div class="sim-subject-tag"><i class="fas fa-square-root-alt"></i> Mathematics</div>
+        <h3>Pascal's Triangle &amp; Fractals</h3>
+        <p>Color the entries of Pascal's triangle by divisibility — say, by whether each number is even or divisible by 3 — and Sierpiński's triangle appears out of thin air. Switch the modulus and watch a different fractal emerge.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/pascal-fractals.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <!-- 8g. Mathematics / Monty Hall -->
+      <div class="sim-card" data-sim-id="monty-hall" data-subject="mathematics">
+        <div class="sim-subject-tag"><i class="fas fa-square-root-alt"></i> Mathematics</div>
+        <h3>Monty Hall Problem</h3>
+        <p>Three doors, one prize. Pick one, the host opens a losing door, and you may switch. Run thousands of trials with "always stay" vs "always switch" and watch the win rates settle at 1/3 and 2/3 — the probability your intuition argues with.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/monty-hall.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <!-- 8h. Mathematics / Buffon's Needle -->
+      <div class="sim-card" data-sim-id="buffons-needle" data-subject="mathematics">
+        <div class="sim-subject-tag"><i class="fas fa-square-root-alt"></i> Mathematics</div>
+        <h3>Buffon's Needle</h3>
+        <p>Drop needles onto a lined floor and count how often they cross a line. The fraction converges on 2/π — a way to estimate π by pure chance. Increase the number of drops and watch the running estimate wiggle toward the true value.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/buffons-needle.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <!-- 8i. Mathematics / Cellular Automata (Rule 30 / Game of Life) -->
+      <div class="sim-card" data-sim-id="cellular-automata" data-subject="mathematics">
+        <div class="sim-subject-tag"><i class="fas fa-square-root-alt"></i> Mathematics</div>
+        <h3>Cellular Automata</h3>
+        <p>Start with a single black cell and apply a simple rule. Rule 30 makes chaotic-looking patterns from nothing; Conway's Game of Life turns it into a world of gliders and oscillators. Pick a rule and watch complexity condense out of arithmetic.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/cellular-automata.html">Open sim <i class="fas fa-arrow-right"></i></a>
         </div>
       </div>
 
       <!-- 9. Finance / Compound Interest -->
-      <div class="sim-card" data-sim-id="compound-interest">
+      <div class="sim-card" data-sim-id="compound-interest" data-subject="finance-economics">
         <div class="sim-subject-tag"><i class="fas fa-coins"></i> Finance & Economics 🧪 Lab</div>
         <h3>Compound Interest</h3>
         <p>"The most powerful force in the universe" — apocryphally attributed to Einstein. Slide rate, time, and starting principal, optionally add monthly contributions, and watch compound and simple interest pull apart.</p>
@@ -165,7 +254,7 @@
       </div>
 
       <!-- 10. Engineering / Truss -->
-      <div class="sim-card" data-sim-id="truss-analyzer">
+      <div class="sim-card" data-sim-id="truss-analyzer" data-subject="engineering">
         <div class="sim-subject-tag"><i class="fas fa-cogs"></i> Engineering</div>
         <h3>Truss Analyzer</h3>
         <p>A pin-jointed truss bridge under a moving load. Each member is colored by its internal force — red is tension, blue is compression. Drag the load car along the deck and watch the force pattern change. The internal forces come from method-of-joints equilibrium.</p>
@@ -176,7 +265,7 @@
       </div>
 
       <!-- 11. Music & Acoustics / Beat Frequencies -->
-      <div class="sim-card" data-sim-id="beat-frequencies">
+      <div class="sim-card" data-sim-id="beat-frequencies" data-subject="music-acoustics">
         <div class="sim-subject-tag"><i class="fas fa-music"></i> Music & Acoustics</div>
         <h3>Beat Frequencies</h3>
         <p>Two close pure tones — when added, they produce a slow amplitude beat at the difference frequency. Adjust the two pitches and watch the envelope wow in and out. Click Play to also hear it: musicians use this exact phenomenon to tune by ear.</p>
@@ -187,7 +276,7 @@
       </div>
 
       <!-- 12. Climate / Carbon Cycle -->
-      <div class="sim-card" data-sim-id="carbon-cycle">
+      <div class="sim-card" data-sim-id="carbon-cycle" data-subject="climate-sustainability">
         <div class="sim-subject-tag"><i class="fas fa-leaf"></i> Climate & Sustainability 🧪 Lab</div>
         <h3>Carbon Cycle</h3>
         <p>Carbon flows between four reservoirs — atmosphere, surface ocean, deep ocean, and land biosphere — driven by photosynthesis, respiration, ocean exchange, and human emissions. Drag the emission rate and watch each pool evolve over a century. The atmospheric pool is what drives global temperature.</p>
@@ -198,7 +287,7 @@
       </div>
 
       <!-- 13. Psychology / Stroop -->
-      <div class="sim-card" data-sim-id="stroop-test">
+      <div class="sim-card" data-sim-id="stroop-test" data-subject="psychology">
         <div class="sim-subject-tag"><i class="fas fa-brain"></i> Psychology</div>
         <h3>Stroop Test</h3>
         <p>Color words printed in mismatched ink — name the INK color, not the word. The classic Stroop effect: when word and color disagree, your brain takes longer to suppress reading. Run timed trials and watch your reaction time double on incongruent stimuli.</p>
@@ -209,7 +298,7 @@
       </div>
 
       <!-- 14. Cognitive Science / Optical Illusions -->
-      <div class="sim-card" data-sim-id="optical-illusions">
+      <div class="sim-card" data-sim-id="optical-illusions" data-subject="cognitive-science">
         <div class="sim-subject-tag"><i class="fas fa-eye"></i> Cognitive Science</div>
         <h3>Optical Illusions Gallery</h3>
         <p>Six classic illusions where your brain insists on the wrong answer even after you measure: Müller-Lyer, Ponzo, Café Wall, Hering, Ebbinghaus, and Checker Shadow. Toggle the "rulers" overlay to confirm — the lines really are equal.</p>
