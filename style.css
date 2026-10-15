@@ -332,3 +332,42 @@ footer {
     grid-template-columns: 1fr;
   }
 }
+
+/* ---------- Active Subject Pill ---------- */
+.subject-pill {
+  cursor: pointer;
+  user-select: none;
+  font-family: inherit;
+}
+
+.subject-pill.active {
+  background: #2c7aa0;
+  border-color: #2c7aa0;
+  color: white;
+  box-shadow: 0 4px 10px -2px rgba(44, 122, 160, 0.35);
+}
+
+.subject-pill.active i {
+  opacity: 1;
+}
+
+/* ---------- No Results Message ---------- */
+.no-results {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #6f8da3;
+  background: #f4f9ff;
+  border-radius: 20px;
+  border: 1px dashed #cde0ef;
+  margin: 1.5rem 0;
+}
+
+.no-results i {
+  font-size: 2rem;
+  color: #b0c8da;
+  margin-bottom: 0.75rem;
+}
+
+.no-results p {
+  font-size: 0.95rem;
+}

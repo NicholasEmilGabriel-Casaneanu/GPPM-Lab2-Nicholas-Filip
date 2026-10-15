@@ -27,30 +27,31 @@
 
   <main class="container">
     <!-- Results / search bar area -->
-    <div class="results-bar">
+    <div class="results-bar" id="resultsBar">
       <i class="fas fa-flask"></i>
-      <span>Results</span> 12 simulations available · ready to explore
+      <span>Results</span> <span id="resultCount">14</span> simulations available · ready to explore
     </div>
 
     <!-- Subjects section -->
     <div class="section-title">
       <i class="fas fa-book-open"></i> Subjects
     </div>
-    <div class="subject-grid">
-      <div class="subject-pill"><i class="fas fa-atom"></i> Physics</div>
-      <div class="subject-pill"><i class="fas fa-flask"></i> Chemistry</div>
-      <div class="subject-pill"><i class="fas fa-dna"></i> Biology</div>
-      <div class="subject-pill"><i class="fas fa-globe"></i> Earth & Space</div>
-      <div class="subject-pill"><i class="fas fa-laptop-code"></i> Computer Science</div>
-      <div class="subject-pill"><i class="fas fa-chart-bar"></i> Data Science</div>
-      <div class="subject-pill"><i class="fas fa-users"></i> Social Science</div>
-      <div class="subject-pill"><i class="fas fa-square-root-alt"></i> Mathematics</div>
-      <div class="subject-pill"><i class="fas fa-coins"></i> Finance & Economics</div>
-      <div class="subject-pill"><i class="fas fa-cogs"></i> Engineering</div>
-      <div class="subject-pill"><i class="fas fa-music"></i> Music & Acoustics</div>
-      <div class="subject-pill"><i class="fas fa-leaf"></i> Climate & Sustainability</div>
-      <div class="subject-pill"><i class="fas fa-brain"></i> Psychology</div>
-      <div class="subject-pill"><i class="fas fa-eye"></i> Cognitive Science</div>
+    <div class="subject-grid" id="subjectGrid">
+      <button class="subject-pill active" data-category="all"><i class="fas fa-th-large"></i> All</button>
+      <button class="subject-pill" data-category="Physics"><i class="fas fa-atom"></i> Physics</button>
+      <button class="subject-pill" data-category="Chemistry"><i class="fas fa-flask"></i> Chemistry</button>
+      <button class="subject-pill" data-category="Biology"><i class="fas fa-dna"></i> Biology</button>
+      <button class="subject-pill" data-category="Earth & Space"><i class="fas fa-globe"></i> Earth & Space</button>
+      <button class="subject-pill" data-category="Computer Science"><i class="fas fa-laptop-code"></i> Computer Science</button>
+      <button class="subject-pill" data-category="Data Science"><i class="fas fa-chart-bar"></i> Data Science</button>
+      <button class="subject-pill" data-category="Social Science"><i class="fas fa-users"></i> Social Science</button>
+      <button class="subject-pill" data-category="Mathematics"><i class="fas fa-square-root-alt"></i> Mathematics</button>
+      <button class="subject-pill" data-category="Finance & Economics"><i class="fas fa-coins"></i> Finance & Economics</button>
+      <button class="subject-pill" data-category="Engineering"><i class="fas fa-cogs"></i> Engineering</button>
+      <button class="subject-pill" data-category="Music & Acoustics"><i class="fas fa-music"></i> Music & Acoustics</button>
+      <button class="subject-pill" data-category="Climate & Sustainability"><i class="fas fa-leaf"></i> Climate & Sustainability</button>
+      <button class="subject-pill" data-category="Psychology"><i class="fas fa-brain"></i> Psychology</button>
+      <button class="subject-pill" data-category="Cognitive Science"><i class="fas fa-eye"></i> Cognitive Science</button>
     </div>
 
     <!-- Favorites hint -->
@@ -63,13 +64,15 @@
     <div class="section-title" style="margin-top: 2rem;">
       <i class="fas fa-star"></i> Featured simulations
     </div>
-    <p class="section-subtitle">A handful to start — open a subject above for the full catalog</p>
+    <p class="section-subtitle">Click a subject above to filter — or open any simulation below</p>
 
-    <div class="sims-grid">
+    <!-- ALL sim cards live inside this grid -->
+    <div class="sims-grid" id="simsGrid">
+
       <!-- 1. Physics / Electric Field -->
-      <div class="sim-card" data-sim-id="electric-field">
+      <div class="sim-card" data-sim-id="electric-field" data-category="Physics">
         <div class="sim-subject-tag"><i class="fas fa-atom"></i> Physics</div>
-        <h3>Electric Field & Charges</h3>
+        <h3>Electric Field &amp; Charges</h3>
         <p>Drop and drag positive and negative charges on a 2D plane and see field vectors, field lines, or equipotentials update live. Move two opposite charges close together to see a clean dipole field.</p>
         <div class="card-footer">
           <i class="far fa-star star-icon" title="Star this simulation"></i>
@@ -78,7 +81,7 @@
       </div>
 
       <!-- 2. Chemistry / Acid-Base Titration -->
-      <div class="sim-card" data-sim-id="acid-base-titration">
+      <div class="sim-card" data-sim-id="acid-base-titration" data-category="Chemistry">
         <div class="sim-subject-tag"><i class="fas fa-flask"></i> Chemistry 🧪 Lab</div>
         <h3>Acid-Base Titration</h3>
         <p>Drip a strong base into a strong or weak acid and watch the pH curve trace out as the equivalence point sweeps past. Pick an indicator and see when its color flips.</p>
@@ -89,9 +92,9 @@
       </div>
 
       <!-- 3. Biology / DNA -->
-      <div class="sim-card" data-sim-id="dna-transcription">
+      <div class="sim-card" data-sim-id="dna-transcription" data-category="Biology">
         <div class="sim-subject-tag"><i class="fas fa-dna"></i> Biology</div>
-        <h3>DNA Transcription & Translation</h3>
+        <h3>DNA Transcription &amp; Translation</h3>
         <p>Type or edit a DNA template strand and watch RNA polymerase transcribe it base-by-base, then a ribosome translate codons into amino acids. Stop and start at any position.</p>
         <div class="card-footer">
           <i class="far fa-star star-icon" title="Star this simulation"></i>
@@ -100,8 +103,8 @@
       </div>
 
       <!-- 4. Earth & Space / Moon Phases -->
-      <div class="sim-card" data-sim-id="moon-phases">
-        <div class="sim-subject-tag"><i class="fas fa-globe"></i> Earth & Space 🧪 Lab</div>
+      <div class="sim-card" data-sim-id="moon-phases" data-category="Earth &amp; Space">
+        <div class="sim-subject-tag"><i class="fas fa-globe"></i> Earth &amp; Space 🧪 Lab</div>
         <h3>Moon Phases</h3>
         <p>Drag the Moon around Earth and see two views update together: the lit side from above, and how the Moon appears from Earth. The phase you see is just geometry.</p>
         <div class="card-footer">
@@ -111,9 +114,9 @@
       </div>
 
       <!-- 5. Computer Science / Logic Gates -->
-      <div class="sim-card" data-sim-id="logic-gates">
+      <div class="sim-card" data-sim-id="logic-gates" data-category="Computer Science">
         <div class="sim-subject-tag"><i class="fas fa-laptop-code"></i> Computer Science</div>
-        <h3>Logic Gates & Circuits</h3>
+        <h3>Logic Gates &amp; Circuits</h3>
         <p>Click input switches and pick gate types in a small circuit. Wires light up green for true and gray for false in real time, and a truth table fills in alongside.</p>
         <div class="card-footer">
           <i class="far fa-star star-icon" title="Star this simulation"></i>
@@ -122,7 +125,7 @@
       </div>
 
       <!-- 6. Data Science / Bayes -->
-      <div class="sim-card" data-sim-id="bayes-theorem">
+      <div class="sim-card" data-sim-id="bayes-theorem" data-category="Data Science">
         <div class="sim-subject-tag"><i class="fas fa-chart-bar"></i> Data Science</div>
         <h3>Bayes' Theorem</h3>
         <p>Watch the classic medical-test paradox: even an accurate test can give mostly false positives when the disease is rare. Drag prevalence, sensitivity, and specificity to see the posterior live.</p>
@@ -133,7 +136,7 @@
       </div>
 
       <!-- 7. Social Science / Schelling -->
-      <div class="sim-card" data-sim-id="schelling-segregation">
+      <div class="sim-card" data-sim-id="schelling-segregation" data-category="Social Science">
         <div class="sim-subject-tag"><i class="fas fa-users"></i> Social Science</div>
         <h3>Schelling's Segregation Model</h3>
         <p>Place two groups on a grid where each only wants a small fraction of similar neighbors. Watch surprising large-scale segregation emerge from gentle individual preferences.</p>
@@ -144,7 +147,7 @@
       </div>
 
       <!-- 8. Mathematics / Mandelbrot -->
-      <div class="sim-card" data-sim-id="mandelbrot-set">
+      <div class="sim-card" data-sim-id="mandelbrot-set" data-category="Mathematics">
         <div class="sim-subject-tag"><i class="fas fa-square-root-alt"></i> Mathematics</div>
         <h3>Mandelbrot Set</h3>
         <p>z_{n+1} = z_n² + c. For each point c in the plane, ask: does this stay bounded as we iterate? The answer paints one of mathematics' most famous fractals. Click anywhere to zoom in — there's infinite detail at every scale.</p>
@@ -155,8 +158,8 @@
       </div>
 
       <!-- 9. Finance / Compound Interest -->
-      <div class="sim-card" data-sim-id="compound-interest">
-        <div class="sim-subject-tag"><i class="fas fa-coins"></i> Finance & Economics 🧪 Lab</div>
+      <div class="sim-card" data-sim-id="compound-interest" data-category="Finance &amp; Economics">
+        <div class="sim-subject-tag"><i class="fas fa-coins"></i> Finance &amp; Economics 🧪 Lab</div>
         <h3>Compound Interest</h3>
         <p>"The most powerful force in the universe" — apocryphally attributed to Einstein. Slide rate, time, and starting principal, optionally add monthly contributions, and watch compound and simple interest pull apart.</p>
         <div class="card-footer">
@@ -166,7 +169,7 @@
       </div>
 
       <!-- 10. Engineering / Truss -->
-      <div class="sim-card" data-sim-id="truss-analyzer">
+      <div class="sim-card" data-sim-id="truss-analyzer" data-category="Engineering">
         <div class="sim-subject-tag"><i class="fas fa-cogs"></i> Engineering</div>
         <h3>Truss Analyzer</h3>
         <p>A pin-jointed truss bridge under a moving load. Each member is colored by its internal force — red is tension, blue is compression. Drag the load car along the deck and watch the force pattern change. The internal forces come from method-of-joints equilibrium.</p>
@@ -177,8 +180,8 @@
       </div>
 
       <!-- 11. Music & Acoustics / Beat Frequencies -->
-      <div class="sim-card" data-sim-id="beat-frequencies">
-        <div class="sim-subject-tag"><i class="fas fa-music"></i> Music & Acoustics</div>
+      <div class="sim-card" data-sim-id="beat-frequencies" data-category="Music &amp; Acoustics">
+        <div class="sim-subject-tag"><i class="fas fa-music"></i> Music &amp; Acoustics</div>
         <h3>Beat Frequencies</h3>
         <p>Two close pure tones — when added, they produce a slow amplitude beat at the difference frequency. Adjust the two pitches and watch the envelope wow in and out. Click Play to also hear it: musicians use this exact phenomenon to tune by ear.</p>
         <div class="card-footer">
@@ -188,8 +191,8 @@
       </div>
 
       <!-- 12. Climate / Carbon Cycle -->
-      <div class="sim-card" data-sim-id="carbon-cycle">
-        <div class="sim-subject-tag"><i class="fas fa-leaf"></i> Climate & Sustainability 🧪 Lab</div>
+      <div class="sim-card" data-sim-id="carbon-cycle" data-category="Climate &amp; Sustainability">
+        <div class="sim-subject-tag"><i class="fas fa-leaf"></i> Climate &amp; Sustainability 🧪 Lab</div>
         <h3>Carbon Cycle</h3>
         <p>Carbon flows between four reservoirs — atmosphere, surface ocean, deep ocean, and land biosphere — driven by photosynthesis, respiration, ocean exchange, and human emissions. Drag the emission rate and watch each pool evolve over a century. The atmospheric pool is what drives global temperature.</p>
         <div class="card-footer">
@@ -199,7 +202,7 @@
       </div>
 
       <!-- 13. Psychology / Stroop -->
-      <div class="sim-card" data-sim-id="stroop-test">
+      <div class="sim-card" data-sim-id="stroop-test" data-category="Psychology">
         <div class="sim-subject-tag"><i class="fas fa-brain"></i> Psychology</div>
         <h3>Stroop Test</h3>
         <p>Color words printed in mismatched ink — name the INK color, not the word. The classic Stroop effect: when word and color disagree, your brain takes longer to suppress reading. Run timed trials and watch your reaction time double on incongruent stimuli.</p>
@@ -210,7 +213,7 @@
       </div>
 
       <!-- 14. Cognitive Science / Optical Illusions -->
-      <div class="sim-card" data-sim-id="optical-illusions">
+      <div class="sim-card" data-sim-id="optical-illusions" data-category="Cognitive Science">
         <div class="sim-subject-tag"><i class="fas fa-eye"></i> Cognitive Science</div>
         <h3>Optical Illusions Gallery</h3>
         <p>Six classic illusions where your brain insists on the wrong answer even after you measure: Müller-Lyer, Ponzo, Café Wall, Hering, Ebbinghaus, and Checker Shadow. Toggle the "rulers" overlay to confirm — the lines really are equal.</p>
@@ -219,6 +222,91 @@
           <span class="open-link">Open sim <i class="fas fa-arrow-right"></i></span>
         </div>
       </div>
+
+      <!-- 15. Physics: Projectile Motion -->
+      <div class="sim-card" data-sim-id="projectile-motion" data-category="Physics">
+        <div class="sim-subject-tag"><i class="fas fa-atom"></i> Physics</div>
+        <h3>Projectile Motion</h3>
+        <p>Fire a projectile with adjustable speed, angle, and gravity. Watch the parabolic path trace out and see range, max height, and flight time update live.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <span class="open-link">Open sim <i class="fas fa-arrow-right"></i></span>
+        </div>
+      </div>
+
+      <!-- 16. Chemistry: Periodic Table -->
+      <div class="sim-card" data-sim-id="periodic-table" data-category="Chemistry">
+        <div class="sim-subject-tag"><i class="fas fa-flask"></i> Chemistry</div>
+        <h3>Periodic Table Explorer</h3>
+        <p>Browse an interactive periodic table. Click any element to see its atomic number, mass, group, period, and category — colour-coded by family.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <span class="open-link">Open sim <i class="fas fa-arrow-right"></i></span>
+        </div>
+      </div>
+
+      <!-- 17. Biology: Punnett Square -->
+      <div class="sim-card" data-sim-id="punnett-square" data-category="Biology">
+        <div class="sim-subject-tag"><i class="fas fa-dna"></i> Biology</div>
+        <h3>Punnett Square &amp; Genetics</h3>
+        <p>Enter two parent genotypes and instantly see the Punnett square, the genotype ratios, and the dominant/recessive phenotype breakdown.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <span class="open-link">Open sim <i class="fas fa-arrow-right"></i></span>
+        </div>
+      </div>
+
+      <!-- 18. Earth & Space: Solar System -->
+      <div class="sim-card" data-sim-id="solar-system" data-category="Earth &amp; Space">
+        <div class="sim-subject-tag"><i class="fas fa-globe"></i> Earth &amp; Space</div>
+        <h3>Solar System Orbits</h3>
+        <p>Watch all eight planets orbit the Sun at their real relative periods. Speed up time to see Mercury whip around while Neptune barely moves.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <span class="open-link">Open sim <i class="fas fa-arrow-right"></i></span>
+        </div>
+      </div>
+
+      <!-- 19. Computer Science: Binary Converter -->
+      <div class="sim-card" data-sim-id="binary-converter" data-category="Computer Science">
+        <div class="sim-subject-tag"><i class="fas fa-laptop-code"></i> Computer Science</div>
+        <h3>Binary &amp; Number Bases</h3>
+        <p>Type a decimal number (0–255) and see its 8-bit binary, hexadecimal, and octal representations. Click any bit to toggle it and watch the value update.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <span class="open-link">Open sim <i class="fas fa-arrow-right"></i></span>
+        </div>
+      </div>
+
+      <!-- 20. Data Science: Linear Regression -->
+      <div class="sim-card" data-sim-id="linear-regression" data-category="Data Science">
+        <div class="sim-subject-tag"><i class="fas fa-chart-bar"></i> Data Science</div>
+        <h3>Linear Regression</h3>
+        <p>Generate noisy data and see the best-fit line computed live, with residuals shown as dashed lines. Add points by clicking anywhere on the canvas.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <span class="open-link">Open sim <i class="fas fa-arrow-right"></i></span>
+        </div>
+      </div>
+
+      <!-- 21. Social Science: Predator-Prey -->
+      <div class="sim-card" data-sim-id="predator-prey" data-category="Social Science">
+        <div class="sim-subject-tag"><i class="fas fa-users"></i> Social Science</div>
+        <h3>Predator–Prey Dynamics</h3>
+        <p>The Lotka–Volterra equations in action. Adjust prey growth, predation rate, and predator death to see how population cycles shift. A classic model in ecology.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <span class="open-link">Open sim <i class="fas fa-arrow-right"></i></span>
+        </div>
+      </div>
+
+    </div>
+    <!-- /#simsGrid -->
+
+    <!-- No results message -->
+    <div id="noResults" class="no-results" style="display:none;">
+      <i class="fas fa-search"></i>
+      <p>No simulations in this category yet.</p>
     </div>
 
     <!-- Coming soon notice -->

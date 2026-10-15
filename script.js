@@ -129,6 +129,68 @@
     });
   }
 
+ // ---------- Category Filtering ----------
+  function initCategoryFilter() {
+    const grid = document.getElementById('simsGrid');
+    const pills = document.querySelectorAll('#subjectGrid .subject-pill');
+    const cards = grid ? grid.querySelectorAll('.sim-card') : [];
+    const noResults = document.getElementById('noResults');
+    const resultCount = document.getElementById('resultCount');
+    const resultsBar = document.getElementById('resultsBar');
+
+    if (!grid || !pills.length) return;
+
+    // Normalize: decode HTML entities + trim
+    function norm(s) {
+      if (!s) return '';
+      const txt = document.createElement('textarea');
+      txt.innerHTML = s;                 // decodes &amp; -> &
+      return txt.value.trim();
+    }
+
+    function applyFilter(category) {
+      const target = norm(category);
+      let visibleCount = 0;
+
+      cards.forEach(card => {
+        const cardCat = norm(card.dataset.category);
+        const show = target === 'all' || cardCat === target;
+        card.style.display = show ? '' : 'none';
+        if (show) visibleCount++;
+      });
+
+      if (noResults) {
+        noResults.style.display = visibleCount === 0 ? 'block' : 'none';
+      }
+
+      if (resultCount) {
+        resultCount.textContent = visibleCount;
+      }
+
+      if (resultsBar) {
+        const label = target === 'all'
+          ? 'simulations available · ready to explore'
+          : `simulation${visibleCount === 1 ? '' : 's'} in "${target}" · click All to reset`;
+        resultsBar.innerHTML =
+          `<i class="fas fa-flask"></i> <span>Results</span> ` +
+          `<span id="resultCount">${visibleCount}</span> ${label}`;
+      }
+
+      pills.forEach(p => {
+        p.classList.toggle('active', norm(p.dataset.category) === target);
+      });
+    }
+
+    pills.forEach(pill => {
+      pill.addEventListener('click', () => applyFilter(pill.dataset.category));
+    });
+
+    // Run once on load so the count reflects what's actually rendered
+    applyFilter('all');
+
+    window.filterByCategory = applyFilter;
+  }
+
   // ---------- Login Button ----------
 
   /**
@@ -152,6 +214,7 @@
     initStars();
     initOpenLinks();
     initLogin();
+    initCategoryFilter();
   }
 
   // Run once DOM is ready
