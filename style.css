@@ -1,0 +1,334 @@
+/* ============================================
+   All-Science Sims — Stylesheet
+   ============================================ */
+
+/* ---------- Reset & Base ---------- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+}
+
+body {
+  background: #f8fafc;
+  color: #0b2b3f;
+  line-height: 1.5;
+  padding: 0 0 3rem;
+}
+
+/* ---------- Layout Container ---------- */
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+/* ---------- Header ---------- */
+header {
+  background: linear-gradient(135deg, #0b2b3f 0%, #1b4a6b 100%);
+  color: white;
+  padding: 1.2rem 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.logo h1 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+}
+
+.logo p {
+  font-size: 0.9rem;
+  opacity: 0.85;
+  margin-top: 0.2rem;
+}
+
+.header-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.login-btn {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 0.5rem 1.2rem;
+  border-radius: 30px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.login-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+/* ---------- Main ---------- */
+main {
+  margin-top: 2rem;
+}
+
+/* ---------- Results Bar ---------- */
+.results-bar {
+  background: white;
+  border-radius: 60px;
+  padding: 0.6rem 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #4a5c6b;
+  font-size: 0.95rem;
+  margin-bottom: 2rem;
+}
+
+.results-bar i {
+  color: #6b8fa8;
+}
+
+.results-bar span {
+  font-weight: 500;
+  color: #0b2b3f;
+}
+
+/* ---------- Section Titles ---------- */
+.section-title {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin: 2rem 0 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  letter-spacing: -0.3px;
+}
+
+.section-title i {
+  color: #2c7aa0;
+  font-size: 1.2rem;
+}
+
+.section-subtitle {
+  color: #4f6f86;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+/* ---------- Subject Pills ---------- */
+.subject-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.subject-pill {
+  background: white;
+  border: 1px solid #cfdde9;
+  color: #1b4a6b;
+  padding: 0.6rem 1.4rem;
+  border-radius: 40px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: default;
+  transition: all 0.1s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.subject-pill i {
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+.subject-pill:hover {
+  background: #eef4fa;
+  border-color: #8db3d0;
+}
+
+/* ---------- Simulation Cards Grid ---------- */
+.sims-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin: 1.5rem 0 1rem;
+}
+
+.sim-card {
+  background: white;
+  border-radius: 20px;
+  padding: 1.6rem 1.4rem 1.4rem;
+  box-shadow: 0 8px 18px -6px rgba(0, 20, 30, 0.08);
+  border: 1px solid #e2edf5;
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.sim-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 28px -10px rgba(16, 70, 100, 0.18);
+  border-color: #b9d4e7;
+}
+
+.sim-subject-tag {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+  color: #2c7aa0;
+  background: #e4f0f9;
+  padding: 0.2rem 0.9rem;
+  border-radius: 30px;
+  align-self: flex-start;
+  margin-bottom: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.sim-card h3 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 0.6rem;
+  color: #0b2b3f;
+  line-height: 1.3;
+}
+
+.sim-card p {
+  font-size: 0.9rem;
+  color: #3a5b70;
+  flex: 1;
+  margin-bottom: 1.2rem;
+  line-height: 1.45;
+}
+
+/* ---------- Card Footer ---------- */
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #eaf1f7;
+  padding-top: 1rem;
+  margin-top: auto;
+}
+
+.star-icon {
+  color: #b0c8da;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: color 0.1s, transform 0.1s;
+}
+
+.star-icon:hover {
+  color: #f5b342;
+  transform: scale(1.15);
+}
+
+.star-icon.starred {
+  color: #f5b342;
+}
+
+.open-link {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #1b6b93;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+}
+
+.open-link i {
+  font-size: 0.7rem;
+  transition: transform 0.1s;
+}
+
+.sim-card:hover .open-link i {
+  transform: translateX(4px);
+}
+
+/* ---------- Favorites Hint ---------- */
+.favorites-hint {
+  background: #f0f7fe;
+  border-radius: 20px;
+  padding: 1rem 1.5rem;
+  font-size: 0.9rem;
+  color: #1e5a7a;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border: 1px dashed #aac9e0;
+  margin: 1.5rem 0 0.5rem;
+}
+
+.favorites-hint i {
+  font-size: 1.3rem;
+  color: #f5b342;
+}
+
+/* ---------- Coming Soon Notice ---------- */
+.coming-soon {
+  margin-top: 2.5rem;
+  padding: 1rem;
+  background: #f4f9ff;
+  border-radius: 20px;
+  color: #1e5a7a;
+  font-size: 0.9rem;
+  border: 1px solid #cde0ef;
+}
+
+.coming-soon i {
+  margin-right: 0.5rem;
+}
+
+/* ---------- Footer ---------- */
+footer {
+  margin-top: 3.5rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #6f8da3;
+  border-top: 1px solid #d9e6f0;
+  padding-top: 2rem;
+}
+
+.footer-sub {
+  margin-top: 0.5rem;
+  opacity: 0.7;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 600px) {
+  .header-flex {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .logo h1 {
+    font-size: 1.5rem;
+  }
+
+  .sims-grid {
+    grid-template-columns: 1fr;
+  }
+}
