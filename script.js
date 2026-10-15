@@ -94,31 +94,38 @@
   // ---------- Open Simulation Logic ----------
 
   /**
-   * Handle clicking an "Open sim" link.
-   * Currently a placeholder — replace with real navigation later.
+   * Handle clicking an "Open sim" link (or anywhere on a card).
+   * Delegates to window.openSim() which is defined in sims.js.
    * @param {Event} e
    */
   function handleOpenSim(e) {
     e.preventDefault();
     const card = e.currentTarget.closest('.sim-card');
-    const simName = card ? card.querySelector('h3')?.innerText : 'this simulation';
-    const simId = card ? card.dataset.simId : 'unknown';
+    const simId = card ? card.dataset.simId : null;
+    if (!simId) return;
 
-    // TODO: Replace with real navigation, e.g.:
-    // window.location.href = `sims/${simId}.html`;
-    alert(
-      `🚧 "${simName}" is not wired up yet.\n\n` +
-      `Sim ID: ${simId}\n\n` +
-      `This is a starting point — you can add the actual sim page later!`
-    );
+    if (typeof window.openSim === 'function') {
+      window.openSim(simId);
+    } else {
+      console.warn('sims.js not loaded yet');
+    }
   }
 
   /**
-   * Wire up all "Open sim" links.
+   * Wire up all "Open sim" links AND the whole card (better UX).
    */
   function initOpenLinks() {
-    openLinks.forEach((link) => {
-      link.addEventListener('click', handleOpenSim);
+    // Click on the whole card opens the sim
+    document.querySelectorAll('.sim-card').forEach((card) => {
+      card.addEventListener('click', (e) => {
+        // Ignore clicks on the star icon
+        if (e.target.closest('.star-icon')) return;
+        const simId = card.dataset.simId;
+        if (simId && typeof window.openSim === 'function') {
+          window.openSim(simId);
+        }
+      });
+      card.style.cursor = 'pointer';
     });
   }
 
