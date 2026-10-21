@@ -6,6 +6,7 @@
   <title>Loan Amortization — All-Science Sims</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="sim-theme.css">
 </head>
 <body>
   <div class="sim-page">
@@ -20,84 +21,187 @@
       Every fixed-rate loan has the same story: early payments are mostly interest, later payments are mostly principal. Drag the rate, term, and amount to see the crossover point move — and see how much interest you really pay.
     </div>
 
-    <div class="sim-canvas-wrap">
-      <canvas id="chart" width="820" height="420"></canvas>
+    <div class="sim-hero" id="hero">
+      <canvas id="canvas"></canvas>
+      <div class="sim-hud">
+        <div class="hud-row">
+          <span class="hud-label">Monthly payment</span>
+          <span class="hud-value" id="hudMonthly">—</span>
+        </div>
+        <div class="hud-row">
+          <span class="hud-label">Total paid</span>
+          <span class="hud-value" id="hudTotal">—</span>
+        </div>
+        <div class="hud-row">
+          <span class="hud-label">Total interest</span>
+          <span class="hud-value" id="hudInterest">—</span>
+        </div>
+      </div>
+      <div class="sim-cursor" id="cursor">Hover to inspect month</div>
+      <div class="sim-tip" id="tip">
+        <strong>Try this:</strong> shorten the term from 30 → 15 years and watch the payment flip
+      </div>
     </div>
 
-    <div class="sim-controls">
-      <div class="control">
-        <label>Loan amount: <span id="amountLabel">$300,000</span></label>
-        <input type="range" id="amount" min="1000" max="1000000" value="300000" step="1000">
+    <div class="preset-bar">
+      <button class="preset-btn is-active" data-preset="mortgage">
+        <i class="fas fa-home"></i> 30-yr mortgage
+      </button>
+      <button class="preset-btn" data-preset="car">
+        <i class="fas fa-car"></i> 5-yr car loan
+      </button>
+      <button class="preset-btn" data-preset="student">
+        <i class="fas fa-graduation-cap"></i> 10-yr student loan
+      </button>
+      <button class="preset-btn" data-preset="refi">
+        <i class="fas fa-exchange-alt"></i> Refi at 3%
+      </button>
+    </div>
+
+    <div class="control-groups">
+      <div class="control-group">
+        <h4><i class="fas fa-dollar-sign"></i> Loan</h4>
+        <div class="slider-row">
+          <label>Amount <span class="value-chip" id="amountChip">$300,000</span></label>
+          <input type="range" id="amount" min="1000" max="1000000" value="300000" step="1000">
+        </div>
+        <div class="slider-row">
+          <label>Annual rate <span class="value-chip" id="rateChip">6.0%</span></label>
+          <input type="range" id="rate" min="0.5" max="15" value="6" step="0.1">
+        </div>
+        <div class="slider-row">
+          <label>Term <span class="value-chip" id="termChip">30 years</span></label>
+          <input type="range" id="term" min="1" max="40" value="30" step="1">
+        </div>
       </div>
-      <div class="control">
-        <label>Annual rate: <span id="rateLabel">6.0%</span></label>
-        <input type="range" id="rate" min="0.5" max="15" value="6" step="0.1">
+
+      <div class="control-group">
+        <h4><i class="fas fa-eye"></i> View</h4>
+        <div class="segmented" id="viewGroup">
+          <button data-view="split" class="is-active">Payment split</button>
+          <button data-view="balance">Balance</button>
+          <button data-view="cumulative">Cumulative interest</button>
+        </div>
+        <div class="slider-row" style="margin-top:0.8rem;">
+          <label>Extra monthly <span class="value-chip" id="extraChip">$0</span></label>
+          <input type="range" id="extra" min="0" max="2000" value="0" step="25">
+        </div>
       </div>
-      <div class="control">
-        <label>Term (years): <span id="termLabel">30</span></label>
-        <input type="range" id="term" min="1" max="40" value="30" step="1">
+
+      <div class="control-group">
+        <h4><i class="fas fa-tools"></i> Compare</h4>
+        <div class="segmented" id="compareGroup">
+          <button data-compare="off" class="is-active">Single loan</button>
+          <button data-compare="on">Show payoff with extra</button>
+        </div>
       </div>
     </div>
 
-    <div class="sim-stats">
-      <div class="stat"><span class="stat-label">Monthly payment</span><span class="stat-value" id="monthly">—</span></div>
-      <div class="stat"><span class="stat-label">Total paid</span><span class="stat-value" id="totalPaid">—</span></div>
-      <div class="stat"><span class="stat-label">Total interest</span><span class="stat-value" id="totalInterest">—</span></div>
-      <div class="stat"><span class="stat-label">Interest as % of loan</span><span class="stat-value" id="interestPct">—</span></div>
+    <div class="insight-panel">
+      <h4><i class="fas fa-lightbulb"></i> Why the crossover matters</h4>
+      <p>
+        Every payment contains some interest (a % of the remaining balance) plus some principal (the rest). Because interest is charged on the <em>current</em> balance, and that balance shrinks slowly at first, <strong>early payments are mostly interest</strong>. In a 30-year mortgage at 6%, you don't start paying more principal than interest until around year 12.
+      </p>
+      <p>
+        This is why extra payments early on are worth more than extra payments late: they attack the balance when the interest is largest. Try adding <em>$200/month</em> — you'll save tens of thousands and cut years off the loan.
+      </p>
     </div>
   </div>
 
+  <script src="sim-ui.js"></script>
   <script>
     (function () {
-      const canvas = document.getElementById('chart');
+      'use strict';
+
+      const canvas = document.getElementById('canvas');
       const ctx = canvas.getContext('2d');
-      const amountInput = document.getElementById('amount');
-      const rateInput = document.getElementById('rate');
-      const termInput = document.getElementById('term');
-      const amountLabel = document.getElementById('amountLabel');
-      const rateLabel = document.getElementById('rateLabel');
-      const termLabel = document.getElementById('termLabel');
-      const monthlyEl = document.getElementById('monthly');
-      const totalPaidEl = document.getElementById('totalPaid');
-      const totalInterestEl = document.getElementById('totalInterest');
-      const interestPctEl = document.getElementById('interestPct');
+      const amount = document.getElementById('amount');
+      const rate = document.getElementById('rate');
+      const term = document.getElementById('term');
+      const extra = document.getElementById('extra');
+      const amountChip = document.getElementById('amountChip');
+      const rateChip = document.getElementById('rateChip');
+      const termChip = document.getElementById('termChip');
+      const extraChip = document.getElementById('extraChip');
+      const hudMonthly = document.getElementById('hudMonthly');
+      const hudTotal = document.getElementById('hudTotal');
+      const hudInterest = document.getElementById('hudInterest');
+      const cursorEl = document.getElementById('cursor');
+      const tipEl = document.getElementById('tip');
+      const viewGroup = document.getElementById('viewGroup');
+      const compareGroup = document.getElementById('compareGroup');
+      const presetBtns = document.querySelectorAll('.preset-btn[data-preset]');
 
-      const fmt = (n) => '$' + Math.round(n).toLocaleString('en-US');
-      const fmt2 = (n) => '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      canvas.style.aspectRatio = '820 / 440';
+      canvas.style.width = '100%';
+      canvas.style.height = 'auto';
 
-      function computeAmortization(principal, annualRate, years) {
-        const r = annualRate / 100 / 12;
-        const n = years * 12;
-        let monthly;
-        if (r === 0) {
-          monthly = principal / n;
-        } else {
-          monthly = (principal * r) / (1 - Math.pow(1 + r, -n));
+      let view = 'split';
+      let compare = 'off';
+      let schedule = null;
+      let scheduleExtra = null;
+      let chartLayout = null;
+
+      SimUI.tips(tipEl, [
+        '<strong>Try this:</strong> shorten the term from 30 → 15 years and watch the payment flip',
+        '<strong>Try this:</strong> add $200/mo extra — see how many years you save',
+        '<strong>Try this:</strong> switch to "Cumulative interest" view — that\'s the true cost',
+        '<strong>Try this:</strong> try the Refi preset — 3% on the same loan saves ~$150k',
+      ], 6000);
+
+      function fmt(n) {
+        return '$' + Math.round(n).toLocaleString('en-US');
+      }
+      function fmt2(n) {
+        return '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      }
+
+      function resize() {
+        const rect = canvas.getBoundingClientRect();
+        const dpr = Math.min(2, window.devicePixelRatio || 1);
+        const W = Math.round(rect.width * dpr);
+        const H = Math.round(rect.height * dpr);
+        if (canvas.width !== W || canvas.height !== H) {
+          canvas.width = W;
+          canvas.height = H;
         }
+      }
+
+      function computeSchedule(principal, annualRate, yrs, extraPayment) {
+        const r = annualRate / 100 / 12;
+        const n = yrs * 12;
+        let monthly;
+        if (r === 0) monthly = principal / n;
+        else monthly = (principal * r) / (1 - Math.pow(1 + r, -n));
 
         let balance = principal;
         let totalInterest = 0;
-        const schedule = [];
+        const sched = [];
         for (let m = 1; m <= n; m++) {
+          if (balance <= 0) break;
           const interest = balance * r;
-          const principalPaid = monthly - interest;
+          const principalPaid = Math.min(balance, monthly - interest + extraPayment);
           balance = Math.max(0, balance - principalPaid);
           totalInterest += interest;
-          schedule.push({ month: m, interest, principal: principalPaid, balance });
+          sched.push({ month: m, interest, principal: principalPaid, balance });
         }
-        return { monthly, schedule, totalInterest, totalPaid: principal + totalInterest };
+        return { monthly, sched, totalInterest, totalPaid: principal + totalInterest };
       }
 
-      function drawChart(schedule, monthly, principal) {
+      function draw() {
+        resize();
         const w = canvas.width, h = canvas.height;
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, w, h);
 
-        const padL = 80, padR = 20, padT = 30, padB = 55;
+        const padL = 80, padR = 30, padT = 30, padB = 60;
         const plotW = w - padL - padR;
         const plotH = h - padT - padB;
 
-        const totalMonths = schedule.length;
+        if (!schedule) return;
+
+        const totalMonths = schedule.sched.length;
+        const principal = parseFloat(amount.value);
         const maxBalance = principal;
 
         // Axes
@@ -109,13 +213,20 @@
         ctx.lineTo(padL + plotW, padT + plotH);
         ctx.stroke();
 
-        // Y gridlines
         ctx.fillStyle = '#6f8da3';
         ctx.font = '11px system-ui';
         ctx.textAlign = 'right';
+
+        // Y gridlines depend on view
+        let maxY;
+        if (view === 'balance') maxY = maxBalance;
+        else if (view === 'cumulative') maxY = schedule.totalInterest;
+        else maxY = schedule.monthly;
+
         for (let i = 0; i <= 5; i++) {
           const y = padT + (plotH * i) / 5;
-          ctx.fillText(fmt((maxBalance * (1 - i / 5))), padL - 8, y + 4);
+          const val = maxY * (1 - i / 5);
+          ctx.fillText(fmt(val), padL - 8, y + 4);
           ctx.strokeStyle = '#eef4fa';
           ctx.beginPath();
           ctx.moveTo(padL, y);
@@ -124,99 +235,216 @@
         }
 
         // X labels (years)
+        const yrs = Math.ceil(totalMonths / 12);
         ctx.textAlign = 'center';
         ctx.fillStyle = '#6f8da3';
         for (let i = 0; i <= 5; i++) {
           const x = padL + (plotW * i) / 5;
-          const yr = Math.round((totalMonths / 12) * (i / 5));
-          ctx.fillText(yr + 'y', x, padT + plotH + 20);
+          ctx.fillText(Math.round((yrs * i) / 5) + 'y', x, padT + plotH + 20);
         }
 
         const xFor = (month) => padL + (plotW * month) / totalMonths;
-        const yFor = (val) => padT + plotH - (plotH * val) / maxBalance;
+        const yFor = (val) => padT + plotH - (plotH * val) / maxY;
+        chartLayout = { padL, padT, plotW, plotH, maxY, xFor, yFor, totalMonths, yrs };
 
-        // Balance curve
-        ctx.strokeStyle = '#2c7aa0';
-        ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        ctx.moveTo(padL, yFor(principal));
-        schedule.forEach((p) => ctx.lineTo(xFor(p.month), yFor(p.balance)));
-        ctx.stroke();
+        if (view === 'balance') {
+          // Balance curve
+          ctx.strokeStyle = '#2c7aa0';
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.moveTo(padL, yFor(principal));
+          schedule.sched.forEach((p) => ctx.lineTo(xFor(p.month), yFor(p.balance)));
+          ctx.stroke();
 
-        // Fill under balance
-        ctx.fillStyle = 'rgba(44, 122, 160, 0.08)';
-        ctx.beginPath();
-        ctx.moveTo(padL, padT + plotH);
-        ctx.lineTo(padL, yFor(principal));
-        schedule.forEach((p) => ctx.lineTo(xFor(p.month), yFor(p.balance)));
-        ctx.lineTo(xFor(totalMonths), padT + plotH);
-        ctx.closePath();
-        ctx.fill();
+          // Fill
+          ctx.fillStyle = 'rgba(44, 122, 160, 0.08)';
+          ctx.beginPath();
+          ctx.moveTo(padL, padT + plotH);
+          ctx.lineTo(padL, yFor(principal));
+          schedule.sched.forEach((p) => ctx.lineTo(xFor(p.month), yFor(p.balance)));
+          ctx.lineTo(xFor(totalMonths), padT + plotH);
+          ctx.closePath();
+          ctx.fill();
 
-        // Interest vs principal per payment (stacked)
-        // Normalize to monthly payment height
-        const maxBar = padT + plotH - padT; // plotH
-        const barW = Math.max(1, (plotW / totalMonths) * 0.9);
-        schedule.forEach((p) => {
-          const x = xFor(p.month) - barW / 2;
-          const interestH = (p.interest / monthly) * (plotH * 0.3);
-          const principalH = (p.principal / monthly) * (plotH * 0.3);
-          // Place bars at the bottom
-          const baseY = padT + plotH;
-          ctx.fillStyle = 'rgba(245, 179, 66, 0.7)'; // interest
-          ctx.fillRect(x, baseY - interestH, barW, interestH);
-          ctx.fillStyle = 'rgba(44, 122, 160, 0.7)'; // principal
-          ctx.fillRect(x, baseY - interestH - principalH, barW, principalH);
-        });
+          // Compare (extra)
+          if (compare === 'on' && scheduleExtra) {
+            ctx.strokeStyle = '#f5b342';
+            ctx.setLineDash([6, 4]);
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(padL, yFor(principal));
+            scheduleExtra.sched.forEach((p) => ctx.lineTo(xFor(p.month), yFor(p.balance)));
+            ctx.stroke();
+            ctx.setLineDash([]);
+          }
+        } else if (view === 'cumulative') {
+          let cum = 0;
+          ctx.strokeStyle = '#c76b3b';
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.moveTo(padL, yFor(0));
+          schedule.sched.forEach((p) => {
+            cum += p.interest;
+            ctx.lineTo(xFor(p.month), yFor(cum));
+          });
+          ctx.stroke();
+
+          ctx.fillStyle = 'rgba(199, 107, 59, 0.12)';
+          ctx.beginPath();
+          ctx.moveTo(padL, padT + plotH);
+          ctx.lineTo(padL, yFor(0));
+          let cum2 = 0;
+          schedule.sched.forEach((p) => {
+            cum2 += p.interest;
+            ctx.lineTo(xFor(p.month), yFor(cum2));
+          });
+          ctx.lineTo(xFor(totalMonths), padT + plotH);
+          ctx.closePath();
+          ctx.fill();
+        } else {
+          // Split view: stacked bars
+          const barW = Math.max(1, (plotW / totalMonths) * 0.9);
+          schedule.sched.forEach((p) => {
+            const x = xFor(p.month) - barW / 2;
+            const interestH = (p.interest / maxY) * plotH;
+            const principalH = (p.principal / maxY) * plotH;
+            const baseY = padT + plotH;
+            ctx.fillStyle = 'rgba(199, 107, 59, 0.75)';
+            ctx.fillRect(x, baseY - interestH, barW, interestH);
+            ctx.fillStyle = 'rgba(44, 122, 160, 0.75)';
+            ctx.fillRect(x, baseY - interestH - principalH, barW, principalH);
+          });
+        }
 
         // Legend
-        const lx = padL + 12;
-        const ly = padT + 12;
         ctx.font = '12px system-ui';
         ctx.textAlign = 'left';
-
-        ctx.strokeStyle = '#2c7aa0';
-        ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        ctx.moveTo(lx, ly + 4);
-        ctx.lineTo(lx + 22, ly + 4);
-        ctx.stroke();
-        ctx.fillStyle = '#0b2b3f';
-        ctx.fillText('Balance', lx + 28, ly + 8);
-
-        ctx.fillStyle = 'rgba(245, 179, 66, 0.7)';
-        ctx.fillRect(lx, ly + 18, 22, 10);
-        ctx.fillStyle = '#0b2b3f';
-        ctx.fillText('Interest portion', lx + 28, ly + 27);
-
-        ctx.fillStyle = 'rgba(44, 122, 160, 0.7)';
-        ctx.fillRect(lx, ly + 34, 22, 10);
-        ctx.fillStyle = '#0b2b3f';
-        ctx.fillText('Principal portion', lx + 28, ly + 43);
+        const lx = padL + 12, ly = padT + 12;
+        if (view === 'split') {
+          ctx.fillStyle = 'rgba(199, 107, 59, 0.8)';
+          ctx.fillRect(lx, ly, 18, 12);
+          ctx.fillStyle = '#0b2b3f';
+          ctx.fillText('Interest portion', lx + 24, ly + 10);
+          ctx.fillStyle = 'rgba(44, 122, 160, 0.8)';
+          ctx.fillRect(lx, ly + 20, 18, 12);
+          ctx.fillStyle = '#0b2b3f';
+          ctx.fillText('Principal portion', lx + 24, ly + 30);
+        } else if (view === 'balance') {
+          ctx.strokeStyle = '#2c7aa0';
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.moveTo(lx, ly + 5);
+          ctx.lineTo(lx + 22, ly + 5);
+          ctx.stroke();
+          ctx.fillStyle = '#0b2b3f';
+          ctx.fillText('Balance', lx + 28, ly + 9);
+          if (compare === 'on') {
+            ctx.strokeStyle = '#f5b342';
+            ctx.setLineDash([6, 4]);
+            ctx.beginPath();
+            ctx.moveTo(lx, ly + 25);
+            ctx.lineTo(lx + 22, ly + 25);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillStyle = '#0b2b3f';
+            ctx.fillText('With extra payments', lx + 28, ly + 29);
+          }
+        } else {
+          ctx.strokeStyle = '#c76b3b';
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.moveTo(lx, ly + 5);
+          ctx.lineTo(lx + 22, ly + 5);
+          ctx.stroke();
+          ctx.fillStyle = '#0b2b3f';
+          ctx.fillText('Cumulative interest', lx + 28, ly + 9);
+        }
       }
 
       function update() {
-        const principal = parseFloat(amountInput.value);
-        const rate = parseFloat(rateInput.value);
-        const years = parseInt(termInput.value, 10);
+        const p = parseFloat(amount.value);
+        const r = parseFloat(rate.value);
+        const yrs = parseInt(term.value, 10);
+        const ex = parseFloat(extra.value);
 
-        amountLabel.textContent = fmt(principal);
-        rateLabel.textContent = rate.toFixed(1) + '%';
-        termLabel.textContent = years;
+        amountChip.textContent = fmt(p);
+        rateChip.textContent = r.toFixed(1) + '%';
+        termChip.textContent = yrs + ' years';
+        extraChip.textContent = fmt(ex);
 
-        const { monthly, schedule, totalInterest, totalPaid } = computeAmortization(principal, rate, years);
+        schedule = computeSchedule(p, r, yrs, 0);
+        scheduleExtra = ex > 0 ? computeSchedule(p, r, yrs, ex) : null;
 
-        monthlyEl.textContent = fmt2(monthly);
-        totalPaidEl.textContent = fmt(totalPaid);
-        totalInterestEl.textContent = fmt(totalInterest);
-        interestPctEl.textContent = ((totalInterest / principal) * 100).toFixed(1) + '%';
+        hudMonthly.textContent = fmt2(schedule.monthly);
+        hudTotal.textContent = fmt(schedule.totalPaid);
+        hudInterest.textContent = fmt(schedule.totalInterest);
 
-        drawChart(schedule, monthly, principal);
+        draw();
       }
 
-      [amountInput, rateInput, termInput].forEach((el) =>
-        el.addEventListener('input', update)
-      );
+      // Hover
+      canvas.addEventListener('mousemove', (e) => {
+        if (!chartLayout || !schedule) return;
+        const rect = canvas.getBoundingClientRect();
+        const dpr = canvas.width / rect.width;
+        const mx = (e.clientX - rect.left) * dpr;
+        const my = (e.clientY - rect.top) * dpr;
+        const { padL, padT, plotW, plotH, xFor, totalMonths } = chartLayout;
+        if (mx < padL || mx > padL + plotW || my < padT || my > padT + plotH) {
+          cursorEl.textContent = 'Hover to inspect month';
+          return;
+        }
+        const frac = (mx - padL) / plotW;
+        const mo = Math.min(totalMonths, Math.round(frac * totalMonths));
+        const pt = schedule.sched[mo - 1];
+        if (pt) {
+          cursorEl.textContent = `Month ${mo} (yr ${Math.ceil(mo / 12)}): interest ${fmt(pt.interest)} · principal ${fmt(pt.principal)}`;
+        }
+      });
+
+      [amount, rate, term, extra].forEach((el) => {
+        el.addEventListener('input', () => {
+          presetBtns.forEach((b) => b.classList.remove('is-active'));
+          update();
+        });
+      });
+
+      viewGroup.querySelectorAll('button').forEach((b) => {
+        b.addEventListener('click', () => {
+          view = b.dataset.view;
+          viewGroup.querySelectorAll('button').forEach((x) => x.classList.toggle('is-active', x === b));
+          draw();
+        });
+      });
+
+      compareGroup.querySelectorAll('button').forEach((b) => {
+        b.addEventListener('click', () => {
+          compare = b.dataset.compare;
+          compareGroup.querySelectorAll('button').forEach((x) => x.classList.toggle('is-active', x === b));
+          update();
+        });
+      });
+
+      const presets = {
+        mortgage: { a: 300000, r: 6, t: 30 },
+        car: { a: 30000, r: 7, t: 5 },
+        student: { a: 40000, r: 5.5, t: 10 },
+        refi: { a: 300000, r: 3, t: 30 },
+      };
+
+      presetBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          presetBtns.forEach((b) => b.classList.remove('is-active'));
+          btn.classList.add('is-active');
+          const cfg = presets[btn.dataset.preset];
+          amount.value = cfg.a;
+          rate.value = cfg.r;
+          term.value = cfg.t;
+          update();
+        });
+      });
+
+      window.addEventListener('resize', draw);
 
       update();
     })();

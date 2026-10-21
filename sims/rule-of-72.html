@@ -6,6 +6,7 @@
   <title>Rule of 72 — All-Science Sims</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="sim-theme.css">
 </head>
 <body>
   <div class="sim-page">
@@ -17,65 +18,147 @@
     </div>
 
     <div class="sim-description">
-      Divide 72 by your interest rate and you get how many years it takes money to double. It's a Taylor approximation of ln(2) ≈ 0.693, adjusted so the mental math works at typical rates. See the approximation and the exact answer side-by-side.
+      A quick mental shortcut: divide 72 by your interest rate to estimate how many years it takes money to double. See why it works (it's a Taylor approximation of ln 2) and how it compares to the exact answer at every rate.
     </div>
 
-    <div class="sim-canvas-wrap">
-      <canvas id="chart" width="820" height="420"></canvas>
-    </div>
-
-    <div class="sim-controls">
-      <div class="control">
-        <label>Rate: <span id="rateLabel">8.0%</span></label>
-        <input type="range" id="rate" min="0.5" max="20" value="8" step="0.1">
+    <div class="sim-hero" id="hero">
+      <canvas id="canvas"></canvas>
+      <div class="sim-hud">
+        <div class="hud-row">
+          <span class="hud-label">Rate</span>
+          <span class="hud-value" id="hudRate">8.0%</span>
+        </div>
+        <div class="hud-row">
+          <span class="hud-label">Rule of 72</span>
+          <span class="hud-value" id="hudRule">9.00 y</span>
+        </div>
+        <div class="hud-row">
+          <span class="hud-label">Exact</span>
+          <span class="hud-value" id="hudExact">9.01 y</span>
+        </div>
       </div>
-      <div class="control">
-        <label>&nbsp;</label>
-        <div class="sim-stats" style="margin: 0;">
-          <div class="stat"><span class="stat-label">Rule of 72</span><span class="stat-value" id="rule72">—</span></div>
-          <div class="stat"><span class="stat-label">Exact</span><span class="stat-value" id="exact">—</span></div>
+      <div class="sim-hud-right">
+        <span class="hud-chip" id="hudError">±0.1%</span>
+      </div>
+      <div class="sim-tip" id="tip">
+        <strong>Try this:</strong> the Rule of 72 is accurate to ~1% up to 20% rates
+      </div>
+    </div>
+
+    <div class="preset-bar">
+      <button class="preset-btn is-active" data-rate="7">7% (stock)</button>
+      <button class="preset-btn" data-rate="2">2% (savings)</button>
+      <button class="preset-btn" data-rate="10">10%</button>
+      <button class="preset-btn" data-rate="20">20% (high)</button>
+      <button class="preset-btn" data-rate="2.5">2.5% (real)</button>
+    </div>
+
+    <div class="control-groups">
+      <div class="control-group">
+        <h4><i class="fas fa-percent"></i> Your rate</h4>
+        <div class="slider-row">
+          <label>Annual return <span class="value-chip" id="rateChip">8.0%</span></label>
+          <input type="range" id="rate" min="0.5" max="30" value="8" step="0.1">
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h4><i class="fas fa-eye"></i> Compare</h4>
+        <div class="segmented" id="compareGroup">
+          <button data-compare="72" class="is-active">Rule of 72</button>
+          <button data-compare="69">Rule of 69 (exact ln 2)</button>
+          <button data-compare="70">Rule of 70</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h4><i class="fas fa-calculator"></i> Doubling example</h4>
+        <div class="slider-row">
+          <label>Starting amount <span class="value-chip" id="amountChip">$1,000</span></label>
+          <input type="range" id="amount" min="100" max="100000" value="1000" step="100">
         </div>
       </div>
     </div>
+
+    <div class="insight-panel">
+      <h4><i class="fas fa-lightbulb"></i> Where does 72 come from?</h4>
+      <p>
+        For small rates, <em>ln(1 + r) ≈ r</em>. So the exact doubling time is
+        <em>ln(2) / ln(1 + r) ≈ 0.693 / r</em>. Multiply numerator and denominator
+        by 100 to express <em>r</em> as a percent, and you get ≈ <strong>69.3 / r%</strong>.
+      </p>
+      <p>
+        But 69 is awkward to divide in your head. 72 has many factors (2, 3, 4, 6, 8, 9, 12) and works well for the rates people actually see. It slightly overestimates the true answer below 10% and underestimates above 15% — but it's always within a fraction of a year.
+      </p>
+    </div>
   </div>
 
+  <script src="sim-ui.js"></script>
   <script>
     (function () {
-      const canvas = document.getElementById('chart');
+      'use strict';
+
+      const canvas = document.getElementById('canvas');
       const ctx = canvas.getContext('2d');
-      const rateInput = document.getElementById('rate');
-      const rateLabel = document.getElementById('rateLabel');
-      const rule72El = document.getElementById('rule72');
-      const exactEl = document.getElementById('exact');
+      const rate = document.getElementById('rate');
+      const amount = document.getElementById('amount');
+      const rateChip = document.getElementById('rateChip');
+      const amountChip = document.getElementById('amountChip');
+      const hudRate = document.getElementById('hudRate');
+      const hudRule = document.getElementById('hudRule');
+      const hudExact = document.getElementById('hudExact');
+      const hudError = document.getElementById('hudError');
+      const tipEl = document.getElementById('tip');
+      const compareGroup = document.getElementById('compareGroup');
+      const presetBtns = document.querySelectorAll('.preset-btn[data-rate]');
 
-      function update() {
-        const rate = parseFloat(rateInput.value);
-        rateLabel.textContent = rate.toFixed(1) + '%';
+      canvas.style.aspectRatio = '820 / 420';
+      canvas.style.width = '100%';
+      canvas.style.height = 'auto';
 
-        const r = rate / 100;
-        const rule72 = 72 / rate;
-        const exact = Math.log(2) / Math.log(1 + r);
+      let compare = '72';
+      let chartLayout = null;
 
-        rule72El.textContent = rule72.toFixed(2) + ' y';
-        exactEl.textContent = exact.toFixed(2) + ' y';
+      SimUI.tips(tipEl, [
+        '<strong>Try this:</strong> the Rule of 72 is accurate to ~1% up to 20% rates',
+        '<strong>Try this:</strong> switch to Rule of 69 — it\'s closer to exact',
+        '<strong>Try this:</strong> try 2% — 36 years to double feels slow, doesn\'t it?',
+        '<strong>Try this:</strong> 20% doubles in under 4 years — that\'s why it\'s rare',
+      ], 6000);
 
-        drawChart(rate, rule72, exact);
+      function fmtShort(n) {
+        if (n >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'M';
+        if (n >= 1e3) return '$' + Math.round(n).toLocaleString('en-US');
+        return '$' + n.toFixed(0);
       }
 
-      function drawChart(currentRate, rule72, exact) {
+      function resize() {
+        const rect = canvas.getBoundingClientRect();
+        const dpr = Math.min(2, window.devicePixelRatio || 1);
+        const W = Math.round(rect.width * dpr);
+        const H = Math.round(rect.height * dpr);
+        if (canvas.width !== W || canvas.height !== H) {
+          canvas.width = W;
+          canvas.height = H;
+        }
+      }
+
+      function draw() {
+        resize();
         const w = canvas.width, h = canvas.height;
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, w, h);
 
-        const padL = 80, padR = 30, padT = 30, padB = 55;
+        const padL = 70, padR = 30, padT = 30, padB = 60;
         const plotW = w - padL - padR;
         const plotH = h - padT - padB;
 
-        const rateMin = 0.5, rateMax = 20;
+        const rMin = 0.5, rMax = 30;
         const maxYears = 60;
 
-        const xFor = (r) => padL + (plotW * (r - rateMin)) / (rateMax - rateMin);
-        const yFor = (y) => padT + plotH - (plotH * y) / maxYears;
+        const xFor = (r) => padL + (plotW * (r - rMin)) / (rMax - rMin);
+        const yFor = (y) => padT + plotH - (plotH * Math.min(maxYears, y)) / maxYears;
+        chartLayout = { padL, padT, plotW, plotH, xFor, yFor, rMin, rMax };
 
         // Axes
         ctx.strokeStyle = '#cfdde9';
@@ -86,7 +169,6 @@
         ctx.lineTo(padL + plotW, padT + plotH);
         ctx.stroke();
 
-        // Gridlines
         ctx.fillStyle = '#6f8da3';
         ctx.font = '11px system-ui';
         ctx.textAlign = 'right';
@@ -99,86 +181,129 @@
           ctx.lineTo(padL + plotW, py);
           ctx.stroke();
         }
+
         ctx.textAlign = 'center';
-        for (let r = 0; r <= 20; r += 5) {
+        for (let r = 0; r <= 30; r += 5) {
           const px = xFor(r);
           ctx.fillText(r + '%', px, padT + plotH + 18);
         }
 
-        // Exact curve
+        // Exact curve (blue)
         ctx.strokeStyle = '#2c7aa0';
         ctx.lineWidth = 2.5;
         ctx.beginPath();
-        let first = true;
-        for (let r = rateMin; r <= rateMax; r += 0.1) {
-          const rr = r / 100;
-          const y = Math.log(2) / Math.log(1 + rr);
-          if (first) { ctx.moveTo(xFor(r), yFor(y)); first = false; }
-          else ctx.lineTo(xFor(r), yFor(y));
+        for (let r = rMin; r <= rMax; r += 0.2) {
+          const y = Math.log(2) / Math.log(1 + r / 100);
+          const px = xFor(r), py = yFor(y);
+          if (r === rMin) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
         }
         ctx.stroke();
 
-        // Rule of 72 curve
+        // Rule curve (orange)
+        const ruleNum = parseFloat(compare);
         ctx.strokeStyle = '#f5b342';
         ctx.lineWidth = 2;
         ctx.setLineDash([6, 4]);
         ctx.beginPath();
-        first = true;
-        for (let r = rateMin; r <= rateMax; r += 0.1) {
-          const y = 72 / r;
-          if (first) { ctx.moveTo(xFor(r), yFor(y)); first = false; }
-          else ctx.lineTo(xFor(r), yFor(y));
+        for (let r = rMin; r <= rMax; r += 0.2) {
+          const y = ruleNum / r;
+          const px = xFor(r), py = yFor(y);
+          if (r === rMin) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
         }
         ctx.stroke();
         ctx.setLineDash([]);
 
         // Current rate marker
-        ctx.strokeStyle = 'rgba(11, 43, 63, 0.4)';
+        const rv = parseFloat(rate.value);
+        const xr = xFor(rv);
+        ctx.strokeStyle = 'rgba(11, 43, 63, 0.35)';
         ctx.setLineDash([3, 3]);
         ctx.beginPath();
-        ctx.moveTo(xFor(currentRate), padT);
-        ctx.lineTo(xFor(currentRate), padT + plotH);
+        ctx.moveTo(xr, padT);
+        ctx.lineTo(xr, padT + plotH);
         ctx.stroke();
         ctx.setLineDash([]);
 
-        // Current dots
+        // Dots
+        const exactY = Math.log(2) / Math.log(1 + rv / 100);
         ctx.fillStyle = '#2c7aa0';
         ctx.beginPath();
-        ctx.arc(xFor(currentRate), yFor(exact), 5, 0, Math.PI * 2);
+        ctx.arc(xr, yFor(exactY), 6, 0, Math.PI * 2);
         ctx.fill();
         ctx.fillStyle = '#f5b342';
         ctx.beginPath();
-        ctx.arc(xFor(currentRate), yFor(rule72), 5, 0, Math.PI * 2);
+        ctx.arc(xr, yFor(ruleNum / rv), 6, 0, Math.PI * 2);
         ctx.fill();
 
         // Legend
-        const lx = padL + 12;
-        const ly = padT + 12;
         ctx.font = '12px system-ui';
         ctx.textAlign = 'left';
-
+        const lx = padL + 12, ly = padT + 12;
         ctx.strokeStyle = '#2c7aa0';
         ctx.lineWidth = 2.5;
         ctx.beginPath();
-        ctx.moveTo(lx, ly + 4);
-        ctx.lineTo(lx + 22, ly + 4);
+        ctx.moveTo(lx, ly + 5);
+        ctx.lineTo(lx + 22, ly + 5);
         ctx.stroke();
         ctx.fillStyle = '#0b2b3f';
-        ctx.fillText('Exact: ln(2) / ln(1+r)', lx + 28, ly + 8);
-
+        ctx.fillText('Exact: ln(2)/ln(1+r)', lx + 28, ly + 9);
         ctx.strokeStyle = '#f5b342';
         ctx.lineWidth = 2;
         ctx.setLineDash([6, 4]);
         ctx.beginPath();
-        ctx.moveTo(lx, ly + 24);
-        ctx.lineTo(lx + 22, ly + 24);
+        ctx.moveTo(lx, ly + 25);
+        ctx.lineTo(lx + 22, ly + 25);
         ctx.stroke();
         ctx.setLineDash([]);
         ctx.fillStyle = '#0b2b3f';
-        ctx.fillText('Rule of 72: 72 / r', lx + 28, ly + 28);
+        ctx.fillText(`Rule of ${ruleNum}`, lx + 28, ly + 29);
       }
 
-      rateInput.addEventListener('input', update);
+      function update() {
+        const rv = parseFloat(rate.value);
+        const ruleNum = parseFloat(compare);
+        const rule = ruleNum / rv;
+        const exact = Math.log(2) / Math.log(1 + rv / 100);
+        const err = ((rule - exact) / exact) * 100;
+
+        rateChip.textContent = rv.toFixed(1) + '%';
+        amountChip.textContent = fmtShort(parseFloat(amount.value));
+        hudRate.textContent = rv.toFixed(1) + '%';
+        hudRule.textContent = rule.toFixed(2) + ' y';
+        hudExact.textContent = exact.toFixed(2) + ' y';
+        hudError.textContent = (err >= 0 ? '+' : '') + err.toFixed(1) + '%';
+
+        draw();
+      }
+
+      [rate, amount].forEach((el) => {
+        el.addEventListener('input', () => {
+          presetBtns.forEach((b) => b.classList.remove('is-active'));
+          update();
+        });
+      });
+
+      compareGroup.querySelectorAll('button').forEach((b) => {
+        b.addEventListener('click', () => {
+          compare = b.dataset.compare;
+          compareGroup.querySelectorAll('button').forEach((x) => x.classList.toggle('is-active', x === b));
+          update();
+        });
+      });
+
+      presetBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          presetBtns.forEach((b) => b.classList.remove('is-active'));
+          btn.classList.add('is-active');
+          rate.value = btn.dataset.rate;
+          update();
+        });
+      });
+
+      window.addEventListener('resize', draw);
+
       update();
     })();
   </script>

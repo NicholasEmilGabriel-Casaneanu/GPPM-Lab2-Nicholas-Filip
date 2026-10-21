@@ -1,0 +1,1748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Geometry Lab — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="sim-theme.css">
+  <style>
+    .lab-wrap {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+    @media (min-width: 980px) {
+      .lab-wrap {
+        grid-template-columns: 1fr 300px;
+        grid-template-areas:
+          "shapes shapes"
+          "stage  tools"
+          "stage  facts";
+      }
+    }
+
+    .shape-bar {
+      grid-area: shapes;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      padding: 0.85rem 1rem;
+      background: white;
+      border-radius: 16px;
+      border: 1px solid #e2edf5;
+      box-shadow: 0 4px 12px -8px rgba(0, 20, 30, 0.08);
+    }
+    .shape-btn {
+      flex: 1 1 auto;
+      min-width: 84px;
+      padding: 0.55rem 0.85rem;
+      border-radius: 12px;
+      border: 1.5px solid #cfdde9;
+      background: #f8fafc;
+      color: #1b4a6b;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+      transition: all 0.15s ease;
+    }
+    .shape-btn:hover { border-color: #8db3d0; background: #eef4fa; transform: translateY(-1px); }
+    .shape-btn.is-active {
+      border-color: #2c7aa0; background: #2c7aa0; color: white;
+      box-shadow: 0 6px 16px -8px rgba(44, 122, 160, 0.6);
+    }
+    .shape-btn .shape-icon { font-size: 1rem; }
+
+    .stage-wrap {
+      grid-area: stage;
+      position: relative;
+      background: #0b2b3f;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 20px 40px -20px rgba(16, 70, 100, 0.5);
+      cursor: grab;
+      user-select: none;
+      min-height: 420px;
+    }
+    .stage-wrap.is-rotating { cursor: grabbing; }
+    .stage-wrap.is-cutting,
+    .stage-wrap.is-picking { cursor: crosshair; }
+    .stage-wrap canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      touch-action: none;
+    }
+
+    .stage-hud {
+      position: absolute;
+      top: 12px; left: 12px;
+      display: flex; gap: 0.5rem; flex-wrap: wrap;
+      pointer-events: none;
+    }
+    .stage-hud .pill {
+      background: rgba(11, 43, 63, 0.82);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      color: white;
+      padding: 0.35rem 0.7rem;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .stage-hud .pill i { margin-right: 0.3rem; color: #f5b342; }
+
+    .snap-pill {
+      position: absolute;
+      top: 12px; left: 50%;
+      transform: translateX(-50%);
+      background: rgba(245, 179, 66, 0.95);
+      color: #0b2b3f;
+      padding: 0.35rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.1s ease;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+    }
+    .snap-pill.is-shown { opacity: 1; }
+
+    .stage-hint {
+      position: absolute;
+      bottom: 12px; left: 12px; right: 12px;
+      display: flex; flex-wrap: wrap; gap: 0.4rem;
+      pointer-events: none;
+    }
+    .stage-hint .hint {
+      background: rgba(11, 43, 63, 0.82);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      color: white;
+      padding: 0.32rem 0.65rem;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .stage-hint .hint kbd {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 0 5px;
+      border-radius: 3px;
+      font-size: 0.65rem;
+      font-family: inherit;
+    }
+
+    .stage-toast {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%) scale(0.9);
+      background: rgba(11, 43, 63, 0.95);
+      color: white;
+      padding: 0.7rem 1.1rem;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      border: 1px solid rgba(245, 179, 66, 0.4);
+      max-width: 80%;
+      text-align: center;
+    }
+    .stage-toast.is-shown { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+    .tool-panel {
+      grid-area: tools;
+      background: white;
+      border-radius: 16px;
+      border: 1px solid #e2edf5;
+      padding: 1rem 1.1rem;
+      box-shadow: 0 4px 12px -8px rgba(0, 20, 30, 0.08);
+    }
+    .tool-panel h4 {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #6f8da3;
+      margin-bottom: 0.7rem;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .tool-panel h4 i { color: #2c7aa0; }
+    .tool-panel h4:not(:first-child) { margin-top: 1rem; }
+
+    .tool-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.45rem;
+    }
+    .tool-btn {
+      padding: 0.6rem 0.5rem;
+      border-radius: 10px;
+      border: 1.5px solid #cfdde9;
+      background: #f8fafc;
+      color: #1b4a6b;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+      transition: all 0.15s ease;
+      text-align: center;
+      line-height: 1.2;
+    }
+    .tool-btn:hover { border-color: #8db3d0; background: #eef4fa; }
+    .tool-btn.is-active { border-color: #2c7aa0; background: #2c7aa0; color: white; }
+    .tool-btn i { font-size: 1rem; }
+    .tool-btn.danger.is-active { background: #c76b3b; border-color: #c76b3b; }
+
+    .size-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.4rem;
+      align-items: center;
+    }
+    .size-input {
+      padding: 0.5rem 0.7rem;
+      border-radius: 8px;
+      border: 1.5px solid #cfdde9;
+      background: #f8fafc;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #0b2b3f;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+      width: 100%;
+    }
+    .size-input:focus { outline: 2px solid #8db3d0; outline-offset: 1px; }
+    .size-unit { font-size: 0.75rem; font-weight: 600; color: #6f8da3; }
+    .size-presets {
+      display: flex; gap: 0.3rem; margin-top: 0.4rem; flex-wrap: wrap;
+    }
+    .size-presets button {
+      flex: 1 1 0; min-width: 40px;
+      padding: 0.3rem 0.2rem;
+      border-radius: 6px;
+      border: 1px solid #cfdde9;
+      background: #f8fafc;
+      color: #1b4a6b;
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s ease;
+    }
+    .size-presets button:hover { border-color: #8db3d0; background: #eef4fa; }
+
+    .fact-panel {
+      grid-area: facts;
+      background: white;
+      border-radius: 16px;
+      border: 1px solid #e2edf5;
+      padding: 1rem 1.1rem;
+      box-shadow: 0 4px 12px -8px rgba(0, 20, 30, 0.08);
+    }
+    .fact-panel h4 {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #6f8da3;
+      margin-bottom: 0.7rem;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .fact-panel h4 i { color: #2c7aa0; }
+
+    .facts {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem;
+    }
+    .fact {
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 0.5rem 0.6rem;
+      border: 1px solid #eef4fa;
+    }
+    .fact .fl {
+      font-size: 0.62rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #6f8da3;
+      font-weight: 600;
+    }
+    .fact .fv {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #0b2b3f;
+      font-variant-numeric: tabular-nums;
+      margin-top: 1px;
+    }
+
+    .measurement {
+      margin-top: 0.75rem;
+      background: linear-gradient(135deg, #f0f7fe, #e4f0f9);
+      border: 1px solid #cde0ef;
+      border-radius: 10px;
+      padding: 0.65rem 0.8rem;
+      font-size: 0.78rem;
+      color: #1b4a6b;
+      line-height: 1.5;
+      min-height: 3rem;
+    }
+    .measurement strong { color: #0b2b3f; }
+
+    .swatches { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    .swatch {
+      width: 26px; height: 26px;
+      border-radius: 8px;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+      padding: 0;
+    }
+    .swatch:hover { transform: scale(1.12); }
+    .swatch.is-active { border-color: #0b2b3f; box-shadow: 0 0 0 2px #ffffff inset; }
+
+    .view-toggle,
+    .pick-toggle {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.3rem;
+    }
+    .view-toggle button,
+    .pick-toggle button {
+      padding: 0.4rem 0.2rem;
+      border-radius: 8px;
+      border: 1px solid #cfdde9;
+      background: #f8fafc;
+      color: #1b4a6b;
+      font-size: 0.62rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s ease;
+    }
+    .view-toggle button:hover,
+    .pick-toggle button:hover { border-color: #8db3d0; }
+    .view-toggle button.is-active {
+      background: #1b4a6b; border-color: #1b4a6b; color: white;
+    }
+    .pick-toggle button.is-active {
+      background: #f5b342; border-color: #f5b342; color: #0b2b3f;
+    }
+
+    .kbd-legend {
+      font-size: 0.7rem;
+      color: #6f8da3;
+      line-height: 1.7;
+      margin-top: 0.5rem;
+    }
+    .kbd-legend kbd {
+      background: #f0f4f9;
+      border: 1px solid #cfdde9;
+      border-radius: 4px;
+      padding: 0 5px;
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 0.62rem;
+      color: #1b4a6b;
+      box-shadow: 0 1px 0 #cfdde9;
+    }
+
+    .cursor-dot {
+      position: absolute;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: rgba(245, 179, 66, 0.9);
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      mix-blend-mode: screen;
+      transition: width 0.15s ease, height 0.15s ease;
+    }
+    .stage-wrap.is-rotating .cursor-dot {
+      width: 14px; height: 14px;
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    .cut-handle {
+      position: absolute;
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: #c76b3b;
+      border: 2px solid #fff;
+      cursor: ns-resize;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 0.65rem;
+      pointer-events: auto;
+      touch-action: none;
+    }
+    .cut-handle:hover { transform: translate(-50%, -50%) scale(1.15); }
+
+    @media (max-width: 600px) {
+      .stage-hint { display: none; }
+      .shape-btn { min-width: 65px; font-size: 0.7rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Geometry Lab</h1>
+      <div class="sim-meta">Mathematics · 3D Shapes, Angles &amp; Measurement</div>
+    </div>
+
+    <div class="sim-description">
+      Explore six 3D polyhedra. Drag to rotate, scroll to zoom, and use the tools on the right to measure distances, angles, or cut through a shape. Click anywhere on the surface — every point is pickable.
+    </div>
+
+    <div class="lab-wrap">
+      <div class="shape-bar" id="shapeBar">
+        <button class="shape-btn is-active" data-shape="cube">
+          <span class="shape-icon"><i class="fas fa-cube"></i></span><span>Cube</span>
+        </button>
+        <button class="shape-btn" data-shape="tetrahedron">
+          <span class="shape-icon"><i class="fas fa-play" style="transform:rotate(90deg)"></i></span><span>Tetrahedron</span>
+        </button>
+        <button class="shape-btn" data-shape="octahedron">
+          <span class="shape-icon"><i class="fas fa-gem"></i></span><span>Octahedron</span>
+        </button>
+        <button class="shape-btn" data-shape="dodecahedron">
+          <span class="shape-icon"><i class="fas fa-dice-d20"></i></span><span>Dodecahedron</span>
+        </button>
+        <button class="shape-btn" data-shape="icosahedron">
+          <span class="shape-icon"><i class="fas fa-dice-d20"></i></span><span>Icosahedron</span>
+        </button>
+        <button class="shape-btn" data-shape="prism">
+          <span class="shape-icon"><i class="fas fa-caret-up"></i></span><span>Triangular Prism</span>
+        </button>
+      </div>
+
+      <div class="stage-wrap" id="stage">
+        <canvas id="canvas"></canvas>
+        <div class="cursor-dot" id="cursorDot"></div>
+
+        <div class="stage-hud">
+          <div class="pill" id="shapePill"><i class="fas fa-cube"></i> Cube</div>
+          <div class="pill" id="modePill" style="display:none;"><i class="fas fa-crosshairs"></i> Measure</div>
+        </div>
+
+        <div class="snap-pill" id="snapPill">Face</div>
+
+        <div class="stage-hint">
+          <span class="hint"><i class="fas fa-mouse"></i> Drag rotate</span>
+          <span class="hint"><i class="fas fa-mouse"></i> Scroll zoom</span>
+          <span class="hint"><kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd> rotate</span>
+          <span class="hint"><kbd>+</kbd><kbd>-</kbd> size</span>
+          <span class="hint"><kbd>R</kbd> reset</span>
+          <span class="hint"><kbd>Esc</kbd> clear</span>
+        </div>
+
+        <div class="stage-toast" id="toast"></div>
+      </div>
+
+      <div class="tool-panel">
+        <h4><i class="fas fa-eye"></i> View mode</h4>
+        <div class="view-toggle" id="viewToggle">
+          <button data-view="solid" class="is-active">Solid</button>
+          <button data-view="wire">Wire</button>
+          <button data-view="verts">Verts</button>
+          <button data-view="faces">Faces</button>
+        </div>
+
+        <h4><i class="fas fa-crosshairs"></i> Pick mode</h4>
+        <div class="pick-toggle" id="pickToggle">
+          <button data-pick="vertex">Vertex</button>
+          <button data-pick="edge">Edge</button>
+          <button data-pick="face">Face</button>
+          <button data-pick="any" class="is-active">Any</button>
+        </div>
+        <div class="kbd-legend">
+          <strong>Any</strong> = exact surface point (ray-cast).<br>
+          <strong>Vertex</strong>/<strong>Edge</strong>/<strong>Face</strong> = snap to the nearest if close.
+        </div>
+
+        <h4><i class="fas fa-ruler-combined"></i> Tools</h4>
+        <div class="tool-grid" id="toolGrid">
+          <button class="tool-btn is-active" data-tool="rotate">
+            <i class="fas fa-arrows-alt"></i> Rotate
+          </button>
+          <button class="tool-btn" data-tool="distance">
+            <i class="fas fa-ruler"></i> Distance
+          </button>
+          <button class="tool-btn" data-tool="angle">
+            <i class="fas fa-drafting-compass"></i> Angle
+          </button>
+          <button class="tool-btn danger" data-tool="cut">
+            <i class="fas fa-cut"></i> Cut plane
+          </button>
+        </div>
+
+        <div class="measurement" id="measurement">
+          <strong>Rotate mode.</strong> Drag to spin the shape.
+        </div>
+
+        <h4><i class="fas fa-expand"></i> Edge length</h4>
+        <div class="size-row">
+          <input type="number" id="sizeInput" class="size-input" value="2.00" min="0.1" max="20" step="0.1">
+          <span class="size-unit">units</span>
+        </div>
+        <div class="size-presets" id="sizePresets">
+          <button data-size="1">1</button>
+          <button data-size="2">2</button>
+          <button data-size="3">3</button>
+          <button data-size="5">5</button>
+          <button data-size="10">10</button>
+        </div>
+
+        <h4><i class="fas fa-palette"></i> Colour</h4>
+        <div class="swatches" id="swatches">
+          <button class="swatch is-active" data-color="#2c7aa0" style="background:#2c7aa0"></button>
+          <button class="swatch" data-color="#c76b3b" style="background:#c76b3b"></button>
+          <button class="swatch" data-color="#5a8a4a" style="background:#5a8a4a"></button>
+          <button class="swatch" data-color="#8a5ac7" style="background:#8a5ac7"></button>
+          <button class="swatch" data-color="#f5b342" style="background:#f5b342"></button>
+        </div>
+
+        <div class="kbd-legend" style="margin-top: 0.75rem;">
+          <kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd> rotate ·
+          <kbd>+</kbd><kbd>−</kbd> size ·
+          <kbd>R</kbd> reset ·
+          <kbd>Esc</kbd> clear
+        </div>
+      </div>
+
+      <div class="fact-panel">
+        <h4><i class="fas fa-info-circle"></i> Current shape</h4>
+        <div class="facts">
+          <div class="fact"><div class="fl">Vertices</div><div class="fv" id="fV">8</div></div>
+          <div class="fact"><div class="fl">Edges</div><div class="fv" id="fE">12</div></div>
+          <div class="fact"><div class="fl">Faces</div><div class="fv" id="fF">6</div></div>
+          <div class="fact"><div class="fl">Face shape</div><div class="fv" id="fFS">□</div></div>
+          <div class="fact"><div class="fl">Edge length</div><div class="fv" id="fEdge">2.00</div></div>
+          <div class="fact"><div class="fl">Volume</div><div class="fv" id="fVol">8.00</div></div>
+          <div class="fact"><div class="fl">Surface area</div><div class="fv" id="fArea">24.0</div></div>
+          <div class="fact"><div class="fl">Visible faces</div><div class="fv" id="fVis">3</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="insight-panel">
+      <h4><i class="fas fa-lightbulb"></i> What you can learn here</h4>
+      <p>
+        A cube has <strong>8 vertices</strong>, <strong>12 edges</strong>, and <strong>6 faces</strong>. Every Platonic solid satisfies <strong>Euler's formula</strong>: <em>V − E + F = 2</em>. Switch shapes and watch the counters update.
+      </p>
+      <p>
+        With the <strong>Distance</strong> and <strong>Angle</strong> tools you can click <em>anywhere</em> on the surface — a corner, the middle of an edge, the centre of a face, or a random point. Use <strong>Pick mode</strong> to choose whether clicks snap to a vertex, an edge, a face, or stay exact ("Any").
+      </p>
+      <p>
+        The <strong>Cut plane</strong> slices through the shape. The cross-section is drawn in orange; drag the ↕ handle or scroll while the Cut tool is active to slide it. A cube cut diagonally through its centre gives a hexagon; cut through a corner gives a triangle.
+      </p>
+      <p>
+        <strong>Tip:</strong> Zoom out until the shape looks tiny — the distance marker keeps its visual size, so you can always read the measurement without squinting.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ============================================================
+      //  DOM
+      // ============================================================
+      const stage = document.getElementById('stage');
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const cursorDot = document.getElementById('cursorDot');
+      const shapeBar = document.getElementById('shapeBar');
+      const shapePill = document.getElementById('shapePill');
+      const modePill = document.getElementById('modePill');
+      const snapPill = document.getElementById('snapPill');
+      const viewToggle = document.getElementById('viewToggle');
+      const pickToggle = document.getElementById('pickToggle');
+      const toolGrid = document.getElementById('toolGrid');
+      const measurementEl = document.getElementById('measurement');
+      const toastEl = document.getElementById('toast');
+      const swatches = document.getElementById('swatches');
+      const sizeInput = document.getElementById('sizeInput');
+      const sizePresets = document.getElementById('sizePresets');
+
+      const fV = document.getElementById('fV');
+      const fE = document.getElementById('fE');
+      const fF = document.getElementById('fF');
+      const fFS = document.getElementById('fFS');
+      const fEdge = document.getElementById('fEdge');
+      const fVol = document.getElementById('fVol');
+      const fArea = document.getElementById('fArea');
+      const fVis = document.getElementById('fVis');
+
+      // ============================================================
+      //  State
+      // ============================================================
+      const state = {
+        shapeName: 'cube',
+        rotX: -0.45,
+        rotY: 0.6,
+        zoom: 1,
+        edge: 2,
+        color: '#2c7aa0',
+        view: 'solid',
+        tool: 'rotate',
+        pick: 'any',
+        measurePoints: [],
+        anglePoints: [],
+        cutNormal: null,
+        cutOffset: 0,
+        cutVisible: false,
+        cutHandlePos: null,
+        hoverHit: null,
+      };
+
+      // ============================================================
+      //  Shapes
+      // ============================================================
+      const PHI = (1 + Math.sqrt(5)) / 2;
+
+      const SHAPES = {
+        cube: makeCube(),
+        tetrahedron: makeTetrahedron(),
+        octahedron: makeOctahedron(),
+        dodecahedron: makeDodecahedron(),
+        icosahedron: makeIcosahedron(),
+        prism: makePrism(),
+      };
+
+      function makeCube() {
+        const h = 0.5;
+        return {
+          vertices: [
+            [-h,-h,-h], [h,-h,-h], [h,h,-h], [-h,h,-h],
+            [-h,-h, h], [h,-h, h], [h,h, h], [-h,h, h],
+          ],
+          faces: [
+            { idx: [4,5,6,7] }, { idx: [1,0,3,2] }, { idx: [5,1,2,6] },
+            { idx: [0,4,7,3] }, { idx: [7,6,2,3] }, { idx: [0,1,5,4] },
+          ],
+          edges: [
+            [0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],
+            [0,4],[1,5],[2,6],[3,7],
+          ],
+          meta: { faceShape: '□', name: 'Cube' },
+        };
+      }
+
+      function makeTetrahedron() {
+        const s = 1 / Math.sqrt(2);
+        return {
+          vertices: [[s,s,s], [s,-s,-s], [-s,s,-s], [-s,-s,s]],
+          faces: [
+            { idx: [0,1,2] }, { idx: [0,3,1] }, { idx: [0,2,3] }, { idx: [1,3,2] },
+          ],
+          edges: [[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]],
+          meta: { faceShape: '△', name: 'Tetrahedron' },
+        };
+      }
+
+      function makeOctahedron() {
+        return {
+          vertices: [
+            [1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1],
+          ],
+          faces: [
+            { idx: [0,2,4] }, { idx: [2,1,4] }, { idx: [1,3,4] }, { idx: [3,0,4] },
+            { idx: [2,0,5] }, { idx: [1,2,5] }, { idx: [3,1,5] }, { idx: [0,3,5] },
+          ],
+          edges: [
+            [0,2],[2,1],[1,3],[3,0],[0,4],[2,4],[1,4],[3,4],
+            [0,5],[2,5],[1,5],[3,5],
+          ],
+          meta: { faceShape: '△', name: 'Octahedron' },
+        };
+      }
+
+      function makeDodecahedron() {
+        const p = PHI, ip = 1 / p;
+        const v = [
+          [1,1,1],[1,1,-1],[1,-1,1],[1,-1,-1],
+          [-1,1,1],[-1,1,-1],[-1,-1,1],[-1,-1,-1],
+          [0, ip, p],[0, ip, -p],[0,-ip, p],[0,-ip, -p],
+          [ip, p, 0],[ip, -p, 0],[-ip, p, 0],[-ip, -p, 0],
+          [p, 0, ip],[p, 0, -ip],[-p, 0, ip],[-p, 0, -ip],
+        ];
+        const DODE = [
+          [0, 8, 9, 1, 12], [0, 12, 4, 14, 5], [0, 5, 16, 6, 8],
+          [1, 9, 17, 2, 13], [1, 13, 7, 3, 12], [2, 17, 10, 6, 15],
+          [2, 15, 11, 3, 13], [3, 11, 7, 4, 12], [4, 7, 11, 15, 14],
+          [5, 14, 10, 18, 16], [6, 16, 18, 11, 15], [8, 9, 17, 10, 18],
+        ];
+        const faces = DODE.map((idx) => ({ idx }));
+        const seen = new Set();
+        const edges = [];
+        faces.forEach((f) => {
+          for (let i = 0; i < f.idx.length; i++) {
+            const a = f.idx[i], b = f.idx[(i + 1) % f.idx.length];
+            const k = a < b ? `${a}-${b}` : `${b}-${a}`;
+            if (!seen.has(k)) { seen.add(k); edges.push([a, b]); }
+          }
+        });
+        return { vertices: v, faces, edges, meta: { faceShape: '⬟', name: 'Dodecahedron' } };
+      }
+
+      function makeIcosahedron() {
+        const p = PHI;
+        const v = [
+          [-1, p, 0],[1, p, 0],[-1, -p, 0],[1, -p, 0],
+          [0, -1, p],[0, 1, p],[0, -1, -p],[0, 1, -p],
+          [p, 0, -1],[p, 0, 1],[-p, 0, -1],[-p, 0, 1],
+        ];
+        const IDX = [
+          [0,11,5],[0,5,1],[0,1,7],[0,7,10],[0,10,11],
+          [1,5,9],[5,11,4],[11,10,2],[10,7,6],[7,1,8],
+          [3,9,4],[3,4,2],[3,2,6],[3,6,8],[3,8,9],
+          [4,9,5],[2,4,11],[6,2,10],[8,6,7],[9,8,1],
+        ];
+        const faces = IDX.map((idx) => ({ idx }));
+        const seen = new Set();
+        const edges = [];
+        faces.forEach((f) => {
+          for (let i = 0; i < 3; i++) {
+            const a = f.idx[i], b = f.idx[(i + 1) % 3];
+            const k = a < b ? `${a}-${b}` : `${b}-${a}`;
+            if (!seen.has(k)) { seen.add(k); edges.push([a, b]); }
+          }
+        });
+        return { vertices: v, faces, edges, meta: { faceShape: '△', name: 'Icosahedron' } };
+      }
+
+      function makePrism() {
+        const r = 1 / Math.sqrt(3), y = 0.5;
+        const v = [
+          [r*Math.cos(0), -y, r*Math.sin(0)],
+          [r*Math.cos(2*Math.PI/3), -y, r*Math.sin(2*Math.PI/3)],
+          [r*Math.cos(4*Math.PI/3), -y, r*Math.sin(4*Math.PI/3)],
+          [r*Math.cos(0), y, r*Math.sin(0)],
+          [r*Math.cos(2*Math.PI/3), y, r*Math.sin(2*Math.PI/3)],
+          [r*Math.cos(4*Math.PI/3), y, r*Math.sin(4*Math.PI/3)],
+        ];
+        return {
+          vertices: v,
+          faces: [
+            { idx: [0,2,1] }, { idx: [3,4,5] },
+            { idx: [0,1,4,3] }, { idx: [1,2,5,4] }, { idx: [2,0,3,5] },
+          ],
+          edges: [
+            [0,1],[1,2],[2,0],[3,4],[4,5],[5,3],[0,3],[1,4],[2,5],
+          ],
+          meta: { faceShape: '△/□', name: 'Triangular Prism' },
+        };
+      }
+
+      // ============================================================
+      //  Vector math
+      // ============================================================
+      function rotatePoint(p, rx, ry) {
+        let [x, y, z] = p;
+        const cx = Math.cos(ry), sx = Math.sin(ry);
+        const x1 = x * cx + z * sx;
+        const z1 = -x * sx + z * cx;
+        x = x1; z = z1;
+        const cy = Math.cos(rx), sy = Math.sin(rx);
+        const y1 = y * cy - z * sy;
+        const z2 = y * sy + z * cy;
+        y = y1; z = z2;
+        return [x, y, z];
+      }
+
+      // Rotate a vector using the inverse rotation (for unprojecting rays)
+      function rotateInverse(p, rx, ry) {
+        // Reverse order: un-rotate X, then un-rotate Y
+        let [x, y, z] = p;
+        const cy = Math.cos(-rx), sy = Math.sin(-rx);
+        const y1 = y * cy - z * sy;
+        const z1 = y * sy + z * cy;
+        y = y1; z = z1;
+        const cx = Math.cos(-ry), sx = Math.sin(-ry);
+        const x1 = x * cx + z * sx;
+        const z2 = -x * sx + z * cx;
+        x = x1; z = z2;
+        return [x, y, z];
+      }
+
+      function project(p, W, H) {
+        const [x, y, z] = p;
+        const dist = 5;
+        const scale = (H * 0.32) * state.zoom * state.edge;
+        const persp = dist / (dist - z);
+        return {
+          x: W / 2 + x * scale * persp,
+          y: H / 2 - y * scale * persp,
+          z,
+          scale,
+          persp,
+        };
+      }
+
+      function normalize(v) {
+        const l = Math.hypot(v[0], v[1], v[2]);
+        return l === 0 ? [0, 0, 0] : [v[0]/l, v[1]/l, v[2]/l];
+      }
+      function cross(a, b) {
+        return [
+          a[1]*b[2] - a[2]*b[1],
+          a[2]*b[0] - a[0]*b[2],
+          a[0]*b[1] - a[1]*b[0],
+        ];
+      }
+      function dot(a, b) { return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; }
+      function sub(a, b) { return [a[0]-b[0], a[1]-b[1], a[2]-b[2]]; }
+      function add(a, b) { return [a[0]+b[0], a[1]+b[1], a[2]+b[2]]; }
+      function scaleVec(v, s) { return [v[0]*s, v[1]*s, v[2]*s]; }
+      function lerp3(a, b, t) { return [a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t]; }
+      function dist3(a, b) { return Math.hypot(a[0]-b[0], a[1]-b[1], a[2]-b[2]); }
+
+      function hexToRgb(hex) {
+        return {
+          r: parseInt(hex.slice(1, 3), 16),
+          g: parseInt(hex.slice(3, 5), 16),
+          b: parseInt(hex.slice(5, 7), 16),
+        };
+      }
+
+      // ============================================================
+      //  Canvas
+      // ============================================================
+      canvas.style.aspectRatio = '4 / 3';
+      canvas.style.width = '100%';
+      canvas.style.height = 'auto';
+
+      function resize() {
+        const rect = canvas.getBoundingClientRect();
+        const dpr = Math.min(2, window.devicePixelRatio || 1);
+        const w = Math.round(rect.width * dpr);
+        const h = Math.round(rect.height * dpr);
+        if (canvas.width !== w || canvas.height !== h) {
+          canvas.width = w;
+          canvas.height = h;
+        }
+      }
+
+      // ============================================================
+      //  Ray casting — pick anywhere on the mesh
+      // ============================================================
+      // Build the inverse projection: screen (mx, my) → world ray origin/dir
+      // (in the rotated frame). Because the projection is perspective,
+      // we solve for the ray from the camera.
+      function screenToRay(mx, my, W, H) {
+        const dist = 5;
+        const scale = (H * 0.32) * state.zoom * state.edge;
+        // Unproject at z = 0 to find the base point on the screen plane
+        // We want the ray from the camera through this screen point.
+        // Projected: x_screen = W/2 + x*scale*persp
+        //            y_screen = H/2 - y*scale*persp
+        //            persp = dist / (dist - z)
+        // The camera looks down -z from (0, 0, dist). So the ray origin is
+        // (0, 0, dist) in rotated space.
+        const origin = [0, 0, dist];
+        // Find a point on the ray: at z=0 (rotated frame), then scale to
+        // reach the screen point.
+        // At z=0, persp = 1. So x_screen = W/2 + x*scale, y_screen = H/2 - y*scale
+        const xAtZ0 = (mx - W/2) / scale;
+        const yAtZ0 = -(my - H/2) / scale;
+        const pointOnRay = [xAtZ0, yAtZ0, 0];
+        const dir = normalize(sub(pointOnRay, origin));
+        return { origin, dir };
+      }
+
+      // Ray-triangle intersection (Möller–Trumbore)
+      function rayTriangle(orig, dir, v0, v1, v2) {
+        const eps = 1e-8;
+        const e1 = sub(v1, v0);
+        const e2 = sub(v2, v0);
+        const h = cross(dir, e2);
+        const a = dot(e1, h);
+        if (Math.abs(a) < eps) return null;
+        const f = 1 / a;
+        const s = sub(orig, v0);
+        const u = f * dot(s, h);
+        if (u < 0 || u > 1) return null;
+        const q = cross(s, e1);
+        const v = f * dot(dir, q);
+        if (v < 0 || u + v > 1) return null;
+        const t = f * dot(e2, q);
+        if (t < eps) return null;
+        return { t, point: add(orig, scaleVec(dir, t)), u, v };
+      }
+
+      // Find nearest intersection of ray with the mesh
+      function pickMesh(mx, my, W, H) {
+        const shape = SHAPES[state.shapeName];
+        // Rotate vertices to camera space
+        const vertsRot = shape.vertices.map((v) => rotatePoint(v, state.rotX, state.rotY));
+        const { origin, dir } = screenToRay(mx, my, W, H);
+
+        let nearest = null;
+        let nearestT = Infinity;
+
+        shape.faces.forEach((f, fi) => {
+          const idx = f.idx;
+          for (let i = 1; i < idx.length - 1; i++) {
+            const v0 = vertsRot[idx[0]];
+            const v1 = vertsRot[idx[i]];
+            const v2 = vertsRot[idx[i + 1]];
+            const hit = rayTriangle(origin, dir, v0, v1, v2);
+            if (hit && hit.t < nearestT) {
+              nearestT = hit.t;
+              nearest = {
+                point: hit.point, // in rotated space
+                faceIndex: fi,
+                triIndex: [idx[0], idx[i], idx[i + 1]],
+                u: hit.u,
+                v: hit.v,
+              };
+            }
+          }
+        });
+
+        if (!nearest) return null;
+
+        // Convert the hit point back to unrotated space
+        const worldPoint = rotateInverse(nearest.point, state.rotX, state.rotY);
+
+        // Now optionally snap based on pick mode
+        let snapped = worldPoint;
+        let snapType = 'face';
+
+        if (state.pick === 'vertex') {
+          let best = null, bestD = Infinity;
+          shape.vertices.forEach((v, i) => {
+            const d = dist3(v, worldPoint);
+            if (d < bestD) { bestD = d; best = v; }
+          });
+          // Snap only if reasonably close (within 25% of edge length)
+          if (best && bestD < 0.25) {
+            snapped = best;
+            snapType = 'vertex';
+          }
+        } else if (state.pick === 'edge') {
+          let best = null, bestD = Infinity;
+          shape.edges.forEach(([a, b]) => {
+            const va = shape.vertices[a];
+            const vb = shape.vertices[b];
+            const ab = sub(vb, va);
+            const t = Math.max(0, Math.min(1, dot(sub(worldPoint, va), ab) / dot(ab, ab)));
+            const p = add(va, scaleVec(ab, t));
+            const d = dist3(p, worldPoint);
+            if (d < bestD) { bestD = d; best = p; }
+          });
+          if (best && bestD < 0.25) {
+            snapped = best;
+            snapType = 'edge';
+          }
+        }
+        // 'face' and 'any' both use the exact hit point
+
+        return {
+          world: snapped,
+          exact: worldPoint,
+          type: snapType,
+          faceIndex: nearest.faceIndex,
+        };
+      }
+
+      // ============================================================
+      //  Render
+      // ============================================================
+      function draw() {
+        resize();
+        const W = canvas.width;
+        const H = canvas.height;
+        ctx.fillStyle = '#0b2b3f';
+        ctx.fillRect(0, 0, W, H);
+
+        const shape = SHAPES[state.shapeName];
+        const vertsRot = shape.vertices.map((v) => rotatePoint(v, state.rotX, state.rotY));
+        const verts2d = vertsRot.map((v) => project(v, W, H));
+
+        const faceInfo = shape.faces.map((f) => {
+          const p0 = vertsRot[f.idx[0]];
+          const p1 = vertsRot[f.idx[1]];
+          const p2 = vertsRot[f.idx[2]];
+          const n = normalize(cross(sub(p1, p0), sub(p2, p0)));
+          return { ...f, normal: n, visible: n[2] > 0 };
+        });
+
+        let cutEnabled = state.cutVisible && state.cutNormal;
+        const cutN = cutEnabled ? state.cutNormal : null;
+        const cutD = state.cutOffset;
+        const vertexSide = vertsRot.map((v) => cutEnabled ? (dot(cutN, v) - cutD) : 1);
+
+        if (state.view === 'solid' || state.view === 'faces') {
+          const drawFaces = faceInfo
+            .map((f) => ({ ...f, depth: f.idx.reduce((s, i) => s + vertsRot[i][2], 0) / f.idx.length }))
+            .sort((a, b) => a.depth - b.depth);
+          const base = hexToRgb(state.color);
+
+          drawFaces.forEach((f) => {
+            if (!f.visible) return;
+            const pts = f.idx.map((i) => verts2d[i]);
+            const sides = f.idx.map((i) => vertexSide[i]);
+            const allBehind = sides.every((s) => s < 0);
+            const allFront = sides.every((s) => s >= 0);
+            if (cutEnabled && allBehind) return;
+
+            ctx.beginPath();
+            pts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+            ctx.closePath();
+            const shade = 0.55 + 0.45 * Math.max(0, f.normal[2]);
+            const alpha = cutEnabled && !allFront ? 0.35 : 0.92;
+            ctx.fillStyle = `rgba(${Math.round(base.r*shade)}, ${Math.round(base.g*shade)}, ${Math.round(base.b*shade)}, ${alpha})`;
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+            ctx.lineWidth = 1.4;
+            ctx.stroke();
+          });
+        }
+
+        if (state.view === 'solid' || state.view === 'wire' || state.view === 'faces') {
+          ctx.strokeStyle = state.view === 'wire' ? '#f5b342' : 'rgba(255,255,255,0.35)';
+          ctx.lineWidth = state.view === 'wire' ? 2 : 1;
+          shape.edges.forEach(([a, b]) => {
+            const pa = verts2d[a], pb = verts2d[b];
+            ctx.beginPath();
+            ctx.moveTo(pa.x, pa.y);
+            ctx.lineTo(pb.x, pb.y);
+            ctx.stroke();
+          });
+        }
+
+        if (cutEnabled) {
+          drawCutCrossSection(shape, vertsRot, W, H, cutN, cutD);
+        }
+
+        if (state.view === 'verts' || state.view === 'wire' || state.view === 'solid') {
+          verts2d.forEach((p) => {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, state.view === 'verts' ? 6 : 3, 0, Math.PI * 2);
+            ctx.fillStyle = state.view === 'verts' ? '#f5b342' : 'rgba(255,255,255,0.9)';
+            ctx.fill();
+          });
+        }
+
+        // Hover hit — a small crosshair on the surface
+        if (state.hoverHit && (state.tool === 'distance' || state.tool === 'angle')) {
+          const rot = rotatePoint(state.hoverHit.world, state.rotX, state.rotY);
+          const scr = project(rot, W, H);
+          ctx.strokeStyle = '#f5b342';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(scr.x, scr.y, 8, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(scr.x - 12, scr.y);
+          ctx.lineTo(scr.x + 12, scr.y);
+          ctx.moveTo(scr.x, scr.y - 12);
+          ctx.lineTo(scr.x, scr.y + 12);
+          ctx.stroke();
+        }
+
+        drawMeasurements(W, H);
+        drawAxis(W, H);
+        updateCutHandle(W, H);
+        updateFacts(shape, faceInfo);
+      }
+
+      // ============================================================
+      //  Cut cross-section
+      // ============================================================
+      function drawCutCrossSection(shape, vertsRot, W, H, n, d) {
+        const segments = [];
+        shape.faces.forEach((f) => {
+          const idx = f.idx;
+          for (let i = 1; i < idx.length - 1; i++) {
+            const tri = [idx[0], idx[i], idx[i + 1]];
+            const seg = trianglePlaneIntersect(tri, vertsRot, n, d);
+            if (seg) segments.push(seg);
+          }
+        });
+        if (segments.length === 0) return;
+
+        const projected = segments.map(([a, b]) => [project(a, W, H), project(b, W, H)]);
+        ctx.strokeStyle = '#c76b3b';
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        projected.forEach(([pa, pb]) => {
+          ctx.beginPath();
+          ctx.moveTo(pa.x, pa.y);
+          ctx.lineTo(pb.x, pb.y);
+          ctx.stroke();
+        });
+
+        const loop = buildLoop(segments);
+        if (loop && loop.length >= 3) {
+          const proj = loop.map((p) => project(p, W, H));
+          ctx.beginPath();
+          proj.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+          ctx.closePath();
+          ctx.fillStyle = 'rgba(199, 107, 59, 0.35)';
+          ctx.fill();
+          ctx.strokeStyle = '#c76b3b';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+      }
+
+      function trianglePlaneIntersect(tri, verts, n, d) {
+        const sides = tri.map((i) => dot(n, verts[i]) - d);
+        const [sa, sb, sc] = sides;
+        const pts = [];
+        const [ia, ib, ic] = tri;
+
+        const edge = (i1, i2, s1, s2) => {
+          if (s1 === 0 && s2 === 0) return null;
+          if ((s1 > 0 && s2 < 0) || (s1 < 0 && s2 > 0)) {
+            const t = s1 / (s1 - s2);
+            return lerp3(verts[i1], verts[i2], t);
+          }
+          if (s1 === 0) return verts[i1];
+          if (s2 === 0) return verts[i2];
+          return null;
+        };
+        const pAB = edge(ia, ib, sa, sb);
+        const pBC = edge(ib, ic, sb, sc);
+        const pCA = edge(ic, ia, sc, sa);
+        [pAB, pBC, pCA].forEach((p) => { if (p && !pts.find(q => dist3(q, p) < 1e-6)) pts.push(p); });
+        return pts.length === 2 ? pts : null;
+      }
+
+      function buildLoop(segments) {
+        if (segments.length === 0) return null;
+        const used = new Array(segments.length).fill(false);
+        const loop = [segments[0][0], segments[0][1]];
+        used[0] = true;
+        const eps = 1e-3;
+        for (let iter = 0; iter < segments.length; iter++) {
+          const last = loop[loop.length - 1];
+          let found = false;
+          for (let i = 0; i < segments.length; i++) {
+            if (used[i]) continue;
+            const [a, b] = segments[i];
+            if (dist3(last, a) < eps) { loop.push(b); used[i] = true; found = true; break; }
+            if (dist3(last, b) < eps) { loop.push(a); used[i] = true; found = true; break; }
+          }
+          if (!found) break;
+        }
+        return loop.length >= 3 ? loop : null;
+      }
+
+      // ============================================================
+      //  Cut handle
+      // ============================================================
+      function updateCutHandle(W, H) {
+        const center = [0, 0, 0];
+        let proj = { x: W / 2, y: H / 2 };
+        if (state.cutNormal) {
+          const worldPt = add(center, scaleVec(state.cutNormal, state.cutOffset));
+          const rot = rotatePoint(worldPt, state.rotX, state.rotY);
+          proj = project(rot, W, H);
+        }
+
+        const rect = canvas.getBoundingClientRect();
+        const dpr = canvas.width / rect.width;
+        let handle = document.getElementById('cutHandle');
+
+        if (state.tool === 'cut' && state.cutVisible) {
+          if (!handle) {
+            handle = document.createElement('div');
+            handle.id = 'cutHandle';
+            handle.className = 'cut-handle';
+            handle.innerHTML = '↕';
+            handle.title = 'Drag to slide the cut plane';
+            stage.appendChild(handle);
+            handle.addEventListener('pointerdown', (e) => {
+              e.stopPropagation();
+              handle.setPointerCapture(e.pointerId);
+              const startY = e.clientY;
+              const startOffset = state.cutOffset;
+              const move = (ev) => {
+                const dy = ev.clientY - startY;
+                state.cutOffset = Math.max(-1.5, Math.min(1.5, startOffset - dy * 0.015));
+                measurementEl.innerHTML = `<strong>Cut plane.</strong> Offset: ${state.cutOffset.toFixed(2)}`;
+                draw();
+              };
+              const up = () => {
+                handle.removeEventListener('pointermove', move);
+                handle.removeEventListener('pointerup', up);
+              };
+              handle.addEventListener('pointermove', move);
+              handle.addEventListener('pointerup', up);
+            });
+          }
+          handle.style.display = 'flex';
+          handle.style.left = (proj.x / dpr) + 'px';
+          handle.style.top = (proj.y / dpr) + 'px';
+        } else if (handle) {
+          handle.remove();
+        }
+      }
+
+      // ============================================================
+      //  Measurements
+      //  Key change: keep the visual marker at a minimum on-screen size
+      //  so it stays readable even when zoomed out.
+      // ============================================================
+      function drawMeasurements(W, H) {
+        const points = state.tool === 'distance' ? state.measurePoints
+                     : state.tool === 'angle' ? state.anglePoints
+                     : [];
+        if (points.length === 0) return;
+
+        // Project all points
+        const projected = points.map((p) => {
+          const rot = rotatePoint(p.world, state.rotX, state.rotY);
+          return project(rot, W, H);
+        });
+
+        // For the distance tool with 2 points: amplify the two dots
+        // outward from their midpoint if they're too close on screen,
+        // so the visual marker never collapses.
+        if (state.tool === 'distance' && projected.length === 2) {
+          const [a, b] = projected;
+          const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+          let dx = b.x - a.x, dy = b.y - a.y;
+          let len = Math.hypot(dx, dy);
+          const MIN_PX = 70;
+          if (len < MIN_PX && len > 0.001) {
+            const factor = MIN_PX / len;
+            dx *= factor; dy *= factor;
+            projected[0] = { x: mid.x - dx / 2, y: mid.y - dy / 2 };
+            projected[1] = { x: mid.x + dx / 2, y: mid.y + dy / 2 };
+          } else if (len <= 0.001) {
+            // Points overlap — draw a small horizontal line
+            projected[0] = { x: mid.x - MIN_PX / 2, y: mid.y };
+            projected[1] = { x: mid.x + MIN_PX / 2, y: mid.y };
+          }
+        }
+
+        // Draw dots
+        projected.forEach((p, i) => {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 7, 0, Math.PI * 2);
+          ctx.fillStyle = '#f5b342';
+          ctx.fill();
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          ctx.fillStyle = '#0b2b3f';
+          ctx.font = 'bold 11px system-ui';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(String.fromCharCode(65 + i), p.x, p.y);
+        });
+
+        if (state.tool === 'distance' && projected.length === 2) {
+          const [a, b] = projected;
+          ctx.strokeStyle = '#f5b342';
+          ctx.lineWidth = 2.5;
+          ctx.setLineDash([6, 4]);
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          // Label at midpoint — fixed size
+          const mx = (a.x + b.x) / 2;
+          const my = (a.y + b.y) / 2;
+          const label = measurementEl.dataset.distance || '';
+          if (label) {
+            ctx.font = 'bold 13px system-ui';
+            const w = ctx.measureText(label).width + 18;
+            const h = 22;
+            ctx.fillStyle = 'rgba(11, 43, 63, 0.94)';
+            ctx.strokeStyle = '#f5b342';
+            ctx.lineWidth = 1.5;
+            roundRect(mx - w / 2, my - h / 2, w, h, 6);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = '#f5b342';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(label, mx, my);
+          }
+        }
+
+        if (state.tool === 'angle' && projected.length === 3) {
+          const [a, b, c] = projected;
+          ctx.strokeStyle = '#f5b342';
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.moveTo(b.x, b.y);
+          ctx.lineTo(a.x, a.y);
+          ctx.moveTo(b.x, b.y);
+          ctx.lineTo(c.x, c.y);
+          ctx.stroke();
+
+          const r = 32;
+          const angA = Math.atan2(a.y - b.y, a.x - b.x);
+          const angC = Math.atan2(c.y - b.y, c.x - b.x);
+          let start = angA, end = angC;
+          if (Math.abs(end - start) > Math.PI) {
+            if (end > start) start += Math.PI * 2;
+            else end += Math.PI * 2;
+          }
+          ctx.beginPath();
+          ctx.arc(b.x, b.y, r, start, end, end < start);
+          ctx.strokeStyle = '#f5b342';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          const label = measurementEl.dataset.angle || '';
+          if (label) {
+            const midAng = (start + end) / 2;
+            const lx = b.x + Math.cos(midAng) * (r + 24);
+            const ly = b.y + Math.sin(midAng) * (r + 24);
+            ctx.font = 'bold 13px system-ui';
+            const w = ctx.measureText(label).width + 18;
+            const h = 22;
+            ctx.fillStyle = 'rgba(11, 43, 63, 0.94)';
+            ctx.strokeStyle = '#f5b342';
+            ctx.lineWidth = 1.5;
+            roundRect(lx - w / 2, ly - h / 2, w, h, 6);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = '#f5b342';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(label, lx, ly);
+          }
+        }
+      }
+
+      function roundRect(x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+      }
+
+      // ============================================================
+      //  Axis
+      // ============================================================
+      function drawAxis(W, H) {
+        const size = 50;
+        const ox = W - size - 20;
+        const oy = H - size - 20;
+        const axes = [
+          { v: [1, 0, 0], color: '#c76b3b', label: 'X' },
+          { v: [0, 1, 0], color: '#5a8a4a', label: 'Y' },
+          { v: [0, 0, 1], color: '#2c7aa0', label: 'Z' },
+        ];
+        axes.forEach((a) => {
+          const r = rotatePoint(a.v, state.rotX, state.rotY);
+          const x = ox + r[0] * 22;
+          const y = oy - r[1] * 22;
+          ctx.strokeStyle = a.color;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(ox, oy);
+          ctx.lineTo(x, y);
+          ctx.stroke();
+          ctx.fillStyle = a.color;
+          ctx.font = 'bold 10px system-ui';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(a.label, x + (x - ox) * 0.3, y + (y - oy) * 0.3 - 7);
+        });
+      }
+
+      // ============================================================
+      //  Facts
+      // ============================================================
+      function updateFacts(shape, faceInfo) {
+        const V = shape.vertices.length;
+        const E = shape.edges.length;
+        const F = shape.faces.length;
+        const visibleCount = faceInfo.filter((f) => f.visible).length;
+        const vol = meshVolume(shape.vertices, shape.faces) * Math.pow(state.edge, 3);
+        const area = meshArea(shape.vertices, shape.faces) * Math.pow(state.edge, 2);
+
+        fV.textContent = V;
+        fE.textContent = E;
+        fF.textContent = F;
+        fFS.textContent = shape.meta.faceShape;
+        fEdge.textContent = state.edge.toFixed(2);
+        fVol.textContent = vol.toFixed(2);
+        fArea.textContent = area.toFixed(2);
+        fVis.textContent = visibleCount;
+      }
+
+      function meshVolume(vertices, faces) {
+        let vol = 0;
+        faces.forEach((f) => {
+          const p0 = vertices[f.idx[0]];
+          for (let i = 1; i < f.idx.length - 1; i++) {
+            const p1 = vertices[f.idx[i]];
+            const p2 = vertices[f.idx[i + 1]];
+            vol += dot(p0, cross(p1, p2)) / 6;
+          }
+        });
+        return Math.abs(vol);
+      }
+
+      function meshArea(vertices, faces) {
+        let area = 0;
+        faces.forEach((f) => {
+          const p0 = vertices[f.idx[0]];
+          for (let i = 1; i < f.idx.length - 1; i++) {
+            const p1 = vertices[f.idx[i]];
+            const p2 = vertices[f.idx[i + 1]];
+            area += 0.5 * Math.hypot(...cross(sub(p1, p0), sub(p2, p0)));
+          }
+        });
+        return area;
+      }
+
+      // ============================================================
+      //  Interactions
+      // ============================================================
+      let dragging = false;
+      let dragStart = null;
+      let rotStart = null;
+
+      stage.addEventListener('pointerdown', (e) => {
+        if (e.target.classList.contains('cut-handle')) return;
+        if (state.tool !== 'rotate') return;
+        if (e.button !== 0) return;
+        dragging = true;
+        dragStart = { x: e.clientX, y: e.clientY };
+        rotStart = { x: state.rotX, y: state.rotY };
+        stage.classList.add('is-rotating');
+        stage.setPointerCapture(e.pointerId);
+      });
+
+      stage.addEventListener('pointermove', (e) => {
+        const sRect = stage.getBoundingClientRect();
+        cursorDot.style.left = (e.clientX - sRect.left) + 'px';
+        cursorDot.style.top = (e.clientY - sRect.top) + 'px';
+
+        if (dragging) {
+          const dx = e.clientX - dragStart.x;
+          const dy = e.clientY - dragStart.y;
+          state.rotY = rotStart.y + dx * 0.01;
+          state.rotX = rotStart.x + dy * 0.01;
+          draw();
+          return;
+        }
+
+        // Hover pick for measurement tools
+        if (state.tool === 'distance' || state.tool === 'angle') {
+          const dpr = canvas.width / sRect.width;
+          const mx = (e.clientX - sRect.left) * dpr;
+          const my = (e.clientY - sRect.top) * dpr;
+          const hit = pickMesh(mx, my, canvas.width, canvas.height);
+          state.hoverHit = hit;
+          if (hit) {
+            snapPill.textContent = hit.type.charAt(0).toUpperCase() + hit.type.slice(1);
+            snapPill.classList.add('is-shown');
+            stage.style.cursor = 'crosshair';
+          } else {
+            snapPill.classList.remove('is-shown');
+            stage.style.cursor = 'default';
+          }
+          draw();
+        } else {
+          state.hoverHit = null;
+          snapPill.classList.remove('is-shown');
+        }
+      });
+
+      stage.addEventListener('pointerup', () => {
+        dragging = false;
+        stage.classList.remove('is-rotating');
+      });
+      stage.addEventListener('pointercancel', () => {
+        dragging = false;
+        stage.classList.remove('is-rotating');
+      });
+      stage.addEventListener('mouseleave', () => {
+        state.hoverHit = null;
+        snapPill.classList.remove('is-shown');
+      });
+
+      stage.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        if (state.tool === 'cut') {
+          state.cutVisible = true;
+          if (!state.cutNormal) state.cutNormal = normalize([0.4, 0.6, 0.5]);
+          state.cutOffset += (e.deltaY > 0 ? 1 : -1) * 0.05;
+          state.cutOffset = Math.max(-1.5, Math.min(1.5, state.cutOffset));
+          measurementEl.innerHTML = `<strong>Cut plane.</strong> Offset: ${state.cutOffset.toFixed(2)}`;
+          draw();
+          return;
+        }
+        const factor = e.deltaY > 0 ? 0.92 : 1.08;
+        state.zoom = Math.max(0.4, Math.min(3.5, state.zoom * factor));
+        draw();
+      }, { passive: false });
+
+      stage.addEventListener('click', (e) => {
+        if (state.tool !== 'distance' && state.tool !== 'angle') return;
+        const sRect = stage.getBoundingClientRect();
+        const dpr = canvas.width / sRect.width;
+        const mx = (e.clientX - sRect.left) * dpr;
+        const my = (e.clientY - sRect.top) * dpr;
+        const hit = pickMesh(mx, my, canvas.width, canvas.height);
+
+        if (!hit) {
+          showToast('Click on the shape');
+          return;
+        }
+
+        const entry = { world: hit.world, type: hit.type };
+
+        if (state.tool === 'distance') {
+          state.measurePoints.push(entry);
+          if (state.measurePoints.length > 2) state.measurePoints.shift();
+          updateDistanceReadout();
+        } else {
+          state.anglePoints.push(entry);
+          if (state.anglePoints.length > 3) state.anglePoints.shift();
+          updateAngleReadout();
+        }
+        draw();
+      });
+
+      window.addEventListener('keydown', (e) => {
+        if (['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'].includes(document.activeElement.tagName)) return;
+        const step = 0.08;
+        let handled = true;
+        switch (e.key) {
+          case 'ArrowLeft': state.rotY -= step; break;
+          case 'ArrowRight': state.rotY += step; break;
+          case 'ArrowUp': state.rotX -= step; break;
+          case 'ArrowDown': state.rotX += step; break;
+          case '+': case '=': setEdge(state.edge + 0.1); break;
+          case '-': case '_': setEdge(state.edge - 0.1); break;
+          case 'r': case 'R': resetView(); break;
+          case 'Escape':
+            state.measurePoints = [];
+            state.anglePoints = [];
+            state.cutVisible = false;
+            updateMeasurementDisplay();
+            break;
+          default: handled = false;
+        }
+        if (handled) { e.preventDefault(); draw(); }
+      });
+
+      // ============================================================
+      //  Measurement readouts
+      // ============================================================
+      function updateDistanceReadout() {
+        if (state.measurePoints.length < 2) {
+          measurementEl.innerHTML = `<strong>Distance tool.</strong> Pick two points (mode: ${state.pick}).`;
+          measurementEl.dataset.distance = '';
+          return;
+        }
+        const [a, b] = state.measurePoints;
+        const d = dist3(a.world, b.world) * state.edge;
+        measurementEl.innerHTML = `<strong>Distance:</strong> ${d.toFixed(3)} units · between two ${a.type} points`;
+        measurementEl.dataset.distance = d.toFixed(2) + ' u';
+      }
+
+      function updateAngleReadout() {
+        if (state.anglePoints.length < 3) {
+          measurementEl.innerHTML = `<strong>Angle tool.</strong> Pick 3 points: A → B (vertex) → C. (${state.anglePoints.length}/3) · mode: ${state.pick}`;
+          measurementEl.dataset.angle = '';
+          return;
+        }
+        const [a, b, c] = state.anglePoints;
+        const u = sub(a.world, b.world);
+        const v = sub(c.world, b.world);
+        const cosA = dot(u, v) / (Math.hypot(...u) * Math.hypot(...v));
+        const angle = Math.acos(Math.max(-1, Math.min(1, cosA))) * 180 / Math.PI;
+        measurementEl.innerHTML = `<strong>Angle ∠ABC:</strong> ${angle.toFixed(1)}°`;
+        measurementEl.dataset.angle = angle.toFixed(1) + '°';
+      }
+
+      function updateMeasurementDisplay() {
+        if (state.tool === 'rotate') {
+          measurementEl.innerHTML = `<strong>Rotate mode.</strong> Drag to spin the shape.`;
+        } else if (state.tool === 'distance') {
+          updateDistanceReadout();
+        } else if (state.tool === 'angle') {
+          updateAngleReadout();
+        } else if (state.tool === 'cut') {
+          state.cutVisible = true;
+          if (!state.cutNormal) state.cutNormal = normalize([0.4, 0.6, 0.5]);
+          measurementEl.innerHTML = `<strong>Cut plane.</strong> Offset: ${state.cutOffset.toFixed(2)}`;
+        }
+      }
+
+      // ============================================================
+      //  Edge length
+      // ============================================================
+      function setEdge(v) {
+        state.edge = Math.max(0.1, Math.min(20, v));
+        sizeInput.value = state.edge.toFixed(2);
+        if (state.tool === 'distance') updateDistanceReadout();
+        if (state.tool === 'angle') updateAngleReadout();
+        draw();
+      }
+
+      sizeInput.addEventListener('input', () => {
+        const v = parseFloat(sizeInput.value);
+        if (!isNaN(v) && v > 0) {
+          state.edge = Math.max(0.1, Math.min(20, v));
+          if (state.tool === 'distance') updateDistanceReadout();
+          if (state.tool === 'angle') updateAngleReadout();
+          draw();
+        }
+      });
+      sizeInput.addEventListener('blur', () => {
+        sizeInput.value = state.edge.toFixed(2);
+      });
+
+      sizePresets.querySelectorAll('button').forEach((b) => {
+        b.addEventListener('click', () => setEdge(parseFloat(b.dataset.size)));
+      });
+
+      // ============================================================
+      //  Shape switcher
+      // ============================================================
+      shapeBar.querySelectorAll('.shape-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          shapeBar.querySelectorAll('.shape-btn').forEach((b) => b.classList.remove('is-active'));
+          btn.classList.add('is-active');
+          state.shapeName = btn.dataset.shape;
+          const shape = SHAPES[state.shapeName];
+          shapePill.innerHTML = `<i class="fas fa-cube"></i> ${shape.meta.name}`;
+          state.measurePoints = [];
+          state.anglePoints = [];
+          state.cutVisible = false;
+          updateMeasurementDisplay();
+          draw();
+        });
+      });
+
+      // ============================================================
+      //  View toggles
+      // ============================================================
+      viewToggle.querySelectorAll('button').forEach((b) => {
+        b.addEventListener('click', () => {
+          state.view = b.dataset.view;
+          viewToggle.querySelectorAll('button').forEach((x) => x.classList.toggle('is-active', x === b));
+          draw();
+        });
+      });
+
+      // ============================================================
+      //  Pick toggles
+      // ============================================================
+      pickToggle.querySelectorAll('button').forEach((b) => {
+        b.addEventListener('click', () => {
+          state.pick = b.dataset.pick;
+          pickToggle.querySelectorAll('button').forEach((x) => x.classList.toggle('is-active', x === b));
+          draw();
+        });
+      });
+
+      // ============================================================
+      //  Tools
+      // ============================================================
+      toolGrid.querySelectorAll('.tool-btn').forEach((b) => {
+        b.addEventListener('click', () => {
+          state.tool = b.dataset.tool;
+          toolGrid.querySelectorAll('.tool-btn').forEach((x) => x.classList.toggle('is-active', x === b));
+          modePill.style.display = state.tool === 'rotate' ? 'none' : 'inline-block';
+          modePill.innerHTML = `<i class="fas fa-crosshairs"></i> ${b.dataset.tool.charAt(0).toUpperCase() + b.dataset.tool.slice(1)}`;
+          state.measurePoints = [];
+          state.anglePoints = [];
+          stage.classList.toggle('is-cutting', state.tool === 'cut');
+          stage.classList.toggle('is-picking', state.tool === 'distance' || state.tool === 'angle');
+          if (state.tool === 'cut') {
+            state.cutNormal = normalize([0.4, 0.6, 0.5]);
+            state.cutOffset = 0;
+            state.cutVisible = true;
+          } else {
+            state.cutVisible = false;
+          }
+          updateMeasurementDisplay();
+          draw();
+        });
+      });
+
+      // ============================================================
+      //  Colour swatches
+      // ============================================================
+      swatches.querySelectorAll('.swatch').forEach((sw) => {
+        sw.addEventListener('click', () => {
+          state.color = sw.dataset.color;
+          swatches.querySelectorAll('.swatch').forEach((s) => s.classList.toggle('is-active', s === sw));
+          draw();
+        });
+      });
+
+      // ============================================================
+      //  Reset
+      // ============================================================
+      function resetView() {
+        state.rotX = -0.45;
+        state.rotY = 0.6;
+        state.zoom = 1;
+        state.edge = 2;
+        state.measurePoints = [];
+        state.anglePoints = [];
+        state.cutVisible = false;
+        sizeInput.value = '2.00';
+        updateMeasurementDisplay();
+        showToast('View reset');
+        draw();
+      }
+
+      // ============================================================
+      //  Toast
+      // ============================================================
+      let toastTimer = null;
+      function showToast(msg) {
+        toastEl.textContent = msg;
+        toastEl.classList.add('is-shown');
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toastEl.classList.remove('is-shown'), 2000);
+      }
+
+      // ============================================================
+      //  Init
+      // ============================================================
+      requestAnimationFrame(() => {
+        resize();
+        draw();
+        updateMeasurementDisplay();
+      });
+
+      window.addEventListener('resize', () => {
+        resize();
+        draw();
+      });
+    })();
+  </script>
+</body>
+</html>

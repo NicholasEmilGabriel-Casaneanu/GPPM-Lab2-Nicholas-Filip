@@ -6,6 +6,7 @@
   <title>Stock Market Random Walk — All-Science Sims</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="sim-theme.css">
 </head>
 <body>
   <div class="sim-page">
@@ -17,70 +18,153 @@
     </div>
 
     <div class="sim-description">
-      Simulate hundreds of possible portfolio paths under geometric Brownian motion — the standard model for stock prices. Some soar, some crash, most end up somewhere in the middle. The fan of outcomes shows both the potential and the risk of investing.
+      Simulate hundreds of possible portfolio paths under geometric Brownian motion. Some soar, some crash, most end up somewhere in the middle. The fan of outcomes shows both the potential and the risk of investing.
     </div>
 
-    <div class="sim-canvas-wrap">
-      <canvas id="chart" width="820" height="420"></canvas>
+    <div class="sim-hero" id="hero">
+      <canvas id="canvas"></canvas>
+      <div class="sim-hud">
+        <div class="hud-row">
+          <span class="hud-label">Median final</span>
+          <span class="hud-value" id="hudMedian">—</span>
+        </div>
+        <div class="hud-row">
+          <span class="hud-label">5th – 95th %</span>
+          <span class="hud-value" id="hudRange">—</span>
+        </div>
+        <div class="hud-row">
+          <span class="hud-label">End above start</span>
+          <span class="hud-value" id="hudWin">—</span>
+        </div>
+      </div>
+      <div class="sim-cursor" id="cursor">Hover to inspect year</div>
+      <div class="sim-tip" id="tip">
+        <strong>Try this:</strong> raise volatility and watch the fan widen — that's risk
+      </div>
     </div>
 
-    <div class="sim-controls">
-      <div class="control">
-        <label>Starting value: <span id="startLabel">$10,000</span></label>
-        <input type="range" id="start" min="100" max="100000" value="10000" step="100">
+    <div class="preset-bar">
+      <button class="preset-btn is-active" data-preset="index">
+        <i class="fas fa-chart-line"></i> S&amp;P 500 (8%, 18% vol)
+      </button>
+      <button class="preset-btn" data-preset="bond">
+        <i class="fas fa-landmark"></i> Bonds (4%, 6% vol)
+      </button>
+      <button class="preset-btn" data-preset="crypto">
+        <i class="fas fa-bitcoin"></i> Crypto (30%, 80% vol)
+      </button>
+      <button class="preset-btn" data-preset="cash">
+        <i class="fas fa-money-bill"></i> Cash (2%, 1% vol)
+      </button>
+    </div>
+
+    <div class="control-groups">
+      <div class="control-group">
+        <h4><i class="fas fa-dollar-sign"></i> Starting value</h4>
+        <div class="slider-row">
+          <label>Amount <span class="value-chip" id="startChip">$10,000</span></label>
+          <input type="range" id="start" min="100" max="100000" value="10000" step="100">
+        </div>
       </div>
-      <div class="control">
-        <label>Expected return: <span id="returnLabel">8.0%</span></label>
-        <input type="range" id="expectedReturn" min="-10" max="20" value="8" step="0.5">
+
+      <div class="control-group">
+        <h4><i class="fas fa-chart-line"></i> Expected return</h4>
+        <div class="slider-row">
+          <label>Annual return <span class="value-chip" id="returnChip">8.0%</span></label>
+          <input type="range" id="expectedReturn" min="-20" max="40" value="8" step="0.5">
+        </div>
+        <div class="slider-row">
+          <label>Volatility <span class="value-chip" id="volChip">18.0%</span></label>
+          <input type="range" id="volatility" min="1" max="100" value="18" step="0.5">
+        </div>
+        <div class="slider-row">
+          <label>Years <span class="value-chip" id="yearsChip">20</span></label>
+          <input type="range" id="years" min="1" max="40" value="20" step="1">
+        </div>
       </div>
-      <div class="control">
-        <label>Volatility: <span id="volLabel">18.0%</span></label>
-        <input type="range" id="volatility" min="1" max="60" value="18" step="0.5">
-      </div>
-      <div class="control">
-        <label>Years: <span id="yearsLabel">20</span></label>
-        <input type="range" id="years" min="1" max="40" value="20" step="1">
-      </div>
-      <div class="control">
-        <label>&nbsp;</label>
-        <div class="btn-row">
-          <button class="btn" id="simulate">Re-simulate</button>
+
+      <div class="control-group">
+        <h4><i class="fas fa-tools"></i> Actions</h4>
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.3rem;">
+          <button class="preset-btn" id="resimBtn"><i class="fas fa-random"></i> Re-simulate</button>
+        </div>
+        <div class="slider-row" style="margin-top:0.8rem;">
+          <label>Paths shown <span class="value-chip" id="pathsChip">200</span></label>
+          <input type="range" id="paths" min="10" max="500" value="200" step="10">
         </div>
       </div>
     </div>
 
-    <div class="sim-stats">
-      <div class="stat"><span class="stat-label">Median final value</span><span class="stat-value" id="median">—</span></div>
-      <div class="stat"><span class="stat-label">5th percentile</span><span class="stat-value" id="p5">—</span></div>
-      <div class="stat"><span class="stat-label">95th percentile</span><span class="stat-value" id="p95">—</span></div>
-      <div class="stat"><span class="stat-label">% ending above start</span><span class="stat-value" id="winRate">—</span></div>
+    <div class="insight-panel">
+      <h4><i class="fas fa-lightbulb"></i> Why the fan?</h4>
+      <p>
+        Each path is a different possible future. They all start at the same value, but each step is a random draw from a normal distribution scaled by volatility. Over time, small random shocks compound — so <strong>the distribution of outcomes widens</strong>. That widening is what we mean by "risk."
+      </p>
+      <p>
+        Notice that the <em>median</em> path ends up below the <em>mean</em> (the box on the left of the chart). That's because the distribution is right-skewed: a few paths soar (dragging the mean up), while most land modestly below. Higher volatility widens the fan but doesn't raise the median much.
+      </p>
     </div>
   </div>
 
+  <script src="sim-ui.js"></script>
   <script>
     (function () {
-      const canvas = document.getElementById('chart');
+      'use strict';
+
+      const canvas = document.getElementById('canvas');
       const ctx = canvas.getContext('2d');
       const startInput = document.getElementById('start');
-      const retInput = document.getElementById('expectedReturn');
+      const returnInput = document.getElementById('expectedReturn');
       const volInput = document.getElementById('volatility');
       const yearsInput = document.getElementById('years');
-      const simBtn = document.getElementById('simulate');
-      const startLabel = document.getElementById('startLabel');
-      const returnLabel = document.getElementById('returnLabel');
-      const volLabel = document.getElementById('volLabel');
-      const yearsLabel = document.getElementById('yearsLabel');
-      const medianEl = document.getElementById('median');
-      const p5El = document.getElementById('p5');
-      const p95El = document.getElementById('p95');
-      const winRateEl = document.getElementById('winRate');
+      const pathsInput = document.getElementById('paths');
+      const startChip = document.getElementById('startChip');
+      const returnChip = document.getElementById('returnChip');
+      const volChip = document.getElementById('volChip');
+      const yearsChip = document.getElementById('yearsChip');
+      const pathsChip = document.getElementById('pathsChip');
+      const resimBtn = document.getElementById('resimBtn');
+      const hudMedian = document.getElementById('hudMedian');
+      const hudRange = document.getElementById('hudRange');
+      const hudWin = document.getElementById('hudWin');
+      const cursorEl = document.getElementById('cursor');
+      const tipEl = document.getElementById('tip');
+      const presetBtns = document.querySelectorAll('.preset-btn[data-preset]');
 
-      const fmt = (n) => '$' + Math.round(n).toLocaleString('en-US');
+      canvas.style.aspectRatio = '820 / 420';
+      canvas.style.width = '100%';
+      canvas.style.height = 'auto';
 
-      const PATHS = 200;
       const STEPS_PER_YEAR = 12;
+      let paths = [];
+      let finals = [];
+      let startVal = 10000;
+      let chartLayout = null;
 
-      // Box-Muller for normal random
+      SimUI.tips(tipEl, [
+        '<strong>Try this:</strong> raise volatility and watch the fan widen — that\'s risk',
+        '<strong>Try this:</strong> try the Crypto preset — the fan is enormous',
+        '<strong>Try this:</strong> hover the chart to see the range at any year',
+        '<strong>Try this:</strong> median path lands below mean — that\'s the right-skew',
+      ], 6000);
+
+      function fmt(n) {
+        if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
+        if (n >= 1e3) return '$' + Math.round(n).toLocaleString('en-US');
+        return '$' + n.toFixed(0);
+      }
+
+      function resize() {
+        const rect = canvas.getBoundingClientRect();
+        const dpr = Math.min(2, window.devicePixelRatio || 1);
+        const W = Math.round(rect.width * dpr);
+        const H = Math.round(rect.height * dpr);
+        if (canvas.width !== W || canvas.height !== H) {
+          canvas.width = W;
+          canvas.height = H;
+        }
+      }
+
       function gauss() {
         let u = 0, v = 0;
         while (u === 0) u = Math.random();
@@ -88,22 +172,24 @@
         return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
       }
 
-      function simulatePaths(startVal, mu, sigma, years) {
-        const n = years * STEPS_PER_YEAR;
+      function simulate(numPaths, startValue, mu, sigma, yrs) {
+        const n = yrs * STEPS_PER_YEAR;
         const dt = 1 / STEPS_PER_YEAR;
-        const paths = [];
-        for (let p = 0; p < PATHS; p++) {
-          const path = [startVal];
-          let val = startVal;
+        const result = [];
+        const endVals = [];
+        for (let p = 0; p < numPaths; p++) {
+          const path = [startValue];
+          let val = startValue;
           for (let i = 0; i < n; i++) {
             const drift = (mu - 0.5 * sigma * sigma) * dt;
             const shock = sigma * Math.sqrt(dt) * gauss();
             val *= Math.exp(drift + shock);
             path.push(val);
           }
-          paths.push(path);
+          result.push(path);
+          endVals.push(val);
         }
-        return paths;
+        return { paths: result, finals: endVals };
       }
 
       function percentile(sorted, p) {
@@ -114,21 +200,24 @@
         return sorted[lo] + (sorted[hi] - sorted[lo]) * (idx - lo);
       }
 
-      function draw(paths, startVal) {
+      function draw() {
+        resize();
         const w = canvas.width, h = canvas.height;
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, w, h);
 
-        const padL = 80, padR = 20, padT = 30, padB = 50;
+        const padL = 80, padR = 30, padT = 30, padB = 60;
         const plotW = w - padL - padR;
         const plotH = h - padT - padB;
 
+        if (!paths.length) return;
+
+        // Compute ranges
         let maxV = 0, minV = Infinity;
         paths.forEach((p) => p.forEach((v) => {
           if (v > maxV) maxV = v;
           if (v < minV) minV = v;
         }));
-        // Give y-axis a little breathing room
         maxV *= 1.05;
         minV = Math.max(0, minV * 0.95);
 
@@ -141,7 +230,6 @@
         ctx.lineTo(padL + plotW, padT + plotH);
         ctx.stroke();
 
-        // Y gridlines (linear scale)
         ctx.fillStyle = '#6f8da3';
         ctx.font = '11px system-ui';
         ctx.textAlign = 'right';
@@ -156,18 +244,18 @@
           ctx.stroke();
         }
 
-        // X labels
+        const yrs = parseInt(yearsInput.value, 10);
         ctx.textAlign = 'center';
         ctx.fillStyle = '#6f8da3';
-        const years = (paths[0].length - 1) / STEPS_PER_YEAR;
         for (let i = 0; i <= 5; i++) {
           const x = padL + (plotW * i) / 5;
-          ctx.fillText(Math.round((years * i) / 5) + 'y', x, padT + plotH + 20);
+          ctx.fillText(Math.round((yrs * i) / 5) + 'y', x, padT + plotH + 20);
         }
 
         const nSteps = paths[0].length;
         const xFor = (i) => padL + (plotW * i) / (nSteps - 1);
-        const yFor = (val) => padT + plotH - (plotH * (val - minV)) / (maxV - minV);
+        const yFor = (v) => padT + plotH - (plotH * (v - minV)) / (maxV - minV);
+        chartLayout = { padL, padT, plotW, plotH, xFor, yFor, nSteps, yrs, minV, maxV };
 
         // Start line
         const yStart = yFor(startVal);
@@ -179,10 +267,10 @@
         ctx.stroke();
         ctx.setLineDash([]);
 
-        // Draw all paths (thin, translucent)
+        // All paths
         ctx.lineWidth = 1;
         paths.forEach((path) => {
-          ctx.strokeStyle = 'rgba(44, 122, 160, 0.12)';
+          ctx.strokeStyle = 'rgba(44, 122, 160, 0.1)';
           ctx.beginPath();
           path.forEach((v, i) => {
             const x = xFor(i), y = yFor(v);
@@ -193,9 +281,8 @@
         });
 
         // Highlight median path
-        const finals = paths.map((p) => p[p.length - 1]).sort((a, b) => a - b);
-        const medianVal = percentile(finals, 0.5);
-        // Find the path closest to median final
+        const sorted = finals.slice().sort((a, b) => a - b);
+        const medianVal = percentile(sorted, 0.5);
         let medianPath = paths[0];
         let bestDiff = Infinity;
         paths.forEach((p) => {
@@ -203,7 +290,7 @@
           if (d < bestDiff) { bestDiff = d; medianPath = p; }
         });
         ctx.strokeStyle = '#2c7aa0';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 2.5;
         ctx.beginPath();
         medianPath.forEach((v, i) => {
           const x = xFor(i), y = yFor(v);
@@ -211,35 +298,95 @@
           else ctx.lineTo(x, y);
         });
         ctx.stroke();
+
+        // Legend
+        ctx.font = '12px system-ui';
+        ctx.textAlign = 'left';
+        const lx = padL + 12, ly = padT + 12;
+        ctx.strokeStyle = '#2c7aa0';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(lx, ly + 5);
+        ctx.lineTo(lx + 22, ly + 5);
+        ctx.stroke();
+        ctx.fillStyle = '#0b2b3f';
+        ctx.fillText('Median path', lx + 28, ly + 9);
       }
 
       function update() {
-        const startVal = parseFloat(startInput.value);
-        const mu = parseFloat(retInput.value) / 100;
+        startVal = parseFloat(startInput.value);
+        const mu = parseFloat(returnInput.value) / 100;
         const sigma = parseFloat(volInput.value) / 100;
-        const years = parseInt(yearsInput.value, 10);
+        const yrs = parseInt(yearsInput.value, 10);
+        const n = parseInt(pathsInput.value, 10);
 
-        startLabel.textContent = fmt(startVal);
-        returnLabel.textContent = (mu * 100).toFixed(1) + '%';
-        volLabel.textContent = (sigma * 100).toFixed(1) + '%';
-        yearsLabel.textContent = years;
+        startChip.textContent = fmt(startVal);
+        returnChip.textContent = (mu * 100).toFixed(1) + '%';
+        volChip.textContent = (sigma * 100).toFixed(1) + '%';
+        yearsChip.textContent = yrs;
+        pathsChip.textContent = n;
 
-        const paths = simulatePaths(startVal, mu, sigma, years);
-        const finals = paths.map((p) => p[p.length - 1]).sort((a, b) => a - b);
+        const sim = simulate(n, startVal, mu, sigma, yrs);
+        paths = sim.paths;
+        finals = sim.finals.sort((a, b) => a - b);
 
-        medianEl.textContent = fmt(percentile(finals, 0.5));
-        p5El.textContent = fmt(percentile(finals, 0.05));
-        p95El.textContent = fmt(percentile(finals, 0.95));
+        hudMedian.textContent = fmt(percentile(finals, 0.5));
+        hudRange.textContent = fmt(percentile(finals, 0.05)) + ' – ' + fmt(percentile(finals, 0.95));
         const wins = finals.filter((f) => f > startVal).length;
-        winRateEl.textContent = ((wins / finals.length) * 100).toFixed(1) + '%';
+        hudWin.textContent = ((wins / finals.length) * 100).toFixed(0) + '%';
 
-        draw(paths, startVal);
+        draw();
       }
 
-      [startInput, retInput, volInput, yearsInput].forEach((el) =>
-        el.addEventListener('input', update)
-      );
-      simBtn.addEventListener('click', update);
+      canvas.addEventListener('mousemove', (e) => {
+        if (!chartLayout || !paths.length) return;
+        const rect = canvas.getBoundingClientRect();
+        const dpr = canvas.width / rect.width;
+        const mx = (e.clientX - rect.left) * dpr;
+        const my = (e.clientY - rect.top) * dpr;
+        const { padL, padT, plotW, plotH, nSteps, yrs } = chartLayout;
+        if (mx < padL || mx > padL + plotW || my < padT || my > padT + plotH) {
+          cursorEl.textContent = 'Hover to inspect year';
+          return;
+        }
+        const frac = (mx - padL) / plotW;
+        const step = Math.round(frac * (nSteps - 1));
+        const valsAtStep = paths.map((p) => p[step]).sort((a, b) => a - b);
+        const p5 = percentile(valsAtStep, 0.05);
+        const p50 = percentile(valsAtStep, 0.5);
+        const p95 = percentile(valsAtStep, 0.95);
+        cursorEl.textContent = `Year ${(step / STEPS_PER_YEAR).toFixed(1)}: 5%=${fmt(p5)} · 50%=${fmt(p50)} · 95%=${fmt(p95)}`;
+      });
+
+      [startInput, returnInput, volInput, yearsInput, pathsInput].forEach((el) => {
+        el.addEventListener('input', () => {
+          presetBtns.forEach((b) => b.classList.remove('is-active'));
+          update();
+        });
+      });
+
+      resimBtn.addEventListener('click', update);
+
+      const presets = {
+        index: { r: 8, v: 18, y: 20 },
+        bond: { r: 4, v: 6, y: 20 },
+        crypto: { r: 30, v: 80, y: 10 },
+        cash: { r: 2, v: 1, y: 20 },
+      };
+
+      presetBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          presetBtns.forEach((b) => b.classList.remove('is-active'));
+          btn.classList.add('is-active');
+          const cfg = presets[btn.dataset.preset];
+          returnInput.value = cfg.r;
+          volInput.value = cfg.v;
+          yearsInput.value = cfg.y;
+          update();
+        });
+      });
+
+      window.addEventListener('resize', draw);
 
       update();
     })();
