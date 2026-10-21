@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Compound Interest — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Compound Interest</h1>
+      <div class="sim-meta">Finance &amp; Economics · Exponential Growth</div>
+    </div>
+
+    <div class="sim-description">
+      "The most powerful force in the universe" — apocryphally attributed to Einstein. Slide rate, time, and starting principal, optionally add monthly contributions, and watch compound and simple interest pull apart.
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="chart" width="820" height="420"></canvas>
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>Starting principal: <span id="principalLabel">$1,000</span></label>
+        <input type="range" id="principal" min="0" max="50000" value="1000" step="500">
+      </div>
+      <div class="control">
+        <label>Annual rate: <span id="rateLabel">7.0%</span></label>
+        <input type="range" id="rate" min="0" max="20" value="7" step="0.1">
+      </div>
+      <div class="control">
+        <label>Years: <span id="yearsLabel">30</span></label>
+        <input type="range" id="years" min="1" max="60" value="30" step="1">
+      </div>
+      <div class="control">
+        <label>Monthly contribution: <span id="monthlyLabel">$0</span></label>
+        <input type="range" id="monthly" min="0" max="2000" value="0" step="25">
+      </div>
+      <div class="control">
+        <label>Compounding frequency</label>
+        <select id="frequency">
+          <option value="1">Annually</option>
+          <option value="4">Quarterly</option>
+          <option value="12" selected>Monthly</option>
+          <option value="365">Daily</option>
+        </select>
+      </div>
+      <div class="control">
+        <label>&nbsp;</label>
+        <div class="btn-row">
+          <button class="btn secondary" id="toggleSimple">Show simple interest</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">Final (compound)</span><span class="stat-value" id="finalCompound">—</span></div>
+      <div class="stat"><span class="stat-label">Final (simple)</span><span class="stat-value" id="finalSimple">—</span></div>
+      <div class="stat"><span class="stat-label">Total contributed</span><span class="stat-value" id="contributed">—</span></div>
+      <div class="stat"><span class="stat-label">Interest earned</span><span class="stat-value" id="interestEarned">—</span></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('chart');
+      const ctx = canvas.getContext('2d');
+      const principalInput = document.getElementById('principal');
+      const rateInput = document.getElementById('rate');
+      const yearsInput = document.getElementById('years');
+      const monthlyInput = document.getElementById('monthly');
+      const freqSelect = document.getElementById('frequency');
+      const toggleBtn = document.getElementById('toggleSimple');
+
+      const principalLabel = document.getElementById('principalLabel');
+      const rateLabel = document.getElementById('rateLabel');
+      const yearsLabel = document.getElementById('yearsLabel');
+      const monthlyLabel = document.getElementById('monthlyLabel');
+
+      const finalCompoundEl = document.getElementById('finalCompound');
+      const finalSimpleEl = document.getElementById('finalSimple');
+      const contributedEl = document.getElementById('contributed');
+      const interestEarnedEl = document.getElementById('interestEarned');
+
+      let showSimple = true;
+
+      const fmt = (n) =>
+        '$' + Math.round(n).toLocaleString('en-US');
+
+      /**
+       * Compute year-by-year balances.
+       * Compound: standard compound interest applied n times per year,
+       * with monthly contributions (treated as end-of-month deposits
+       * into the same account).
+       * Simple: linear growth, no compounding of contributions.
+       */
+      function computeSeries(principal, annualRate, years, monthlyContrib, compFreq) {
+        const r = annualRate / 100;
+        const n = compFreq;
+
+        // ---- Compound series (computed monthly for smoothness) ----
+        const monthlyRate = Math.pow(1 + r / n, n / 12) - 1; // equivalent monthly rate
+        const compSeries = [];
+        let balance = principal;
+        let contributed = principal;
+        compSeries.push({ year: 0, balance, contributed });
+
+        const totalMonths = years * 12;
+        for (let m = 1; m <= totalMonths; m++) {
+          balance = balance * (1 + monthlyRate) + monthlyContrib;
+          contributed += monthlyContrib;
+          if (m % 12 === 0) {
+            compSeries.push({ year: m / 12, balance, contributed });
+          }
+        }
+
+        // ---- Simple series (computed yearly) ----
+        // Interest on principal every year (no compounding),
+        // plus contributions added but not growing.
+        const simpleSeries = [];
+        let simpleBalance = principal;
+        let simpleContributed = principal;
+        simpleSeries.push({ year: 0, balance: simpleBalance, contributed: simpleContributed });
+        for (let y = 1; y <= years; y++) {
+          simpleBalance += principal * r; // interest only on original principal
+          simpleBalance += monthlyContrib * 12; // add contributions
+          simpleContributed += monthlyContrib * 12;
+          simpleSeries.push({ year: y, balance: simpleBalance, contributed: simpleContributed });
+        }
+
+        return { compSeries, simpleSeries };
+      }
+
+      function drawChart(compSeries, simpleSeries, years) {
+        const w = canvas.width, h = canvas.height;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+
+        const padL = 80, padR = 20, padT = 30, padB = 50;
+        const plotW = w - padL - padR;
+        const plotH = h - padT - padB;
+
+        const maxVal = Math.max(
+          ...compSeries.map((p) => p.balance),
+          ...(showSimple ? simpleSeries.map((p) => p.balance) : [0])
+        ) || 1;
+
+        // Axes
+        ctx.strokeStyle = '#cfdde9';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(padL, padT);
+        ctx.lineTo(padL, padT + plotH);
+        ctx.lineTo(padL + plotW, padT + plotH);
+        ctx.stroke();
+
+        // Y gridlines
+        ctx.fillStyle = '#6f8da3';
+        ctx.font = '11px system-ui';
+        ctx.textAlign = 'right';
+        for (let i = 0; i <= 5; i++) {
+          const y = padT + (plotH * i) / 5;
+          const val = maxVal * (1 - i / 5);
+          ctx.fillText(fmt(val), padL - 8, y + 4);
+          ctx.strokeStyle = '#eef4fa';
+          ctx.beginPath();
+          ctx.moveTo(padL, y);
+          ctx.lineTo(padL + plotW, y);
+          ctx.stroke();
+        }
+
+        // X labels
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#6f8da3';
+        for (let i = 0; i <= 5; i++) {
+          const x = padL + (plotW * i) / 5;
+          const yr = Math.round((years * i) / 5);
+          ctx.fillText(yr + 'y', x, padT + plotH + 20);
+        }
+
+        const xFor = (year) => padL + (plotW * year) / Math.max(1, years);
+        const yFor = (val) => padT + plotH - (plotH * val) / maxVal;
+
+        // Contributed (principal + deposits) — area under compound
+        ctx.fillStyle = 'rgba(141, 179, 208, 0.25)';
+        ctx.beginPath();
+        ctx.moveTo(padL, yFor(0));
+        compSeries.forEach((p) => ctx.lineTo(xFor(p.year), yFor(p.contributed)));
+        ctx.lineTo(xFor(years), yFor(0));
+        ctx.closePath();
+        ctx.fill();
+
+        // Simple interest line (dashed orange)
+        if (showSimple) {
+          ctx.strokeStyle = '#f5b342';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([6, 4]);
+          ctx.beginPath();
+          simpleSeries.forEach((p, i) => {
+            const x = xFor(p.year), y = yFor(p.balance);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          });
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        // Compound line (solid blue)
+        ctx.strokeStyle = '#2c7aa0';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        compSeries.forEach((p, i) => {
+          const x = xFor(p.year), y = yFor(p.balance);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+
+        // End dots
+        const lastComp = compSeries[compSeries.length - 1];
+        ctx.fillStyle = '#2c7aa0';
+        ctx.beginPath();
+        ctx.arc(xFor(lastComp.year), yFor(lastComp.balance), 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (showSimple) {
+          const lastSimple = simpleSeries[simpleSeries.length - 1];
+          ctx.fillStyle = '#f5b342';
+          ctx.beginPath();
+          ctx.arc(xFor(lastSimple.year), yFor(lastSimple.balance), 5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Legend
+        const legendX = padL + 12;
+        const legendY = padT + 12;
+        ctx.font = '12px system-ui';
+        ctx.textAlign = 'left';
+
+        ctx.strokeStyle = '#2c7aa0';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(legendX, legendY + 4);
+        ctx.lineTo(legendX + 22, legendY + 4);
+        ctx.stroke();
+        ctx.fillStyle = '#0b2b3f';
+        ctx.fillText('Compound', legendX + 28, legendY + 8);
+
+        if (showSimple) {
+          ctx.strokeStyle = '#f5b342';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([6, 4]);
+          ctx.beginPath();
+          ctx.moveTo(legendX, legendY + 24);
+          ctx.lineTo(legendX + 22, legendY + 24);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = '#0b2b3f';
+          ctx.fillText('Simple', legendX + 28, legendY + 28);
+        }
+      }
+
+      function update() {
+        const principal = parseFloat(principalInput.value);
+        const rate = parseFloat(rateInput.value);
+        const years = parseInt(yearsInput.value, 10);
+        const monthly = parseFloat(monthlyInput.value);
+        const compFreq = parseInt(freqSelect.value, 10);
+
+        principalLabel.textContent = fmt(principal);
+        rateLabel.textContent = rate.toFixed(1) + '%';
+        yearsLabel.textContent = years;
+        monthlyLabel.textContent = fmt(monthly);
+
+        const { compSeries, simpleSeries } = computeSeries(
+          principal, rate, years, monthly, compFreq
+        );
+
+        const lastComp = compSeries[compSeries.length - 1];
+        const lastSimple = simpleSeries[simpleSeries.length - 1];
+
+        finalCompoundEl.textContent = fmt(lastComp.balance);
+        finalSimpleEl.textContent = fmt(lastSimple.balance);
+        contributedEl.textContent = fmt(lastComp.contributed);
+        interestEarnedEl.textContent = fmt(lastComp.balance - lastComp.contributed);
+
+        drawChart(compSeries, simpleSeries, years);
+      }
+
+      [principalInput, rateInput, yearsInput, monthlyInput, freqSelect].forEach((el) =>
+        el.addEventListener('input', update)
+      );
+
+      toggleBtn.addEventListener('click', () => {
+        showSimple = !showSimple;
+        toggleBtn.textContent = showSimple ? 'Hide simple interest' : 'Show simple interest';
+        update();
+      });
+
+      update();
+    })();
+  </script>
+</body>
+</html>

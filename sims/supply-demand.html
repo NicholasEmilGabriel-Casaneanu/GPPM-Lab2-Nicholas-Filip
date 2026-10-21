@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supply &amp; Demand Equilibrium — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Supply &amp; Demand Equilibrium</h1>
+      <div class="sim-meta">Finance &amp; Economics · Microeconomics</div>
+    </div>
+
+    <div class="sim-description">
+      The most fundamental graph in economics. Slide the supply and demand curves up and down, add a price ceiling or floor, and watch how markets clear — or don't. See who wins and who loses from each intervention.
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="chart" width="820" height="480"></canvas>
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>Demand shift: <span id="demandLabel">0</span></label>
+        <input type="range" id="demandShift" min="-3" max="3" value="0" step="0.1">
+      </div>
+      <div class="control">
+        <label>Supply shift: <span id="supplyLabel">0</span></label>
+        <input type="range" id="supplyShift" min="-3" max="3" value="0" step="0.1">
+      </div>
+      <div class="control">
+        <label>Price control</label>
+        <select id="control">
+          <option value="none">None (free market)</option>
+          <option value="ceiling">Price ceiling</option>
+          <option value="floor">Price floor</option>
+        </select>
+      </div>
+      <div class="control">
+        <label>Control price: <span id="controlPriceLabel">5.00</span></label>
+        <input type="range" id="controlPrice" min="0" max="10" value="5" step="0.1">
+      </div>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">Equilibrium price</span><span class="stat-value" id="eqPrice">—</span></div>
+      <div class="stat"><span class="stat-label">Equilibrium quantity</span><span class="stat-value" id="eqQty">—</span></div>
+      <div class="stat"><span class="stat-label">Market status</span><span class="stat-value" id="status">—</span></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('chart');
+      const ctx = canvas.getContext('2d');
+      const demandShiftInput = document.getElementById('demandShift');
+      const supplyShiftInput = document.getElementById('supplyShift');
+      const controlSel = document.getElementById('control');
+      const controlPriceInput = document.getElementById('controlPrice');
+      const demandLabel = document.getElementById('demandLabel');
+      const supplyLabel = document.getElementById('supplyLabel');
+      const controlPriceLabel = document.getElementById('controlPriceLabel');
+      const eqPriceEl = document.getElementById('eqPrice');
+      const eqQtyEl = document.getElementById('eqQty');
+      const statusEl = document.getElementById('status');
+
+      // Base equations (linear)
+      // Demand: Qd = 10 - P + shift
+      // Supply: Qs = P - 2 + shift
+      // Equilibrium: 10 - P = P - 2 → P = 6, Q = 4 (base)
+      const BASE_DEMAND_INTERCEPT = 10;
+      const BASE_SUPPLY_INTERCEPT = -2;
+
+      function demandQ(p, shift) {
+        return Math.max(0, BASE_DEMAND_INTERCEPT - p + shift);
+      }
+      function supplyQ(p, shift) {
+        return Math.max(0, p + BASE_SUPPLY_INTERCEPT + shift);
+      }
+      function equilibrium(demandShift, supplyShift) {
+        // 10 - P + dShift = P - 2 + sShift
+        // 12 + dShift - sShift = 2P
+        const P = (12 + demandShift - supplyShift) / 2;
+        const Q = demandQ(P, demandShift);
+        return { P, Q };
+      }
+
+      function draw(demandShift, supplyShift, controlType, controlPrice) {
+        const w = canvas.width, h = canvas.height;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+
+        const padL = 70, padR = 30, padT = 30, padB = 60;
+        const plotW = w - padL - padR;
+        const plotH = h - padT - padB;
+
+        const pMin = 0, pMax = 10;
+        const qMax = 15;
+
+        const xFor = (q) => padL + (plotW * q) / qMax;
+        const yFor = (p) => padT + plotH - (plotH * (p - pMin)) / (pMax - pMin);
+
+        // Axes
+        ctx.strokeStyle = '#cfdde9';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(padL, padT);
+        ctx.lineTo(padL, padT + plotH);
+        ctx.lineTo(padL + plotW, padT + plotH);
+        ctx.stroke();
+
+        // Gridlines
+        ctx.fillStyle = '#6f8da3';
+        ctx.font = '11px system-ui';
+        ctx.textAlign = 'right';
+        for (let p = 0; p <= 10; p += 2) {
+          const y = yFor(p);
+          ctx.fillText('$' + p, padL - 8, y + 4);
+          ctx.strokeStyle = '#eef4fa';
+          ctx.beginPath();
+          ctx.moveTo(padL, y);
+          ctx.lineTo(padL + plotW, y);
+          ctx.stroke();
+        }
+        ctx.textAlign = 'center';
+        for (let q = 0; q <= 15; q += 3) {
+          const x = xFor(q);
+          ctx.fillText(q, x, padT + plotH + 18);
+        }
+
+        // Axis labels
+        ctx.fillStyle = '#1b4a6b';
+        ctx.font = 'bold 12px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('Quantity', padL + plotW / 2, h - 15);
+        ctx.save();
+        ctx.translate(20, padT + plotH / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText('Price', 0, 0);
+        ctx.restore();
+
+        // Demand line (red)
+        ctx.strokeStyle = '#c76b3b';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        // Solve for Q at p=0 and p=10
+        const dQ0 = demandQ(0, demandShift);
+        const dQ10 = demandQ(10, demandShift);
+        ctx.moveTo(xFor(dQ0), yFor(0));
+        ctx.lineTo(xFor(dQ10), yFor(10));
+        ctx.stroke();
+
+        // Supply line (blue)
+        ctx.strokeStyle = '#2c7aa0';
+        ctx.beginPath();
+        const sQ0 = supplyQ(0, supplyShift);
+        const sQ10 = supplyQ(10, supplyShift);
+        ctx.moveTo(xFor(sQ0), yFor(0));
+        ctx.lineTo(xFor(sQ10), yFor(10));
+        ctx.stroke();
+
+        // Equilibrium
+        const eq = equilibrium(demandShift, supplyShift);
+        if (eq.P >= 0 && eq.P <= 10) {
+          ctx.fillStyle = '#0b2b3f';
+          ctx.beginPath();
+          ctx.arc(xFor(eq.Q), yFor(eq.P), 5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#e0eaf2';
+          ctx.setLineDash([4, 4]);
+          ctx.beginPath();
+          ctx.moveTo(padL, yFor(eq.P));
+          ctx.lineTo(xFor(eq.Q), yFor(eq.P));
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(xFor(eq.Q), padT + plotH);
+          ctx.lineTo(xFor(eq.Q), yFor(eq.P));
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        // Price control line
+        if (controlType !== 'none' && controlPrice >= 0 && controlPrice <= 10) {
+          ctx.strokeStyle = '#f5b342';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([8, 4]);
+          ctx.beginPath();
+          ctx.moveTo(padL, yFor(controlPrice));
+          ctx.lineTo(padL + plotW, yFor(controlPrice));
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          // Determine status
+          let status, qd, qs;
+          if (controlType === 'ceiling') {
+            qd = demandQ(controlPrice, demandShift);
+            qs = supplyQ(controlPrice, supplyShift);
+            status = qd > qs ? 'Shortage' : 'Non-binding';
+          } else {
+            qs = supplyQ(controlPrice, supplyShift);
+            qd = demandQ(controlPrice, demandShift);
+            status = qs > qd ? 'Surplus' : 'Non-binding';
+          }
+
+          // Label
+          ctx.fillStyle = '#1b4a6b';
+          ctx.font = 'bold 12px system-ui';
+          ctx.textAlign = 'left';
+          ctx.fillText(
+            (controlType === 'ceiling' ? 'Ceiling ' : 'Floor ') + '$' + controlPrice.toFixed(2),
+            padL + 8,
+            yFor(controlPrice) - 6
+          );
+
+          // Show quantities on the line
+          const qDisplay = Math.min(qd, qs);
+          ctx.fillStyle = '#c76b3b';
+          ctx.beginPath();
+          ctx.arc(xFor(qd), yFor(controlPrice), 4, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#2c7aa0';
+          ctx.beginPath();
+          ctx.arc(xFor(qs), yFor(controlPrice), 4, 0, Math.PI * 2);
+          ctx.fill();
+
+          statusEl.textContent = status;
+        } else {
+          statusEl.textContent = 'Free market';
+        }
+
+        // Legend
+        const lx = padL + 12;
+        const ly = padT + 12;
+        ctx.font = '12px system-ui';
+        ctx.textAlign = 'left';
+
+        ctx.strokeStyle = '#c76b3b';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(lx, ly + 4);
+        ctx.lineTo(lx + 22, ly + 4);
+        ctx.stroke();
+        ctx.fillStyle = '#0b2b3f';
+        ctx.fillText('Demand', lx + 28, ly + 8);
+
+        ctx.strokeStyle = '#2c7aa0';
+        ctx.beginPath();
+        ctx.moveTo(lx, ly + 24);
+        ctx.lineTo(lx + 22, ly + 24);
+        ctx.stroke();
+        ctx.fillStyle = '#0b2b3f';
+        ctx.fillText('Supply', lx + 28, ly + 28);
+
+        // Update stats
+        eqPriceEl.textContent = '$' + eq.P.toFixed(2);
+        eqQtyEl.textContent = eq.Q.toFixed(2);
+      }
+
+      function update() {
+        const dShift = parseFloat(demandShiftInput.value);
+        const sShift = parseFloat(supplyShiftInput.value);
+        const controlType = controlSel.value;
+        const controlPrice = parseFloat(controlPriceInput.value);
+
+        demandLabel.textContent = (dShift >= 0 ? '+' : '') + dShift.toFixed(1);
+        supplyLabel.textContent = (sShift >= 0 ? '+' : '') + sShift.toFixed(1);
+        controlPriceLabel.textContent = '$' + controlPrice.toFixed(2);
+
+        draw(dShift, sShift, controlType, controlPrice);
+      }
+
+      [demandShiftInput, supplyShiftInput, controlSel, controlPriceInput].forEach((el) =>
+        el.addEventListener('input', update)
+      );
+
+      update();
+    })();
+  </script>
+</body>
+</html>

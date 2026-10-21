@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inflation &amp; Purchasing Power — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Inflation &amp; Purchasing Power</h1>
+      <div class="sim-meta">Finance &amp; Economics · Monetary Economics</div>
+    </div>
+
+    <div class="sim-description">
+      A dollar today doesn't buy the same basket tomorrow. Set an inflation rate and watch the value of money erode over decades — and see how much you'd need in the future to buy the same things.
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="chart" width="820" height="420"></canvas>
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>Starting amount: <span id="amountLabel">$100</span></label>
+        <input type="range" id="amount" min="1" max="10000" value="100" step="10">
+      </div>
+      <div class="control">
+        <label>Annual inflation: <span id="rateLabel">3.0%</span></label>
+        <input type="range" id="rate" min="0" max="15" value="3" step="0.1">
+      </div>
+      <div class="control">
+        <label>Years: <span id="yearsLabel">30</span></label>
+        <input type="range" id="years" min="1" max="60" value="30" step="1">
+      </div>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">Future cost of today's basket</span><span class="stat-value" id="futureCost">—</span></div>
+      <div class="stat"><span class="stat-label">Future buying power of today's money</span><span class="stat-value" id="futurePower">—</span></div>
+      <div class="stat"><span class="stat-label">Lost to inflation</span><span class="stat-value" id="lost">—</span></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('chart');
+      const ctx = canvas.getContext('2d');
+      const amountInput = document.getElementById('amount');
+      const rateInput = document.getElementById('rate');
+      const yearsInput = document.getElementById('years');
+      const amountLabel = document.getElementById('amountLabel');
+      const rateLabel = document.getElementById('rateLabel');
+      const yearsLabel = document.getElementById('yearsLabel');
+      const futureCostEl = document.getElementById('futureCost');
+      const futurePowerEl = document.getElementById('futurePower');
+      const lostEl = document.getElementById('lost');
+
+      const fmt = (n) => '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+      function computeSeries(amount, rate, years) {
+        const r = rate / 100;
+        const cost = [];
+        const power = [];
+        for (let y = 0; y <= years; y++) {
+          const inflationFactor = Math.pow(1 + r, y);
+          cost.push({ year: y, value: amount * inflationFactor });
+          power.push({ year: y, value: amount / inflationFactor });
+        }
+        return { cost, power };
+      }
+
+      function drawChart(costSeries, powerSeries, years) {
+        const w = canvas.width, h = canvas.height;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+
+        const padL = 80, padR = 20, padT = 30, padB = 50;
+        const plotW = w - padL - padR;
+        const plotH = h - padT - padB;
+
+        const maxVal = Math.max(
+          ...costSeries.map((p) => p.value),
+          ...powerSeries.map((p) => p.value)
+        ) || 1;
+
+        // Axes
+        ctx.strokeStyle = '#cfdde9';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(padL, padT);
+        ctx.lineTo(padL, padT + plotH);
+        ctx.lineTo(padL + plotW, padT + plotH);
+        ctx.stroke();
+
+        // Y gridlines
+        ctx.fillStyle = '#6f8da3';
+        ctx.font = '11px system-ui';
+        ctx.textAlign = 'right';
+        for (let i = 0; i <= 5; i++) {
+          const y = padT + (plotH * i) / 5;
+          ctx.fillText('$' + Math.round(maxVal * (1 - i / 5)), padL - 8, y + 4);
+          ctx.strokeStyle = '#eef4fa';
+          ctx.beginPath();
+          ctx.moveTo(padL, y);
+          ctx.lineTo(padL + plotW, y);
+          ctx.stroke();
+        }
+
+        // X labels
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#6f8da3';
+        for (let i = 0; i <= 5; i++) {
+          const x = padL + (plotW * i) / 5;
+          const yr = Math.round((years * i) / 5);
+          ctx.fillText(yr + 'y', x, padT + plotH + 20);
+        }
+
+        const xFor = (year) => padL + (plotW * year) / Math.max(1, years);
+        const yFor = (val) => padT + plotH - (plotH * val) / maxVal;
+
+        // Cost line (red, rising)
+        ctx.strokeStyle = '#c76b3b';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        costSeries.forEach((p, i) => {
+          const x = xFor(p.year), y = yFor(p.value);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+
+        // Power line (blue, falling)
+        ctx.strokeStyle = '#2c7aa0';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        powerSeries.forEach((p, i) => {
+          const x = xFor(p.year), y = yFor(p.value);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+
+        // Legend
+        const lx = padL + 12;
+        const ly = padT + 12;
+        ctx.font = '12px system-ui';
+        ctx.textAlign = 'left';
+
+        ctx.strokeStyle = '#c76b3b';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(lx, ly + 4);
+        ctx.lineTo(lx + 22, ly + 4);
+        ctx.stroke();
+        ctx.fillStyle = '#0b2b3f';
+        ctx.fillText('Future cost of today\u2019s basket', lx + 28, ly + 8);
+
+        ctx.strokeStyle = '#2c7aa0';
+        ctx.beginPath();
+        ctx.moveTo(lx, ly + 24);
+        ctx.lineTo(lx + 22, ly + 24);
+        ctx.stroke();
+        ctx.fillStyle = '#0b2b3f';
+        ctx.fillText('Buying power of today\u2019s money', lx + 28, ly + 28);
+      }
+
+      function update() {
+        const amount = parseFloat(amountInput.value);
+        const rate = parseFloat(rateInput.value);
+        const years = parseInt(yearsInput.value, 10);
+
+        amountLabel.textContent = fmt(amount);
+        rateLabel.textContent = rate.toFixed(1) + '%';
+        yearsLabel.textContent = years;
+
+        const { cost, power } = computeSeries(amount, rate, years);
+        const lastCost = cost[cost.length - 1].value;
+        const lastPower = power[power.length - 1].value;
+
+        futureCostEl.textContent = fmt(lastCost);
+        futurePowerEl.textContent = fmt(lastPower);
+        lostEl.textContent = ((1 - lastPower / amount) * 100).toFixed(1) + '%';
+
+        drawChart(cost, power, years);
+      }
+
+      [amountInput, rateInput, yearsInput].forEach((el) =>
+        el.addEventListener('input', update)
+      );
+
+      update();
+    })();
+  </script>
+</body>
+</html>

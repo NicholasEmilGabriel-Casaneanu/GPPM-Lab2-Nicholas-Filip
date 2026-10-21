@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rule of 72 — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Rule of 72</h1>
+      <div class="sim-meta">Finance &amp; Economics · Approximation</div>
+    </div>
+
+    <div class="sim-description">
+      Divide 72 by your interest rate and you get how many years it takes money to double. It's a Taylor approximation of ln(2) ≈ 0.693, adjusted so the mental math works at typical rates. See the approximation and the exact answer side-by-side.
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="chart" width="820" height="420"></canvas>
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>Rate: <span id="rateLabel">8.0%</span></label>
+        <input type="range" id="rate" min="0.5" max="20" value="8" step="0.1">
+      </div>
+      <div class="control">
+        <label>&nbsp;</label>
+        <div class="sim-stats" style="margin: 0;">
+          <div class="stat"><span class="stat-label">Rule of 72</span><span class="stat-value" id="rule72">—</span></div>
+          <div class="stat"><span class="stat-label">Exact</span><span class="stat-value" id="exact">—</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('chart');
+      const ctx = canvas.getContext('2d');
+      const rateInput = document.getElementById('rate');
+      const rateLabel = document.getElementById('rateLabel');
+      const rule72El = document.getElementById('rule72');
+      const exactEl = document.getElementById('exact');
+
+      function update() {
+        const rate = parseFloat(rateInput.value);
+        rateLabel.textContent = rate.toFixed(1) + '%';
+
+        const r = rate / 100;
+        const rule72 = 72 / rate;
+        const exact = Math.log(2) / Math.log(1 + r);
+
+        rule72El.textContent = rule72.toFixed(2) + ' y';
+        exactEl.textContent = exact.toFixed(2) + ' y';
+
+        drawChart(rate, rule72, exact);
+      }
+
+      function drawChart(currentRate, rule72, exact) {
+        const w = canvas.width, h = canvas.height;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+
+        const padL = 80, padR = 30, padT = 30, padB = 55;
+        const plotW = w - padL - padR;
+        const plotH = h - padT - padB;
+
+        const rateMin = 0.5, rateMax = 20;
+        const maxYears = 60;
+
+        const xFor = (r) => padL + (plotW * (r - rateMin)) / (rateMax - rateMin);
+        const yFor = (y) => padT + plotH - (plotH * y) / maxYears;
+
+        // Axes
+        ctx.strokeStyle = '#cfdde9';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(padL, padT);
+        ctx.lineTo(padL, padT + plotH);
+        ctx.lineTo(padL + plotW, padT + plotH);
+        ctx.stroke();
+
+        // Gridlines
+        ctx.fillStyle = '#6f8da3';
+        ctx.font = '11px system-ui';
+        ctx.textAlign = 'right';
+        for (let y = 0; y <= maxYears; y += 10) {
+          const py = yFor(y);
+          ctx.fillText(y + 'y', padL - 8, py + 4);
+          ctx.strokeStyle = '#eef4fa';
+          ctx.beginPath();
+          ctx.moveTo(padL, py);
+          ctx.lineTo(padL + plotW, py);
+          ctx.stroke();
+        }
+        ctx.textAlign = 'center';
+        for (let r = 0; r <= 20; r += 5) {
+          const px = xFor(r);
+          ctx.fillText(r + '%', px, padT + plotH + 18);
+        }
+
+        // Exact curve
+        ctx.strokeStyle = '#2c7aa0';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        let first = true;
+        for (let r = rateMin; r <= rateMax; r += 0.1) {
+          const rr = r / 100;
+          const y = Math.log(2) / Math.log(1 + rr);
+          if (first) { ctx.moveTo(xFor(r), yFor(y)); first = false; }
+          else ctx.lineTo(xFor(r), yFor(y));
+        }
+        ctx.stroke();
+
+        // Rule of 72 curve
+        ctx.strokeStyle = '#f5b342';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 4]);
+        ctx.beginPath();
+        first = true;
+        for (let r = rateMin; r <= rateMax; r += 0.1) {
+          const y = 72 / r;
+          if (first) { ctx.moveTo(xFor(r), yFor(y)); first = false; }
+          else ctx.lineTo(xFor(r), yFor(y));
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Current rate marker
+        ctx.strokeStyle = 'rgba(11, 43, 63, 0.4)';
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        ctx.moveTo(xFor(currentRate), padT);
+        ctx.lineTo(xFor(currentRate), padT + plotH);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Current dots
+        ctx.fillStyle = '#2c7aa0';
+        ctx.beginPath();
+        ctx.arc(xFor(currentRate), yFor(exact), 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#f5b342';
+        ctx.beginPath();
+        ctx.arc(xFor(currentRate), yFor(rule72), 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Legend
+        const lx = padL + 12;
+        const ly = padT + 12;
+        ctx.font = '12px system-ui';
+        ctx.textAlign = 'left';
+
+        ctx.strokeStyle = '#2c7aa0';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(lx, ly + 4);
+        ctx.lineTo(lx + 22, ly + 4);
+        ctx.stroke();
+        ctx.fillStyle = '#0b2b3f';
+        ctx.fillText('Exact: ln(2) / ln(1+r)', lx + 28, ly + 8);
+
+        ctx.strokeStyle = '#f5b342';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 4]);
+        ctx.beginPath();
+        ctx.moveTo(lx, ly + 24);
+        ctx.lineTo(lx + 22, ly + 24);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#0b2b3f';
+        ctx.fillText('Rule of 72: 72 / r', lx + 28, ly + 28);
+      }
+
+      rateInput.addEventListener('input', update);
+      update();
+    })();
+  </script>
+</body>
+</html>

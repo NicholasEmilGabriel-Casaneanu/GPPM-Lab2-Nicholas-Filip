@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stock Market Random Walk — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Stock Market Random Walk</h1>
+      <div class="sim-meta">Finance &amp; Economics · Stochastic Processes</div>
+    </div>
+
+    <div class="sim-description">
+      Simulate hundreds of possible portfolio paths under geometric Brownian motion — the standard model for stock prices. Some soar, some crash, most end up somewhere in the middle. The fan of outcomes shows both the potential and the risk of investing.
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="chart" width="820" height="420"></canvas>
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>Starting value: <span id="startLabel">$10,000</span></label>
+        <input type="range" id="start" min="100" max="100000" value="10000" step="100">
+      </div>
+      <div class="control">
+        <label>Expected return: <span id="returnLabel">8.0%</span></label>
+        <input type="range" id="expectedReturn" min="-10" max="20" value="8" step="0.5">
+      </div>
+      <div class="control">
+        <label>Volatility: <span id="volLabel">18.0%</span></label>
+        <input type="range" id="volatility" min="1" max="60" value="18" step="0.5">
+      </div>
+      <div class="control">
+        <label>Years: <span id="yearsLabel">20</span></label>
+        <input type="range" id="years" min="1" max="40" value="20" step="1">
+      </div>
+      <div class="control">
+        <label>&nbsp;</label>
+        <div class="btn-row">
+          <button class="btn" id="simulate">Re-simulate</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">Median final value</span><span class="stat-value" id="median">—</span></div>
+      <div class="stat"><span class="stat-label">5th percentile</span><span class="stat-value" id="p5">—</span></div>
+      <div class="stat"><span class="stat-label">95th percentile</span><span class="stat-value" id="p95">—</span></div>
+      <div class="stat"><span class="stat-label">% ending above start</span><span class="stat-value" id="winRate">—</span></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('chart');
+      const ctx = canvas.getContext('2d');
+      const startInput = document.getElementById('start');
+      const retInput = document.getElementById('expectedReturn');
+      const volInput = document.getElementById('volatility');
+      const yearsInput = document.getElementById('years');
+      const simBtn = document.getElementById('simulate');
+      const startLabel = document.getElementById('startLabel');
+      const returnLabel = document.getElementById('returnLabel');
+      const volLabel = document.getElementById('volLabel');
+      const yearsLabel = document.getElementById('yearsLabel');
+      const medianEl = document.getElementById('median');
+      const p5El = document.getElementById('p5');
+      const p95El = document.getElementById('p95');
+      const winRateEl = document.getElementById('winRate');
+
+      const fmt = (n) => '$' + Math.round(n).toLocaleString('en-US');
+
+      const PATHS = 200;
+      const STEPS_PER_YEAR = 12;
+
+      // Box-Muller for normal random
+      function gauss() {
+        let u = 0, v = 0;
+        while (u === 0) u = Math.random();
+        while (v === 0) v = Math.random();
+        return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+      }
+
+      function simulatePaths(startVal, mu, sigma, years) {
+        const n = years * STEPS_PER_YEAR;
+        const dt = 1 / STEPS_PER_YEAR;
+        const paths = [];
+        for (let p = 0; p < PATHS; p++) {
+          const path = [startVal];
+          let val = startVal;
+          for (let i = 0; i < n; i++) {
+            const drift = (mu - 0.5 * sigma * sigma) * dt;
+            const shock = sigma * Math.sqrt(dt) * gauss();
+            val *= Math.exp(drift + shock);
+            path.push(val);
+          }
+          paths.push(path);
+        }
+        return paths;
+      }
+
+      function percentile(sorted, p) {
+        const idx = (sorted.length - 1) * p;
+        const lo = Math.floor(idx);
+        const hi = Math.ceil(idx);
+        if (lo === hi) return sorted[lo];
+        return sorted[lo] + (sorted[hi] - sorted[lo]) * (idx - lo);
+      }
+
+      function draw(paths, startVal) {
+        const w = canvas.width, h = canvas.height;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+
+        const padL = 80, padR = 20, padT = 30, padB = 50;
+        const plotW = w - padL - padR;
+        const plotH = h - padT - padB;
+
+        let maxV = 0, minV = Infinity;
+        paths.forEach((p) => p.forEach((v) => {
+          if (v > maxV) maxV = v;
+          if (v < minV) minV = v;
+        }));
+        // Give y-axis a little breathing room
+        maxV *= 1.05;
+        minV = Math.max(0, minV * 0.95);
+
+        // Axes
+        ctx.strokeStyle = '#cfdde9';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(padL, padT);
+        ctx.lineTo(padL, padT + plotH);
+        ctx.lineTo(padL + plotW, padT + plotH);
+        ctx.stroke();
+
+        // Y gridlines (linear scale)
+        ctx.fillStyle = '#6f8da3';
+        ctx.font = '11px system-ui';
+        ctx.textAlign = 'right';
+        for (let i = 0; i <= 5; i++) {
+          const y = padT + (plotH * i) / 5;
+          const val = maxV - (maxV - minV) * (i / 5);
+          ctx.fillText(fmt(val), padL - 8, y + 4);
+          ctx.strokeStyle = '#eef4fa';
+          ctx.beginPath();
+          ctx.moveTo(padL, y);
+          ctx.lineTo(padL + plotW, y);
+          ctx.stroke();
+        }
+
+        // X labels
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#6f8da3';
+        const years = (paths[0].length - 1) / STEPS_PER_YEAR;
+        for (let i = 0; i <= 5; i++) {
+          const x = padL + (plotW * i) / 5;
+          ctx.fillText(Math.round((years * i) / 5) + 'y', x, padT + plotH + 20);
+        }
+
+        const nSteps = paths[0].length;
+        const xFor = (i) => padL + (plotW * i) / (nSteps - 1);
+        const yFor = (val) => padT + plotH - (plotH * (val - minV)) / (maxV - minV);
+
+        // Start line
+        const yStart = yFor(startVal);
+        ctx.strokeStyle = '#e0eaf2';
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(padL, yStart);
+        ctx.lineTo(padL + plotW, yStart);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Draw all paths (thin, translucent)
+        ctx.lineWidth = 1;
+        paths.forEach((path) => {
+          ctx.strokeStyle = 'rgba(44, 122, 160, 0.12)';
+          ctx.beginPath();
+          path.forEach((v, i) => {
+            const x = xFor(i), y = yFor(v);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          });
+          ctx.stroke();
+        });
+
+        // Highlight median path
+        const finals = paths.map((p) => p[p.length - 1]).sort((a, b) => a - b);
+        const medianVal = percentile(finals, 0.5);
+        // Find the path closest to median final
+        let medianPath = paths[0];
+        let bestDiff = Infinity;
+        paths.forEach((p) => {
+          const d = Math.abs(p[p.length - 1] - medianVal);
+          if (d < bestDiff) { bestDiff = d; medianPath = p; }
+        });
+        ctx.strokeStyle = '#2c7aa0';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        medianPath.forEach((v, i) => {
+          const x = xFor(i), y = yFor(v);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+      }
+
+      function update() {
+        const startVal = parseFloat(startInput.value);
+        const mu = parseFloat(retInput.value) / 100;
+        const sigma = parseFloat(volInput.value) / 100;
+        const years = parseInt(yearsInput.value, 10);
+
+        startLabel.textContent = fmt(startVal);
+        returnLabel.textContent = (mu * 100).toFixed(1) + '%';
+        volLabel.textContent = (sigma * 100).toFixed(1) + '%';
+        yearsLabel.textContent = years;
+
+        const paths = simulatePaths(startVal, mu, sigma, years);
+        const finals = paths.map((p) => p[p.length - 1]).sort((a, b) => a - b);
+
+        medianEl.textContent = fmt(percentile(finals, 0.5));
+        p5El.textContent = fmt(percentile(finals, 0.05));
+        p95El.textContent = fmt(percentile(finals, 0.95));
+        const wins = finals.filter((f) => f > startVal).length;
+        winRateEl.textContent = ((wins / finals.length) * 100).toFixed(1) + '%';
+
+        draw(paths, startVal);
+      }
+
+      [startInput, retInput, volInput, yearsInput].forEach((el) =>
+        el.addEventListener('input', update)
+      );
+      simBtn.addEventListener('click', update);
+
+      update();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loan Amortization — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Loan Amortization</h1>
+      <div class="sim-meta">Finance &amp; Economics · Debt Dynamics</div>
+    </div>
+
+    <div class="sim-description">
+      Every fixed-rate loan has the same story: early payments are mostly interest, later payments are mostly principal. Drag the rate, term, and amount to see the crossover point move — and see how much interest you really pay.
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="chart" width="820" height="420"></canvas>
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>Loan amount: <span id="amountLabel">$300,000</span></label>
+        <input type="range" id="amount" min="1000" max="1000000" value="300000" step="1000">
+      </div>
+      <div class="control">
+        <label>Annual rate: <span id="rateLabel">6.0%</span></label>
+        <input type="range" id="rate" min="0.5" max="15" value="6" step="0.1">
+      </div>
+      <div class="control">
+        <label>Term (years): <span id="termLabel">30</span></label>
+        <input type="range" id="term" min="1" max="40" value="30" step="1">
+      </div>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">Monthly payment</span><span class="stat-value" id="monthly">—</span></div>
+      <div class="stat"><span class="stat-label">Total paid</span><span class="stat-value" id="totalPaid">—</span></div>
+      <div class="stat"><span class="stat-label">Total interest</span><span class="stat-value" id="totalInterest">—</span></div>
+      <div class="stat"><span class="stat-label">Interest as % of loan</span><span class="stat-value" id="interestPct">—</span></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('chart');
+      const ctx = canvas.getContext('2d');
+      const amountInput = document.getElementById('amount');
+      const rateInput = document.getElementById('rate');
+      const termInput = document.getElementById('term');
+      const amountLabel = document.getElementById('amountLabel');
+      const rateLabel = document.getElementById('rateLabel');
+      const termLabel = document.getElementById('termLabel');
+      const monthlyEl = document.getElementById('monthly');
+      const totalPaidEl = document.getElementById('totalPaid');
+      const totalInterestEl = document.getElementById('totalInterest');
+      const interestPctEl = document.getElementById('interestPct');
+
+      const fmt = (n) => '$' + Math.round(n).toLocaleString('en-US');
+      const fmt2 = (n) => '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+      function computeAmortization(principal, annualRate, years) {
+        const r = annualRate / 100 / 12;
+        const n = years * 12;
+        let monthly;
+        if (r === 0) {
+          monthly = principal / n;
+        } else {
+          monthly = (principal * r) / (1 - Math.pow(1 + r, -n));
+        }
+
+        let balance = principal;
+        let totalInterest = 0;
+        const schedule = [];
+        for (let m = 1; m <= n; m++) {
+          const interest = balance * r;
+          const principalPaid = monthly - interest;
+          balance = Math.max(0, balance - principalPaid);
+          totalInterest += interest;
+          schedule.push({ month: m, interest, principal: principalPaid, balance });
+        }
+        return { monthly, schedule, totalInterest, totalPaid: principal + totalInterest };
+      }
+
+      function drawChart(schedule, monthly, principal) {
+        const w = canvas.width, h = canvas.height;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+
+        const padL = 80, padR = 20, padT = 30, padB = 55;
+        const plotW = w - padL - padR;
+        const plotH = h - padT - padB;
+
+        const totalMonths = schedule.length;
+        const maxBalance = principal;
+
+        // Axes
+        ctx.strokeStyle = '#cfdde9';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(padL, padT);
+        ctx.lineTo(padL, padT + plotH);
+        ctx.lineTo(padL + plotW, padT + plotH);
+        ctx.stroke();
+
+        // Y gridlines
+        ctx.fillStyle = '#6f8da3';
+        ctx.font = '11px system-ui';
+        ctx.textAlign = 'right';
+        for (let i = 0; i <= 5; i++) {
+          const y = padT + (plotH * i) / 5;
+          ctx.fillText(fmt((maxBalance * (1 - i / 5))), padL - 8, y + 4);
+          ctx.strokeStyle = '#eef4fa';
+          ctx.beginPath();
+          ctx.moveTo(padL, y);
+          ctx.lineTo(padL + plotW, y);
+          ctx.stroke();
+        }
+
+        // X labels (years)
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#6f8da3';
+        for (let i = 0; i <= 5; i++) {
+          const x = padL + (plotW * i) / 5;
+          const yr = Math.round((totalMonths / 12) * (i / 5));
+          ctx.fillText(yr + 'y', x, padT + plotH + 20);
+        }
+
+        const xFor = (month) => padL + (plotW * month) / totalMonths;
+        const yFor = (val) => padT + plotH - (plotH * val) / maxBalance;
+
+        // Balance curve
+        ctx.strokeStyle = '#2c7aa0';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(padL, yFor(principal));
+        schedule.forEach((p) => ctx.lineTo(xFor(p.month), yFor(p.balance)));
+        ctx.stroke();
+
+        // Fill under balance
+        ctx.fillStyle = 'rgba(44, 122, 160, 0.08)';
+        ctx.beginPath();
+        ctx.moveTo(padL, padT + plotH);
+        ctx.lineTo(padL, yFor(principal));
+        schedule.forEach((p) => ctx.lineTo(xFor(p.month), yFor(p.balance)));
+        ctx.lineTo(xFor(totalMonths), padT + plotH);
+        ctx.closePath();
+        ctx.fill();
+
+        // Interest vs principal per payment (stacked)
+        // Normalize to monthly payment height
+        const maxBar = padT + plotH - padT; // plotH
+        const barW = Math.max(1, (plotW / totalMonths) * 0.9);
+        schedule.forEach((p) => {
+          const x = xFor(p.month) - barW / 2;
+          const interestH = (p.interest / monthly) * (plotH * 0.3);
+          const principalH = (p.principal / monthly) * (plotH * 0.3);
+          // Place bars at the bottom
+          const baseY = padT + plotH;
+          ctx.fillStyle = 'rgba(245, 179, 66, 0.7)'; // interest
+          ctx.fillRect(x, baseY - interestH, barW, interestH);
+          ctx.fillStyle = 'rgba(44, 122, 160, 0.7)'; // principal
+          ctx.fillRect(x, baseY - interestH - principalH, barW, principalH);
+        });
+
+        // Legend
+        const lx = padL + 12;
+        const ly = padT + 12;
+        ctx.font = '12px system-ui';
+        ctx.textAlign = 'left';
+
+        ctx.strokeStyle = '#2c7aa0';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(lx, ly + 4);
+        ctx.lineTo(lx + 22, ly + 4);
+        ctx.stroke();
+        ctx.fillStyle = '#0b2b3f';
+        ctx.fillText('Balance', lx + 28, ly + 8);
+
+        ctx.fillStyle = 'rgba(245, 179, 66, 0.7)';
+        ctx.fillRect(lx, ly + 18, 22, 10);
+        ctx.fillStyle = '#0b2b3f';
+        ctx.fillText('Interest portion', lx + 28, ly + 27);
+
+        ctx.fillStyle = 'rgba(44, 122, 160, 0.7)';
+        ctx.fillRect(lx, ly + 34, 22, 10);
+        ctx.fillStyle = '#0b2b3f';
+        ctx.fillText('Principal portion', lx + 28, ly + 43);
+      }
+
+      function update() {
+        const principal = parseFloat(amountInput.value);
+        const rate = parseFloat(rateInput.value);
+        const years = parseInt(termInput.value, 10);
+
+        amountLabel.textContent = fmt(principal);
+        rateLabel.textContent = rate.toFixed(1) + '%';
+        termLabel.textContent = years;
+
+        const { monthly, schedule, totalInterest, totalPaid } = computeAmortization(principal, rate, years);
+
+        monthlyEl.textContent = fmt2(monthly);
+        totalPaidEl.textContent = fmt(totalPaid);
+        totalInterestEl.textContent = fmt(totalInterest);
+        interestPctEl.textContent = ((totalInterest / principal) * 100).toFixed(1) + '%';
+
+        drawChart(schedule, monthly, principal);
+      }
+
+      [amountInput, rateInput, termInput].forEach((el) =>
+        el.addEventListener('input', update)
+      );
+
+      update();
+    })();
+  </script>
+</body>
+</html>
