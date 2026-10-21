@@ -6,6 +6,7 @@
   <title>Collatz Conjecture — All-Science Sims</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="sim-theme.css">
 </head>
 <body>
   <div class="sim-page">
@@ -20,43 +21,123 @@
       Pick any positive integer. If it's even, halve it; if it's odd, triple it and add one. Every number tested so far eventually reaches 1 — but nobody has proven it always will. Watch the famous "hailstone" trajectory.
     </div>
 
-    <div class="sim-controls">
-      <div class="control">
-        <label>Starting number</label>
-        <input type="number" id="startNum" value="27" min="1" max="100000">
+    <div class="sim-hero" id="hero">
+      <canvas id="canvas"></canvas>
+      <div class="sim-hud">
+        <div class="hud-row">
+          <span class="hud-label">Start</span>
+          <span class="hud-value" id="hudStart">27</span>
+        </div>
+        <div class="hud-row">
+          <span class="hud-label">Steps</span>
+          <span class="hud-value" id="hudSteps">—</span>
+        </div>
+        <div class="hud-row">
+          <span class="hud-label">Peak value</span>
+          <span class="hud-value" id="hudPeak">—</span>
+        </div>
       </div>
-      <div class="control">
-        <label>&nbsp;</label>
-        <div class="btn-row">
-          <button class="btn" id="run">Run</button>
-          <button class="btn secondary" id="random">Random</button>
+      <div class="sim-hud-right">
+        <span class="hud-chip" id="hudCurrent">n = 27</span>
+      </div>
+      <div class="sim-cursor" id="cursor">Hover to inspect</div>
+      <div class="sim-tip" id="tip">
+        <strong>Try this:</strong> run with 27 — it has one of the longest trajectories
+      </div>
+    </div>
+
+    <div class="preset-bar">
+      <button class="preset-btn is-active" data-preset="27">27 (famous)</button>
+      <button class="preset-btn" data-preset="6">6 (short)</button>
+      <button class="preset-btn" data-preset="97">97</button>
+      <button class="preset-btn" data-preset="6171">6,171 (tallest under 10k)</button>
+      <button class="preset-btn" data-preset="random"><i class="fas fa-random"></i> Random</button>
+    </div>
+
+    <div class="control-groups">
+      <div class="control-group">
+        <h4><i class="fas fa-hashtag"></i> Starting number</h4>
+        <div class="slider-row">
+          <label>
+            n
+            <span class="value-chip" id="startChip">27</span>
+          </label>
+          <input type="number" id="startNum" value="27" min="1" max="100000" style="padding:0.5rem 0.7rem; border-radius:8px; border:1px solid #cfdde9; font-family:inherit;">
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h4><i class="fas fa-tachometer-alt"></i> Speed</h4>
+        <div class="segmented" id="speedGroup">
+          <button data-speed="120">Slow</button>
+          <button data-speed="40" class="is-active">Normal</button>
+          <button data-speed="10">Fast</button>
+          <button data-speed="0">Instant</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h4><i class="fas fa-tools"></i> Actions</h4>
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.3rem;">
+          <button class="preset-btn" id="runBtn"><i class="fas fa-play"></i> Run</button>
+        </div>
+        <div class="kbd-hints">
+          <span><kbd>Enter</kbd> in field to run</span>
         </div>
       </div>
     </div>
 
-    <div class="sim-canvas-wrap">
-      <canvas id="canvas" width="820" height="420"></canvas>
-    </div>
-
-    <div class="sim-stats">
-      <div class="stat"><span class="stat-label">Steps to reach 1</span><span class="stat-value" id="steps">—</span></div>
-      <div class="stat"><span class="stat-label">Peak value</span><span class="stat-value" id="peak">—</span></div>
-      <div class="stat"><span class="stat-label">Current</span><span class="stat-value" id="current">—</span></div>
+    <div class="insight-panel">
+      <h4><i class="fas fa-lightbulb"></i> Why is this hard?</h4>
+      <p>
+        The rule is trivial, yet proving every number reaches 1 has resisted
+        every attempt since 1937. We can verify it for all <em>n</em> up to
+        ~2<sup>68</sup>, but that's not a proof.
+      </p>
+      <p>
+        Notice how even numbers fall fast (halving) while odd numbers spike
+        (roughly 3×). The trajectory "hailstones" — it rises, falls, rises
+        again, and lands on 1. The peak height grows with <em>n</em> but never
+        seems to escape.
+      </p>
     </div>
   </div>
 
+  <script src="sim-ui.js"></script>
   <script>
     (function () {
+      'use strict';
+
       const canvas = document.getElementById('canvas');
       const ctx = canvas.getContext('2d');
       const startInput = document.getElementById('startNum');
-      const runBtn = document.getElementById('run');
-      const randomBtn = document.getElementById('random');
-      const stepsEl = document.getElementById('steps');
-      const peakEl = document.getElementById('peak');
-      const currentEl = document.getElementById('current');
+      const startChip = document.getElementById('startChip');
+      const speedGroup = document.getElementById('speedGroup');
+      const runBtn = document.getElementById('runBtn');
+      const hudStart = document.getElementById('hudStart');
+      const hudSteps = document.getElementById('hudSteps');
+      const hudPeak = document.getElementById('hudPeak');
+      const hudCurrent = document.getElementById('hudCurrent');
+      const cursorEl = document.getElementById('cursor');
+      const tipEl = document.getElementById('tip');
+      const presetBtns = document.querySelectorAll('.preset-btn[data-preset]');
 
+      let speed = 40;
+      let sequence = [];
+      let currentIndex = 0;
       let animHandle = null;
+      let plot = null; // { padL, padT, plotW, plotH, maxVal, xFor, yFor }
+
+      canvas.style.aspectRatio = '820 / 420';
+      canvas.style.width = '100%';
+      canvas.style.height = 'auto';
+
+      SimUI.tips(tipEl, [
+        '<strong>Try this:</strong> run with 27 — it has one of the longest trajectories',
+        '<strong>Try this:</strong> try 6,171 — it climbs to nearly 100,000 before falling',
+        '<strong>Try this:</strong> hover anywhere on the chart to see the value at that step',
+        '<strong>Try this:</strong> hit Random a few times and see how different paths look',
+      ], 6000);
 
       function computeSequence(start) {
         const seq = [start];
@@ -68,20 +149,33 @@
         return seq;
       }
 
-      function draw(seq, index) {
-        const w = canvas.width;
-        const h = canvas.height;
-        ctx.clearRect(0, 0, w, h);
+      function resizeCanvas() {
+        const rect = canvas.getBoundingClientRect();
+        const dpr = Math.min(2, window.devicePixelRatio || 1);
+        const W = Math.round(rect.width * dpr);
+        const H = Math.round(rect.height * dpr);
+        if (canvas.width !== W || canvas.height !== H) {
+          canvas.width = W;
+          canvas.height = H;
+        }
+      }
 
-        // padding
-        const padL = 50, padR = 20, padT = 20, padB = 30;
+      function draw(highlightIndex) {
+        resizeCanvas();
+        const w = canvas.width, h = canvas.height;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+
+        if (!sequence.length) return;
+
+        const padL = 60, padR = 30, padT = 30, padB = 45;
         const plotW = w - padL - padR;
         const plotH = h - padT - padB;
 
-        const maxVal = Math.max(...seq);
-        const n = seq.length;
+        const maxVal = Math.max(...sequence);
+        const n = sequence.length;
 
-        // axes
+        // Axes
         ctx.strokeStyle = '#cfdde9';
         ctx.lineWidth = 1;
         ctx.beginPath();
@@ -90,8 +184,8 @@
         ctx.lineTo(padL + plotW, padT + plotH);
         ctx.stroke();
 
-        // gridlines (y)
-        ctx.fillStyle = '#8ba9c0';
+        // Y gridlines
+        ctx.fillStyle = '#6f8da3';
         ctx.font = '11px system-ui';
         ctx.textAlign = 'right';
         for (let i = 0; i <= 4; i++) {
@@ -105,7 +199,7 @@
           ctx.stroke();
         }
 
-        // x-axis labels
+        // X labels
         ctx.textAlign = 'center';
         for (let i = 0; i <= 5; i++) {
           const x = padL + (plotW * i) / 5;
@@ -115,80 +209,150 @@
 
         const xFor = (i) => padL + (plotW * i) / Math.max(1, n - 1);
         const yFor = (v) => padT + plotH - (plotH * v) / maxVal;
+        plot = { padL, padT, plotW, plotH, maxVal, xFor, yFor, n };
 
-        // full curve (light)
+        // Full curve (faint)
         ctx.strokeStyle = '#cfe0ee';
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 1.5;
         ctx.beginPath();
         for (let i = 0; i < n; i++) {
-          const x = xFor(i), y = yFor(seq[i]);
+          const x = xFor(i), y = yFor(sequence[i]);
           if (i === 0) ctx.moveTo(x, y);
           else ctx.lineTo(x, y);
         }
         ctx.stroke();
 
-        // highlighted progress
+        // Progress curve (drawn up to highlightIndex)
+        const hi = Math.min(highlightIndex, n - 1);
         ctx.strokeStyle = '#2c7aa0';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 2.5;
         ctx.beginPath();
-        for (let i = 0; i <= index; i++) {
-          const x = xFor(i), y = yFor(seq[i]);
+        for (let i = 0; i <= hi; i++) {
+          const x = xFor(i), y = yFor(sequence[i]);
           if (i === 0) ctx.moveTo(x, y);
           else ctx.lineTo(x, y);
         }
         ctx.stroke();
 
-        // current point
-        const cx = xFor(index), cy = yFor(seq[index]);
+        // Current point
+        const cx = xFor(hi), cy = yFor(sequence[hi]);
         ctx.fillStyle = '#f5b342';
         ctx.beginPath();
-        ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+        ctx.arc(cx, cy, 6, 0, Math.PI * 2);
         ctx.fill();
         ctx.strokeStyle = '#e09a20';
         ctx.lineWidth = 2;
         ctx.stroke();
+
+        // Start & end markers
+        ctx.fillStyle = '#5a8a4a';
+        ctx.beginPath();
+        ctx.arc(xFor(0), yFor(sequence[0]), 4, 0, Math.PI * 2);
+        ctx.fill();
+        if (hi === n - 1 && sequence[n - 1] === 1) {
+          ctx.fillStyle = '#c76b3b';
+          ctx.beginPath();
+          ctx.arc(xFor(n - 1), yFor(1), 5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Axis labels
+        ctx.fillStyle = '#1b4a6b';
+        ctx.font = 'bold 11px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('Step', padL + plotW / 2, h - 12);
+        ctx.save();
+        ctx.translate(18, padT + plotH / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText('Value', 0, 0);
+        ctx.restore();
+      }
+
+      function updateHud(idx) {
+        const hi = Math.min(idx, sequence.length - 1);
+        hudCurrent.textContent = 'n = ' + sequence[hi];
+        hudSteps.textContent = hi;
       }
 
       function run() {
         if (animHandle) cancelAnimationFrame(animHandle);
         const start = Math.max(1, parseInt(startInput.value || '27', 10));
-        const seq = computeSequence(start);
+        sequence = computeSequence(start);
 
-        stepsEl.textContent = seq.length - 1;
-        peakEl.textContent = Math.max(...seq);
-        currentEl.textContent = seq[0];
+        hudStart.textContent = start;
+        hudPeak.textContent = Math.max(...sequence);
+        hudSteps.textContent = sequence.length - 1;
 
         let i = 0;
+        currentIndex = 0;
         const step = () => {
-          draw(seq, i);
-          currentEl.textContent = seq[i];
-          if (i < seq.length - 1) {
+          draw(i);
+          updateHud(i);
+          if (i < sequence.length - 1) {
             i++;
-            animHandle = requestAnimationFrame(() => setTimeout(step, 25));
-          } else {
-            currentEl.textContent = '1 (reached)';
-            animHandle = null;
+            if (speed === 0) {
+              // Instant: jump to the end
+              draw(sequence.length - 1);
+              updateHud(sequence.length - 1);
+              return;
+            }
+            animHandle = requestAnimationFrame(() => setTimeout(step, speed));
           }
         };
         step();
       }
 
-      runBtn.addEventListener('click', run);
-
-      randomBtn.addEventListener('click', () => {
-        startInput.value = Math.floor(Math.random() * 2000) + 2;
-        run();
+      // Hover tooltip
+      canvas.addEventListener('mousemove', (e) => {
+        if (!plot) return;
+        const rect = canvas.getBoundingClientRect();
+        const dpr = canvas.width / rect.width;
+        const mx = (e.clientX - rect.left) * dpr;
+        const my = (e.clientY - rect.top) * dpr;
+        if (mx < plot.padL || mx > plot.padL + plot.plotW) {
+          cursorEl.textContent = 'Hover to inspect';
+          return;
+        }
+        const frac = (mx - plot.padL) / plot.plotW;
+        const idx = Math.round(frac * (plot.n - 1));
+        cursorEl.textContent = `step ${idx}: n = ${sequence[idx]}`;
       });
 
-      // initial render (static)
-      (function init() {
-        const start = parseInt(startInput.value, 10);
-        const seq = computeSequence(start);
-        stepsEl.textContent = seq.length - 1;
-        peakEl.textContent = Math.max(...seq);
-        currentEl.textContent = seq[0];
-        draw(seq, seq.length - 1);
-      })();
+      startInput.addEventListener('input', () => {
+        startChip.textContent = startInput.value;
+        presetBtns.forEach((b) => b.classList.remove('is-active'));
+      });
+
+      startInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') run();
+      });
+
+      presetBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          presetBtns.forEach((b) => b.classList.remove('is-active'));
+          btn.classList.add('is-active');
+          const val = btn.dataset.preset;
+          if (val === 'random') {
+            startInput.value = Math.floor(Math.random() * 2000) + 2;
+          } else {
+            startInput.value = val;
+          }
+          startChip.textContent = startInput.value;
+          run();
+        });
+      });
+
+      speedGroup.querySelectorAll('button').forEach((b) => {
+        b.addEventListener('click', () => {
+          speed = parseInt(b.dataset.speed, 10);
+          speedGroup.querySelectorAll('button').forEach((x) => x.classList.toggle('is-active', x === b));
+        });
+      });
+
+      runBtn.addEventListener('click', run);
+
+      // Init
+      run();
     })();
   </script>
 </body>

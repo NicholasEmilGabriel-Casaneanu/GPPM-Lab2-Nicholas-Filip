@@ -6,6 +6,7 @@
   <title>Pascal's Triangle &amp; Fractals — All-Science Sims</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="sim-theme.css">
 </head>
 <body>
   <div class="sim-page">
@@ -17,68 +18,156 @@
     </div>
 
     <div class="sim-description">
-      Color the entries of Pascal's triangle by divisibility and Sierpiński's triangle appears out of thin air. Switch the modulus and a different fractal emerges.
+      Color the entries of Pascal's triangle by divisibility — say, by whether each number is even or divisible by 3 — and Sierpiński's triangle appears out of thin air. Switch the modulus and watch a different fractal emerge.
     </div>
 
-    <div class="sim-controls">
-      <div class="control">
-        <label>Rows: <span id="rowsLabel">32</span></label>
-        <input type="range" id="rows" min="8" max="64" value="32" step="1">
+    <div class="sim-hero" id="hero">
+      <canvas id="canvas"></canvas>
+      <div class="sim-hud">
+        <div class="hud-row">
+          <span class="hud-label">Rows</span>
+          <span class="hud-value" id="hudRows">32</span>
+        </div>
+        <div class="hud-row">
+          <span class="hud-label">Modulus</span>
+          <span class="hud-value" id="hudMod">2</span>
+        </div>
+        <div class="hud-row">
+          <span class="hud-label">% divisible</span>
+          <span class="hud-value" id="hudPct">—</span>
+        </div>
       </div>
-      <div class="control">
-        <label>Modulus</label>
-        <select id="modulus">
-          <option value="2">2 (even / odd)</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5">5</option>
-          <option value="7">7</option>
-        </select>
-      </div>
-      <div class="control">
-        <label>Coloring</label>
-        <select id="mode">
-          <option value="divisible">Divisible by m</option>
-          <option value="remainder">Colour by remainder</option>
-        </select>
+      <div class="sim-cursor" id="cursor">Hover a cell</div>
+      <div class="sim-tip" id="tip">
+        <strong>Try this:</strong> with modulus 2, Sierpiński appears at ~64 rows
       </div>
     </div>
 
-    <div class="sim-canvas-wrap">
-      <canvas id="canvas" width="820" height="600"></canvas>
+    <div class="preset-bar">
+      <button class="preset-btn is-active" data-mod="2">Mod 2 (Sierpiński)</button>
+      <button class="preset-btn" data-mod="3">Mod 3</button>
+      <button class="preset-btn" data-mod="5">Mod 5</button>
+      <button class="preset-btn" data-mod="7">Mod 7</button>
+      <button class="preset-btn" data-mod="9">Mod 9</button>
+    </div>
+
+    <div class="control-groups">
+      <div class="control-group">
+        <h4><i class="fas fa-sliders-h"></i> Triangle</h4>
+        <div class="slider-row">
+          <label>Rows <span class="value-chip" id="rowsChip">32</span></label>
+          <input type="range" id="rows" min="8" max="64" value="32" step="1">
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h4><i class="fas fa-palette"></i> Coloring</h4>
+        <div class="segmented" id="modeGroup">
+          <button data-mode="divisible" class="is-active">Divisible by m</button>
+          <button data-mode="remainder">Color by remainder</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h4><i class="fas fa-tools"></i> Modulus</h4>
+        <div class="slider-row">
+          <label>m <span class="value-chip" id="modChip">2</span></label>
+          <input type="range" id="modulus" min="2" max="12" value="2" step="1">
+        </div>
+      </div>
+    </div>
+
+    <div class="insight-panel">
+      <h4><i class="fas fa-lightbulb"></i> Why Sierpiński?</h4>
+      <p>
+        The binomial coefficient <em>C(n,k)</em> counts subsets. When you color
+        each entry by whether it's even, a Sierpiński triangle emerges — as if
+        by magic. The reason: <strong>Lucas' Theorem</strong>. Write <em>n</em>
+        and <em>k</em> in base 2; the coefficient is odd if and only if every
+        binary digit of <em>k</em> is ≤ the corresponding digit of <em>n</em>.
+        That condition traces exactly Sierpiński's shape.
+      </p>
+      <p>
+        Change the modulus and you get different fractals: mod 3 gives a
+        three-way version, mod 5 a five-way one. The pattern is always
+        <em>self-similar</em> — zoom in and you see the same structure repeating.
+      </p>
     </div>
   </div>
 
+  <script src="sim-ui.js"></script>
   <script>
     (function () {
+      'use strict';
+
       const canvas = document.getElementById('canvas');
       const ctx = canvas.getContext('2d');
       const rowsInput = document.getElementById('rows');
-      const rowsLabel = document.getElementById('rowsLabel');
-      const modSel = document.getElementById('modulus');
-      const modeSel = document.getElementById('mode');
+      const rowsChip = document.getElementById('rowsChip');
+      const modulusInput = document.getElementById('modulus');
+      const modChip = document.getElementById('modChip');
+      const modeGroup = document.getElementById('modeGroup');
+      const hudRows = document.getElementById('hudRows');
+      const hudMod = document.getElementById('hudMod');
+      const hudPct = document.getElementById('hudPct');
+      const cursorEl = document.getElementById('cursor');
+      const tipEl = document.getElementById('tip');
+      const presetBtns = document.querySelectorAll('.preset-btn[data-mod]');
 
-      const palette = ['#ffffff', '#2c7aa0', '#f5b342', '#1b4a6b', '#8db3d0', '#c76b3b', '#5a8a4a', '#9c5fa6'];
+      canvas.style.aspectRatio = '820 / 620';
+      canvas.style.width = '100%';
+      canvas.style.height = 'auto';
+
+      let mode = 'divisible';
+      let tri = []; // cached triangle mod 12
+      let cellLayout = null; // { ox, oy, cell, n }
+
+      SimUI.tips(tipEl, [
+        '<strong>Try this:</strong> with modulus 2, Sierpiński appears at ~64 rows',
+        '<strong>Try this:</strong> switch to mod 3 — a different fractal',
+        '<strong>Try this:</strong> change to "Color by remainder" to see all residues',
+        '<strong>Try this:</strong> hover any cell to see the binomial coefficient',
+      ], 6000);
+
+      function resize() {
+        const rect = canvas.getBoundingClientRect();
+        const dpr = Math.min(2, window.devicePixelRatio || 1);
+        const W = Math.round(rect.width * dpr);
+        const H = Math.round(rect.height * dpr);
+        if (canvas.width !== W || canvas.height !== H) {
+          canvas.width = W;
+          canvas.height = H;
+        }
+      }
+
+      function buildTriangle(n) {
+        const t = [];
+        for (let i = 0; i < n; i++) {
+          t.push(new Array(i + 1).fill(1));
+          for (let j = 1; j < i; j++) {
+            t[i][j] = t[i - 1][j - 1] + t[i - 1][j];
+          }
+        }
+        // Reduce mod 60 for classification (we need mod up to 12)
+        for (let i = 0; i < n; i++) {
+          for (let j = 0; j <= i; j++) {
+            t[i][j] = t[i][j] % 60;
+          }
+        }
+        return t;
+      }
 
       function draw() {
+        resize();
         const w = canvas.width, h = canvas.height;
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, w, h);
 
         const n = parseInt(rowsInput.value, 10);
-        const m = parseInt(modSel.value, 10);
-        const mode = modeSel.value;
+        const m = parseInt(modulusInput.value, 10);
 
-        // Compute triangle mod m
-        const tri = [];
-        for (let i = 0; i < n; i++) {
-          tri.push(new Array(i + 1).fill(1));
-          for (let j = 1; j < i; j++) {
-            tri[i][j] = (tri[i - 1][j - 1] + tri[i - 1][j]) % m;
-          }
-        }
+        if (!tri.length || tri.length !== n) tri = buildTriangle(n);
 
-        // Fit to canvas
         const cellW = w / n;
         const cellH = h / n;
         const cell = Math.min(cellW, cellH);
@@ -86,13 +175,22 @@
         const totalH = cell * n;
         const ox = (w - totalW) / 2;
         const oy = (h - totalH) / 2;
+        cellLayout = { ox, oy, cell, n };
+
+        const palette = ['#ffffff', '#2c7aa0', '#f5b342', '#1b4a6b', '#8db3d0',
+                         '#c76b3b', '#5a8a4a', '#9c5fa6', '#d4a017', '#6b8fa8',
+                         '#8b3a3a', '#3a6a6a', '#8a5ac7'];
+
+        let divisible = 0, total = 0;
 
         for (let i = 0; i < n; i++) {
           for (let j = 0; j <= i; j++) {
-            const v = tri[i][j];
+            const v = tri[i][j] % m;
+            total++;
+            if (v === 0) divisible++;
             let color;
             if (mode === 'divisible') {
-              color = (v % m === 0) ? palette[1] : palette[0];
+              color = (v === 0) ? '#2c7aa0' : '#ffffff';
             } else {
               color = palette[v % palette.length];
             }
@@ -101,8 +199,8 @@
           }
         }
 
-        // subtle grid overlay
-        ctx.strokeStyle = 'rgba(0,0,0,0.03)';
+        // Subtle grid
+        ctx.strokeStyle = 'rgba(0,0,0,0.04)';
         ctx.lineWidth = 1;
         for (let i = 0; i <= n; i++) {
           ctx.beginPath();
@@ -114,14 +212,63 @@
           ctx.lineTo(ox + totalW, oy + i * cell);
           ctx.stroke();
         }
+
+        // HUD
+        hudRows.textContent = n;
+        hudMod.textContent = m;
+        hudPct.textContent = ((divisible / total) * 100).toFixed(1) + '%';
       }
 
+      canvas.addEventListener('mousemove', (e) => {
+        if (!cellLayout) return;
+        const rect = canvas.getBoundingClientRect();
+        const dpr = canvas.width / rect.width;
+        const mx = (e.clientX - rect.left) * dpr;
+        const my = (e.clientY - rect.top) * dpr;
+        const { ox, oy, cell, n } = cellLayout;
+        const col = Math.floor((mx - ox) / cell);
+        const row = Math.floor((my - oy) / cell);
+        if (row < 0 || row >= n || col < 0 || col > row) {
+          cursorEl.textContent = 'Hover a cell';
+          return;
+        }
+        const m = parseInt(modulusInput.value, 10);
+        const v = tri[row][col];
+        const rem = v % m;
+        cursorEl.textContent = `C(${row},${col}) mod ${m} = ${rem}`;
+      });
+
       rowsInput.addEventListener('input', () => {
-        rowsLabel.textContent = rowsInput.value;
+        rowsChip.textContent = rowsInput.value;
+        tri = []; // rebuild
         draw();
       });
-      modSel.addEventListener('change', draw);
-      modeSel.addEventListener('change', draw);
+
+      modulusInput.addEventListener('input', () => {
+        modChip.textContent = modulusInput.value;
+        presetBtns.forEach((b) => b.classList.remove('is-active'));
+        draw();
+      });
+
+      presetBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          presetBtns.forEach((b) => b.classList.remove('is-active'));
+          btn.classList.add('is-active');
+          modulusInput.value = btn.dataset.mod;
+          modChip.textContent = modulusInput.value;
+          draw();
+        });
+      });
+
+      modeGroup.querySelectorAll('button').forEach((b) => {
+        b.addEventListener('click', () => {
+          mode = b.dataset.mode;
+          modeGroup.querySelectorAll('button').forEach((x) => x.classList.toggle('is-active', x === b));
+          draw();
+        });
+      });
+
+      window.addEventListener('resize', draw);
 
       draw();
     })();

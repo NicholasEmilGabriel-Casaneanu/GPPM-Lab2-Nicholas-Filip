@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Implicit Association Demo — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Implicit Association Demo</h1>
+      <div class="sim-meta">Psychology · Social Cognition</div>
+    </div>
+
+    <div class="sim-description">
+      Sort stimuli into categories as fast as you can. Compare your speed when categories are "matched" vs "crossed" — the IAT design used to study implicit associations. This is a demonstration, not a diagnosis.
+    </div>
+
+    <div class="sim-canvas-wrap" style="padding: 2rem; text-align: center;">
+      <div id="stage" style="min-height: 260px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem;">
+        <div style="color:#4f6f86; font-size:0.95rem;">Press Start to begin</div>
+      </div>
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>&nbsp;</label>
+        <div class="btn-row">
+          <button class="btn" id="start">Start</button>
+          <button class="btn secondary" id="reset">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">Compatible mean</span><span class="stat-value" id="compMean">—</span></div>
+      <div class="stat"><span class="stat-label">Incompatible mean</span><span class="stat-value" id="incompMean">—</span></div>
+      <div class="stat"><span class="stat-label">IAT-style effect</span><span class="stat-value" id="effect">—</span></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const stage = document.getElementById('stage');
+      const startBtn = document.getElementById('start');
+      const resetBtn = document.getElementById('reset');
+      const compMeanEl = document.getElementById('compMean');
+      const incompMeanEl = document.getElementById('incompMean');
+      const effectEl = document.getElementById('effect');
+
+      // Categories: Flowers vs Insects, Positive vs Negative
+      const STIMULI = {
+        flowers: { emoji: '🌸', words: ['Rose', 'Tulip', 'Daisy', 'Lily'] },
+        insects: { emoji: '🐜', words: ['Ant', 'Bee', 'Wasp', 'Moth'] },
+        positive: { emoji: '😊', words: ['Joy', 'Love', 'Peace', 'Happy'] },
+        negative: { emoji: '😣', words: ['Pain', 'Hate', 'Fear', 'Sad'] },
+      };
+
+      const compRT = [];
+      const incompRT = [];
+      let queue = [];
+      let currentTrial = null;
+      let phase = null; // 'compatible' or 'incompatible'
+      let trialStart = 0;
+      let accepting = false;
+
+      function buildQueue() {
+        // Each phase: 8 trials (4 from each category pair)
+        const q = [];
+        // Compatible block
+        ['flowers', 'positive', 'insects', 'negative'].forEach((cat) => {
+          for (let i = 0; i < 2; i++) {
+            const s = STIMULI[cat].words[Math.floor(Math.random() * 4)];
+            q.push({ cat, stimulus: s, phase: 'compatible' });
+          }
+        });
+        // Incompatible block
+        ['flowers', 'negative', 'insects', 'positive'].forEach((cat) => {
+          for (let i = 0; i < 2; i++) {
+            const s = STIMULI[cat].words[Math.floor(Math.random() * 4)];
+            q.push({ cat, stimulus: s, phase: 'incompatible' });
+          }
+        });
+        return q;
+      }
+
+      function categoryGroup(cat, phase) {
+        // Returns left/right grouping
+        if (phase === 'compatible') {
+          if (cat === 'flowers' || cat === 'positive') return 'left';
+          return 'right';
+        } else {
+          if (cat === 'flowers' || cat === 'negative') return 'left';
+          return 'right';
+        }
+      }
+
+      function showTrial() {
+        if (queue.length === 0) {
+          finish();
+          return;
+        }
+        currentTrial = queue.shift();
+        phase = currentTrial.phase;
+        const side = categoryGroup(currentTrial.cat, phase);
+
+        const leftLabel = phase === 'compatible' ? '🌸 Flowers / 😊 Good' : '🌸 Flowers / 😣 Bad';
+        const rightLabel = phase === 'compatible' ? '🐜 Insects / 😣 Bad' : '🐜 Insects / 😊 Good';
+
+        stage.innerHTML = `
+          <div style="display:flex; width:100%; max-width:500px; justify-content:space-between; margin-bottom:1.5rem;">
+            <div style="background:#e4f0f9; padding:0.6rem 1rem; border-radius:10px; font-weight:600; color:#1b4a6b; font-size:0.9rem;">${leftLabel}</div>
+            <div style="background:#e4f0f9; padding:0.6rem 1rem; border-radius:10px; font-weight:600; color:#1b4a6b; font-size:0.9rem;">${rightLabel}</div>
+          </div>
+          <div style="font-size:2.4rem; font-weight:800; color:#0b2b3f; padding:1.5rem 2rem; background:#f8fafc; border-radius:16px; border:1px solid #e2edf5; min-width:180px;">
+            ${currentTrial.stimulus}
+          </div>
+          <div style="display:flex; gap:1rem; margin-top:1.5rem;">
+            <button id="leftBtn" class="sortBtn">← Left (E)</button>
+            <button id="rightBtn" class="sortBtn">Right (I) →</button>
+          </div>
+          <div style="color:#6f8da3; font-size:0.8rem; margin-top:0.5rem;">${phase === 'compatible' ? 'Compatible block' : 'Incompatible block'}</div>
+        `;
+
+        stage.querySelectorAll('.sortBtn').forEach((b) => {
+          b.style.cssText = `
+            background: #2c7aa0; border: none; border-radius: 10px;
+            padding: 0.7rem 1.4rem; font-size: 1rem; font-weight: 600;
+            color: white; cursor: pointer; font-family: inherit;
+          `;
+        });
+
+        stage.querySelector('#leftBtn').addEventListener('click', () => handleAnswer('left'));
+        stage.querySelector('#rightBtn').addEventListener('click', () => handleAnswer('right'));
+
+        trialStart = performance.now();
+        accepting = true;
+      }
+
+      function handleAnswer(side) {
+        if (!accepting) return;
+        accepting = false;
+        const rt = performance.now() - trialStart;
+        const correctSide = categoryGroup(currentTrial.cat, phase);
+        const correct = side === correctSide;
+
+        const target = phase === 'compatible' ? compRT : incompRT;
+        target.push(correct ? rt : rt + 500);
+
+        setTimeout(showTrial, 250);
+      }
+
+      function finish() {
+        const mean = (a) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+        const c = mean(compRT);
+        const i = mean(incompRT);
+        compMeanEl.textContent = c !== null ? Math.round(c) + ' ms' : '—';
+        incompMeanEl.textContent = i !== null ? Math.round(i) + ' ms' : '—';
+        if (c !== null && i !== null) {
+          const d = Math.round(i - c);
+          effectEl.textContent = (d >= 0 ? '+' : '') + d + ' ms';
+        } else {
+          effectEl.textContent = '—';
+        }
+
+        stage.innerHTML = `
+          <div style="font-size:2rem; font-weight:700; color:#0b2b3f;">Done!</div>
+          <div style="color:#4f6f86;">Compatible mean: ${c !== null ? Math.round(c) : '—'} ms</div>
+          <div style="color:#4f6f86;">Incompatible mean: ${i !== null ? Math.round(i) : '—'} ms</div>
+          <div style="color:#2c7aa0; font-weight:600; margin-top:0.5rem;">
+            ${c !== null && i !== null ? 'Effect: ' + Math.round(i - c) + ' ms' : ''}
+          </div>
+          <div style="color:#6f8da3; font-size:0.8rem; max-width:400px; margin-top:0.5rem;">
+            A positive number means you were slower in the incompatible block — the classic IAT pattern.
+          </div>
+        `;
+      }
+
+      function start() {
+        reset();
+        queue = buildQueue();
+        // Interleave compatible and incompatible for variety
+        queue = queue.sort(() => Math.random() - 0.5);
+        showTrial();
+      }
+
+      function reset() {
+        compRT.length = 0;
+        incompRT.length = 0;
+        queue = [];
+        accepting = false;
+        compMeanEl.textContent = '—';
+        incompMeanEl.textContent = '—';
+        effectEl.textContent = '—';
+        stage.innerHTML = '<div style="color:#4f6f86; font-size:0.95rem;">Press Start to begin</div>';
+      }
+
+      startBtn.addEventListener('click', start);
+      resetBtn.addEventListener('click', reset);
+
+      // Keyboard support
+      window.addEventListener('keydown', (e) => {
+        if (!accepting) return;
+        if (e.key === 'e' || e.key === 'E') {
+          stage.querySelector('#leftBtn')?.click();
+        } else if (e.key === 'i' || e.key === 'I') {
+          stage.querySelector('#rightBtn')?.click();
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

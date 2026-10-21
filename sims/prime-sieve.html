@@ -6,6 +6,7 @@
   <title>Prime Sieve — All-Science Sims</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="sim-theme.css">
 </head>
 <body>
   <div class="sim-page">
@@ -13,39 +14,94 @@
 
     <div class="sim-header">
       <h1>Prime Sieve (Sieve of Eratosthenes)</h1>
-      <div class="sim-meta">Mathematics · Number Theory</div>
+      <div class="sim-meta">Mathematics · Number Theory &amp; Algorithms</div>
     </div>
 
     <div class="sim-description">
-      Watch Eratosthenes' ancient algorithm in action: start with a grid of numbers, and strike out multiples of each prime as it's found. Numbers still standing at the end are prime.
+      Eratosthenes' 2,200-year-old algorithm in action: start with a grid of numbers, then for each prime you find, cross out all its multiples. Whatever is left standing must be prime. Watch the sieve do its work step by step.
     </div>
 
-    <div class="sim-controls">
-      <div class="control">
-        <label>Range up to: <span id="rangeLabel">200</span></label>
-        <input type="range" id="range" min="30" max="500" value="200" step="10">
+    <!-- HERO: grid + HUD -->
+    <div class="sim-hero" id="hero" style="background:#ffffff;">
+      <div style="padding: 1.25rem;">
+        <div id="grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)); gap: 4px;"></div>
       </div>
-      <div class="control">
-        <label>Speed: <span id="speedLabel">Normal</span></label>
-        <input type="range" id="speed" min="1" max="5" value="3" step="1">
+      <div class="sim-hud">
+        <div class="hud-row">
+          <span class="hud-label">Current prime</span>
+          <span class="hud-value" id="hudPrime">—</span>
+        </div>
+        <div class="hud-row">
+          <span class="hud-label">Eliminated</span>
+          <span class="hud-value" id="hudElim">0</span>
+        </div>
+        <div class="hud-row">
+          <span class="hud-label">Primes found</span>
+          <span class="hud-value" id="hudPrimes">0</span>
+        </div>
       </div>
-      <div class="control">
-        <label>&nbsp;</label>
-        <div class="btn-row">
-          <button class="btn" id="start">Start sieve</button>
-          <button class="btn secondary" id="reset">Reset</button>
+      <div class="sim-hud-right">
+        <span class="hud-chip" id="hudProgress">0% complete</span>
+      </div>
+      <div class="sim-tip" id="tip">
+        <strong>Try this:</strong> start the sieve and watch the colours spread
+      </div>
+    </div>
+
+    <!-- PRESETS -->
+    <div class="preset-bar">
+      <button class="preset-btn is-active" data-range="30">Up to 30</button>
+      <button class="preset-btn" data-range="100">Up to 100</button>
+      <button class="preset-btn" data-range="200">Up to 200</button>
+      <button class="preset-btn" data-range="500">Up to 500</button>
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="control-groups">
+      <div class="control-group">
+        <h4><i class="fas fa-sliders-h"></i> Range</h4>
+        <div class="slider-row">
+          <label>
+            Numbers up to
+            <span class="value-chip" id="rangeChip">200</span>
+          </label>
+          <input type="range" id="range" min="30" max="500" value="200" step="10">
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h4><i class="fas fa-tachometer-alt"></i> Speed</h4>
+        <div class="segmented" id="speedGroup">
+          <button data-speed="800">Slow</button>
+          <button data-speed="300" class="is-active">Normal</button>
+          <button data-speed="80">Fast</button>
+          <button data-speed="20">Instant</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h4><i class="fas fa-tools"></i> Actions</h4>
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.3rem;">
+          <button class="preset-btn" id="startBtn"><i class="fas fa-play"></i> Start sieve</button>
+          <button class="preset-btn" id="resetBtn"><i class="fas fa-undo"></i> Reset</button>
         </div>
       </div>
     </div>
 
-    <div class="sim-stats">
-      <div class="stat"><span class="stat-label">Current prime</span><span class="stat-value" id="currentPrime">—</span></div>
-      <div class="stat"><span class="stat-label">Eliminated</span><span class="stat-value" id="eliminated">0</span></div>
-      <div class="stat"><span class="stat-label">Primes found</span><span class="stat-value" id="primesFound">0</span></div>
-    </div>
-
-    <div class="sim-canvas-wrap" style="padding: 1.5rem;">
-      <div id="grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(38px, 1fr)); gap: 4px;"></div>
+    <!-- INSIGHT -->
+    <div class="insight-panel">
+      <h4><i class="fas fa-lightbulb"></i> Why this works</h4>
+      <p>
+        If a number has a factor larger than its square root, it must also have
+        a matching factor smaller than its square root. So we only need to sieve
+        with primes up to <em>√n</em> — everything else is already taken care of.
+      </p>
+      <p>
+        Notice that when we start crossing off multiples of <em>p</em>, we begin
+        at <em>p²</em>, not <em>2p</em>. Smaller multiples were already removed
+        by a smaller prime. This is why the sieve is so fast: complexity is
+        <em>O(n log log n)</em>.
+      </p>
     </div>
   </div>
 
@@ -61,56 +117,47 @@
       font-size: 0.85rem;
       font-weight: 500;
       color: #1b4a6b;
-      transition: all 0.2s ease;
+      transition: all 0.25s ease;
       font-variant-numeric: tabular-nums;
+      cursor: help;
     }
-    .num-cell.eliminated {
-      background: #f0f4f8;
-      color: #b6c4d0;
-      text-decoration: line-through;
-      border-color: #e4ebf1;
-    }
-    .num-cell.prime {
-      background: #2c7aa0;
-      color: #ffffff;
-      border-color: #1b4a6b;
-      font-weight: 700;
-      box-shadow: 0 0 0 2px rgba(44, 122, 160, 0.2);
-    }
-    .num-cell.current {
-      background: #f5b342;
-      color: #0b2b3f;
-      border-color: #e09a20;
-      font-weight: 700;
-      transform: scale(1.08);
-    }
-    .num-cell.one {
-      background: #eef4fa;
-      color: #8ba9c0;
-      font-style: italic;
-    }
+    .num-cell:hover { transform: scale(1.1); z-index: 2; }
+    .num-cell.eliminated { background: #f0f4f8; color: #b6c4d0; text-decoration: line-through; border-color: #e4ebf1; }
+    .num-cell.prime { background: #2c7aa0; color: #fff; border-color: #1b4a6b; font-weight: 700; box-shadow: 0 0 0 2px rgba(44,122,160,0.25); }
+    .num-cell.current { background: #f5b342; color: #0b2b3f; border-color: #e09a20; font-weight: 700; transform: scale(1.15); box-shadow: 0 0 12px rgba(245,179,66,0.5); }
+    .num-cell.one { background: #eef4fa; color: #8ba9c0; font-style: italic; }
   </style>
 
+  <script src="sim-ui.js"></script>
   <script>
     (function () {
+      'use strict';
+
       const grid = document.getElementById('grid');
       const rangeInput = document.getElementById('range');
-      const rangeLabel = document.getElementById('rangeLabel');
-      const speedInput = document.getElementById('speed');
-      const speedLabel = document.getElementById('speedLabel');
-      const startBtn = document.getElementById('start');
-      const resetBtn = document.getElementById('reset');
-      const currentPrimeEl = document.getElementById('currentPrime');
-      const eliminatedEl = document.getElementById('eliminated');
-      const primesFoundEl = document.getElementById('primesFound');
+      const rangeChip = document.getElementById('rangeChip');
+      const speedGroup = document.getElementById('speedGroup');
+      const startBtn = document.getElementById('startBtn');
+      const resetBtn = document.getElementById('resetBtn');
+      const hudPrime = document.getElementById('hudPrime');
+      const hudElim = document.getElementById('hudElim');
+      const hudPrimes = document.getElementById('hudPrimes');
+      const hudProgress = document.getElementById('hudProgress');
+      const tipEl = document.getElementById('tip');
+      const rangeBtns = document.querySelectorAll('.preset-btn[data-range]');
 
       let cells = [];
       let n = 200;
       let running = false;
       let stopped = false;
+      let speed = 300;
 
-      const speedNames = ['Very slow', 'Slow', 'Normal', 'Fast', 'Very fast'];
-      const speedDelays = [800, 400, 180, 80, 30];
+      SimUI.tips(tipEl, [
+        '<strong>Try this:</strong> start the sieve and watch the colours spread',
+        '<strong>Try this:</strong> hover a cell to see if it was crossed out',
+        '<strong>Try this:</strong> try up to 500 — see how fast it still finishes',
+        '<strong>Try this:</strong> notice the current prime always turns gold',
+      ], 6000);
 
       function buildGrid() {
         grid.innerHTML = '';
@@ -119,6 +166,7 @@
           const cell = document.createElement('div');
           cell.className = 'num-cell';
           cell.textContent = i;
+          cell.title = i === 1 ? '1 is neither prime nor composite' : `Click to check ${i}`;
           if (i === 1) cell.classList.add('one');
           grid.appendChild(cell);
           cells[i] = cell;
@@ -128,37 +176,41 @@
       function reset() {
         running = false;
         stopped = false;
-        startBtn.textContent = 'Start sieve';
-        currentPrimeEl.textContent = '—';
-        eliminatedEl.textContent = '0';
-        primesFoundEl.textContent = '0';
+        startBtn.innerHTML = '<i class="fas fa-play"></i> Start sieve';
+        hudPrime.textContent = '—';
+        hudElim.textContent = '0';
+        hudPrimes.textContent = '0';
+        hudProgress.textContent = '0% complete';
         buildGrid();
       }
 
       async function runSieve() {
         running = true;
-        startBtn.textContent = 'Running…';
+        stopped = false;
+        startBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Running…';
+
         const isPrime = new Array(n + 1).fill(true);
         isPrime[0] = isPrime[1] = false;
+        let eliminated = 0, primesFound = 0;
 
-        let eliminated = 0;
-        let primesFound = 0;
+        const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
-        const delay = () => speedDelays[speedInput.value - 1];
+        // Mark 1 immediately
+        cells[1].classList.add('eliminated');
 
         for (let p = 2; p * p <= n; p++) {
           if (stopped) return;
           if (!isPrime[p]) continue;
 
-          currentPrimeEl.textContent = p;
+          hudPrime.textContent = p;
           cells[p].classList.add('current');
-          await new Promise((r) => setTimeout(r, delay()));
+          await delay(speed);
           if (stopped) return;
 
           cells[p].classList.remove('current');
           cells[p].classList.add('prime');
           primesFound++;
-          primesFoundEl.textContent = primesFound;
+          hudPrimes.textContent = primesFound;
 
           for (let m = p * p; m <= n; m += p) {
             if (stopped) return;
@@ -166,10 +218,13 @@
               isPrime[m] = false;
               cells[m].classList.add('eliminated');
               eliminated++;
-              eliminatedEl.textContent = eliminated;
-              await new Promise((r) => setTimeout(r, Math.max(4, delay() / 6)));
+              hudElim.textContent = eliminated;
+              await delay(Math.max(5, speed / 8));
             }
           }
+
+          const pct = Math.min(100, Math.round((p / Math.sqrt(n)) * 100));
+          hudProgress.textContent = pct + '% complete';
         }
 
         // Remaining primes
@@ -178,14 +233,15 @@
           if (isPrime[i] && !cells[i].classList.contains('prime')) {
             cells[i].classList.add('prime');
             primesFound++;
-            primesFoundEl.textContent = primesFound;
-            await new Promise((r) => setTimeout(r, 20));
+            hudPrimes.textContent = primesFound;
+            await delay(15);
           }
         }
 
-        currentPrimeEl.textContent = 'done';
+        hudPrime.textContent = 'done';
+        hudProgress.textContent = '100% complete';
         running = false;
-        startBtn.textContent = 'Restart';
+        startBtn.innerHTML = '<i class="fas fa-redo"></i> Run again';
       }
 
       startBtn.addEventListener('click', () => {
@@ -198,18 +254,30 @@
 
       rangeInput.addEventListener('input', () => {
         n = parseInt(rangeInput.value, 10);
-        rangeLabel.textContent = n;
+        rangeChip.textContent = n;
+        rangeBtns.forEach((b) => b.classList.remove('is-active'));
         if (!running) reset();
       });
 
-      speedInput.addEventListener('input', () => {
-        speedLabel.textContent = speedNames[speedInput.value - 1];
+      rangeBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          n = parseInt(btn.dataset.range, 10);
+          rangeInput.value = n;
+          rangeChip.textContent = n;
+          rangeBtns.forEach((b) => b.classList.toggle('is-active', b === btn));
+          reset();
+        });
+      });
+
+      speedGroup.querySelectorAll('button').forEach((b) => {
+        b.addEventListener('click', () => {
+          speed = parseInt(b.dataset.speed, 10);
+          speedGroup.querySelectorAll('button').forEach((x) => x.classList.toggle('is-active', x === b));
+        });
       });
 
       // init
-      n = parseInt(rangeInput.value, 10);
-      speedLabel.textContent = speedNames[speedInput.value - 1];
-      reset();
+      buildGrid();
     })();
   </script>
 </body>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Memory Span — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Memory Span</h1>
+      <div class="sim-meta">Psychology · Working Memory</div>
+    </div>
+
+    <div class="sim-description">
+      Digits flash one at a time. Repeat them back in order (forward span) or reversed (backward span). Most adults hold <strong>7 ± 2 digits forward</strong> and <strong>5 ± 1 backward</strong>. Find your own limit.
+    </div>
+
+    <div class="sim-canvas-wrap" style="padding: 2rem; text-align: center;">
+      <div id="stage" style="min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem;">
+        <div style="color:#4f6f86; font-size:0.95rem;">Press Start to begin</div>
+      </div>
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>Mode</label>
+        <select id="mode">
+          <option value="forward" selected>Forward (repeat in order)</option>
+          <option value="backward">Backward (repeat reversed)</option>
+        </select>
+      </div>
+      <div class="control">
+        <label>&nbsp;</label>
+        <div class="btn-row">
+          <button class="btn" id="start">Start</button>
+          <button class="btn secondary" id="reset">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">Current span</span><span class="stat-value" id="currentSpan">—</span></div>
+      <div class="stat"><span class="stat-label">Best span</span><span class="stat-value" id="bestSpan">—</span></div>
+      <div class="stat"><span class="stat-label">Mode</span><span class="stat-value" id="modeLabel">—</span></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const stage = document.getElementById('stage');
+      const modeSel = document.getElementById('mode');
+      const startBtn = document.getElementById('start');
+      const resetBtn = document.getElementById('reset');
+      const currentSpanEl = document.getElementById('currentSpan');
+      const bestSpanEl = document.getElementById('bestSpan');
+      const modeLabel = document.getElementById('modeLabel');
+
+      let span = 3;
+      let bestSpan = 0;
+      let sequence = [];
+      let userInput = [];
+      let running = false;
+
+      function showStage(html) {
+        stage.innerHTML = html;
+      }
+
+      function flashDigits(digits, done) {
+        let i = 0;
+        const showNext = () => {
+          if (i >= digits.length) {
+            done();
+            return;
+          }
+          showStage(`<div style="font-size:4rem; font-weight:800; color:#2c7aa0;">${digits[i]}</div>`);
+          i++;
+          setTimeout(() => {
+            showStage(`<div style="font-size:4rem; font-weight:800; color:#ffffff;">.</div>`);
+            setTimeout(showNext, 250);
+          }, 700);
+        };
+        showNext();
+      }
+
+      function askInput() {
+        const expected = modeSel.value === 'backward'
+          ? sequence.slice().reverse().join('')
+          : sequence.join('');
+        userInput = [];
+
+        const render = () => {
+          const inputStr = userInput.length ? userInput.join('') : '___';
+          showStage(`
+            <div style="color:#4f6f86; font-size:0.95rem; margin-bottom:0.5rem;">
+              Repeat the digits ${modeSel.value === 'backward' ? 'in <strong>reverse</strong>' : 'in order'}:
+            </div>
+            <div style="font-size:2.5rem; font-weight:800; color:#2c7aa0; letter-spacing:0.4em; min-height:60px;">${inputStr}</div>
+            <div style="display:flex; flex-wrap:wrap; gap:0.4rem; justify-content:center; max-width:400px;">
+              ${[1,2,3,4,5,6,7,8,9,0].map(d => `<button data-d="${d}" class="key">${d}</button>`).join('')}
+            </div>
+            <div style="display:flex; gap:0.4rem; margin-top:0.5rem;">
+              <button id="backspace" class="key secondary">⌫</button>
+              <button id="submit" class="key primary">Submit</button>
+            </div>
+          `);
+
+          stage.querySelectorAll('.key[data-d]').forEach((b) => {
+            b.style.cssText = `
+              background: white;
+              border: 1px solid #cfdde9;
+              border-radius: 10px;
+              padding: 0.6rem 1rem;
+              font-size: 1.1rem;
+              font-weight: 600;
+              color: #1b4a6b;
+              cursor: pointer;
+              font-family: inherit;
+              min-width: 44px;
+            `;
+            b.addEventListener('click', () => {
+              userInput.push(b.dataset.d);
+              render();
+            });
+          });
+
+          const bs = stage.querySelector('#backspace');
+          bs.style.cssText = `
+            background: #e4f0f9; border: 1px solid #b9d4e7; border-radius: 10px;
+            padding: 0.6rem 1rem; font-size: 1rem; font-weight: 600;
+            color: #1b4a6b; cursor: pointer; font-family: inherit;
+          `;
+          bs.addEventListener('click', () => {
+            userInput.pop();
+            render();
+          });
+
+          const sub = stage.querySelector('#submit');
+          sub.style.cssText = `
+            background: #2c7aa0; border: none; border-radius: 10px;
+            padding: 0.6rem 1.4rem; font-size: 1rem; font-weight: 600;
+            color: white; cursor: pointer; font-family: inherit;
+          `;
+          sub.addEventListener('click', () => {
+            const correct = userInput.join('') === expected;
+            if (correct) {
+              bestSpan = Math.max(bestSpan, span);
+              bestSpanEl.textContent = bestSpan;
+              span++;
+              currentSpanEl.textContent = span;
+              showStage(`<div style="font-size:1.4rem; font-weight:700; color:#5a8a4a;">✓ Correct!</div><div style="color:#4f6f86;">Next: ${span} digits</div>`);
+              setTimeout(nextTrial, 1200);
+            } else {
+              running = false;
+              showStage(`
+                <div style="font-size:1.4rem; font-weight:700; color:#c0392b;">✗ Not quite</div>
+                <div style="color:#4f6f86;">You entered: <strong>${userInput.join('') || '(nothing)'}</strong></div>
+                <div style="color:#4f6f86;">Correct: <strong>${expected}</strong></div>
+                <div style="color:#2c7aa0; font-weight:600; margin-top:0.5rem;">Your span: ${span - 1}</div>
+              `);
+              currentSpanEl.textContent = span - 1;
+            }
+          });
+        };
+
+        render();
+      }
+
+      function nextTrial() {
+        currentSpanEl.textContent = span;
+        sequence = [];
+        for (let i = 0; i < span; i++) sequence.push(Math.floor(Math.random() * 10));
+
+        showStage(`<div style="color:#4f6f86; font-size:0.95rem;">Get ready… ${span} digits</div>`);
+        setTimeout(() => {
+          flashDigits(sequence, () => askInput());
+        }, 800);
+      }
+
+      function start() {
+        running = true;
+        span = 3;
+        bestSpan = 0;
+        bestSpanEl.textContent = '—';
+        modeLabel.textContent = modeSel.value === 'backward' ? 'Backward' : 'Forward';
+        nextTrial();
+      }
+
+      function reset() {
+        running = false;
+        span = 3;
+        bestSpan = 0;
+        bestSpanEl.textContent = '—';
+        currentSpanEl.textContent = '—';
+        modeLabel.textContent = '—';
+        showStage('<div style="color:#4f6f86; font-size:0.95rem;">Press Start to begin</div>');
+      }
+
+      startBtn.addEventListener('click', start);
+      resetBtn.addEventListener('click', reset);
+      modeSel.addEventListener('change', reset);
+    })();
+  </script>
+</body>
+</html>

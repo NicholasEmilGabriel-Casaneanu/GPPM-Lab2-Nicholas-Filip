@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>McGurk Effect — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>McGurk Effect</h1>
+      <div class="sim-meta">Cognitive Science · Multisensory Perception</div>
+    </div>
+
+    <div class="sim-description">
+      Hear one syllable, see another mouth shape — and your brain fuses them into a third sound that was never played. Switch audio and video independently and discover that you don't hear with your ears alone.
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="canvas" width="820" height="400"></canvas>
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>Audio syllable</label>
+        <select id="audio">
+          <option value="ba" selected>BA</option>
+          <option value="ga">GA</option>
+          <option value="da">DA</option>
+          <option value="pa">PA</option>
+          <option value="ka">KA</option>
+        </select>
+      </div>
+      <div class="control">
+        <label>Mouth shape</label>
+        <select id="mouth">
+          <option value="ba" selected>BA (closed → open)</option>
+          <option value="ga">GA (open wide → back)</option>
+          <option value="da">DA (tongue to ridge)</option>
+          <option value="pa">PA (pursed → open)</option>
+          <option value="ka">KA (open → back)</option>
+        </select>
+      </div>
+      <div class="control">
+        <label>&nbsp;</label>
+        <div class="btn-row">
+          <button class="btn" id="play">Play</button>
+          <button class="btn secondary" id="stop">Stop</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">Audio</span><span class="stat-value" id="audioLabel">BA</span></div>
+      <div class="stat"><span class="stat-label">Visual</span><span class="stat-value" id="mouthLabel">BA</span></div>
+      <div class="stat"><span class="stat-label">Perceived</span><span class="stat-value" id="perceived">—</span></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const audioSel = document.getElementById('audio');
+      const mouthSel = document.getElementById('mouth');
+      const playBtn = document.getElementById('play');
+      const stopBtn = document.getElementById('stop');
+      const audioLabelEl = document.getElementById('audioLabel');
+      const mouthLabelEl = document.getElementById('mouthLabel');
+      const perceivedEl = document.getElementById('perceived');
+
+      let audioCtx = null;
+      let isPlaying = false;
+      let animHandle = null;
+      let mouthOpen = 0; // 0..1
+      let startTime = 0;
+
+      // Frequency formant approximations for each syllable
+      const FORMANTS = {
+        ba: [300, 900, 2200],
+        ga: [300, 1800, 2600],
+        da: [300, 1600, 2400],
+        pa: [300, 900, 2200],
+        ka: [300, 2000, 2800],
+      };
+
+      // Expected perception when audio & video conflict
+      const MCGURK = {
+        'ba-ga': 'DA (or THA)',
+        'ba-ka': 'DA / GA fusion',
+        'ba-da': 'BA (weak fusion)',
+        'ga-ba': 'BA? / confused',
+        'ga-da': 'GA / DA',
+        'pa-ka': 'PA / KA fusion',
+        'ga-pa': 'confused',
+      };
+
+      function getPerceived(audio, mouth) {
+        if (audio === mouth) return audio.toUpperCase() + ' (aligned)';
+        const key = audio + '-' + mouth;
+        return MCGURK[key] || 'Fused percept (not ' + audio.toUpperCase() + ', not ' + mouth.toUpperCase() + ')';
+      }
+
+      function drawMouth(open) {
+        const w = canvas.width, h = canvas.height;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+
+        // Face
+        const cx = w / 2, cy = h / 2;
+        ctx.fillStyle = '#f5d5b8';
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, 140, 160, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#8b6b4a';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Eyes
+        ctx.fillStyle = '#0b2b3f';
+        ctx.beginPath();
+        ctx.arc(cx - 50, cy - 60, 10, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(cx + 50, cy - 60, 10, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Mouth
+        const mouthW = 80;
+        const mouthH = 5 + open * 60;
+        ctx.fillStyle = '#5a2a2a';
+        ctx.beginPath();
+        ctx.ellipse(cx, cy + 60, mouthW / 2, mouthH / 2, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#8b3a3a';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // Tongue hint (if open)
+        if (open > 0.4) {
+          ctx.fillStyle = '#c76b6b';
+          ctx.beginPath();
+          ctx.ellipse(cx, cy + 60 + mouthH / 4, mouthW / 4, mouthH / 4, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Labels
+        const audioText = audioSel.value.toUpperCase();
+        const mouthText = mouthSel.value.toUpperCase();
+        ctx.fillStyle = '#6f8da3';
+        ctx.font = '13px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('Audio: ' + audioText, cx - 200, cy - 140);
+        ctx.fillText('Mouth: ' + mouthText, cx + 200, cy - 140);
+      }
+
+      function playSyllable() {
+        const audio = audioSel.value;
+        const mouth = mouthSel.value;
+
+        audioLabelEl.textContent = audio.toUpperCase();
+        mouthLabelEl.textContent = mouth.toUpperCase();
+        perceivedEl.textContent = getPerceived(audio, mouth);
+
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        // Synthesize a rough "syllable" by sweeping through formants
+        const now = audioCtx.currentTime;
+        const duration = 0.5;
+        const formants = FORMANTS[audio] || FORMANTS.ba;
+
+        // Create a carrier tone with formant modulation via bandpass filters
+        const osc = audioCtx.createOscillator();
+        osc.type = 'sawtooth';
+        osc.frequency.value = 120; // fundamental
+
+        const masterGain = audioCtx.createGain();
+        masterGain.gain.value = 0;
+        masterGain.gain.linearRampToValueAtTime(0.15, now + 0.05);
+        masterGain.gain.linearRampToValueAtTime(0.15, now + duration - 0.1);
+        masterGain.gain.linearRampToValueAtTime(0, now + duration);
+
+        // Three bandpass filters to approximate formants
+        const filters = formants.map((f) => {
+          const bp = audioCtx.createBiquadFilter();
+          bp.type = 'bandpass';
+          bp.frequency.value = f;
+          bp.Q.value = 8;
+          return bp;
+        });
+
+        const mergeGain = audioCtx.createGain();
+        mergeGain.gain.value = 0.33;
+        filters.forEach((f) => {
+          osc.connect(f).connect(mergeGain);
+        });
+        mergeGain.connect(masterGain).connect(audioCtx.destination);
+
+        osc.start(now);
+        osc.stop(now + duration);
+
+        // Animate mouth
+        startTime = performance.now();
+        isPlaying = true;
+        const animate = () => {
+          const t = (performance.now() - startTime) / 500;
+          if (t >= 1) {
+            mouthOpen = 0;
+            drawMouth(0);
+            isPlaying = false;
+            return;
+          }
+          mouthOpen = Math.sin(t * Math.PI) * (mouth === 'ba' || mouth === 'pa' ? 0.4 : 1);
+          drawMouth(mouthOpen);
+          animHandle = requestAnimationFrame(animate);
+        };
+        animate();
+      }
+
+      function stopPlay() {
+        if (animHandle) cancelAnimationFrame(animHandle);
+        isPlaying = false;
+        mouthOpen = 0;
+        drawMouth(0);
+      }
+
+      audioSel.addEventListener('change', () => {
+        audioLabelEl.textContent = audioSel.value.toUpperCase();
+        perceivedEl.textContent = getPerceived(audioSel.value, mouthSel.value);
+      });
+      mouthSel.addEventListener('change', () => {
+        mouthLabelEl.textContent = mouthSel.value.toUpperCase();
+        perceivedEl.textContent = getPerceived(audioSel.value, mouthSel.value);
+      });
+
+      playBtn.addEventListener('click', playSyllable);
+      stopBtn.addEventListener('click', stopPlay);
+
+      // Init
+      audioLabelEl.textContent = audioSel.value.toUpperCase();
+      mouthLabelEl.textContent = mouthSel.value.toUpperCase();
+      drawMouth(0);
+    })();
+  </script>
+</body>
+</html>

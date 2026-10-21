@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Classical Conditioning — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Classical Conditioning</h1>
+      <div class="sim-meta">Psychology · Learning</div>
+    </div>
+
+    <div class="sim-description">
+      Pavlov's dog, but you run the experiment. Pair a neutral cue (a light) with a reward (food) and watch the conditioned response build up. Then remove the reward and see how quickly it extinguishes.
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="canvas" width="820" height="360"></canvas>
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>Training mode</label>
+        <select id="mode">
+          <option value="pair">Pair (light + food)</option>
+          <option value="lightOnly">Light only (test)</option>
+          <option value="extinguish">Extinction (light, no food)</option>
+        </select>
+      </div>
+      <div class="control">
+        <label>&nbsp;</label>
+        <div class="btn-row">
+          <button class="btn" id="trial">Run trial</button>
+          <button class="btn secondary" id="reset">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">Trials</span><span class="stat-value" id="trials">0</span></div>
+      <div class="stat"><span class="stat-label">Association strength</span><span class="stat-value" id="strength">—</span></div>
+      <div class="stat"><span class="stat-label">Response</span><span class="stat-value" id="response">—</span></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const modeSel = document.getElementById('mode');
+      const trialBtn = document.getElementById('trial');
+      const resetBtn = document.getElementById('reset');
+      const trialsEl = document.getElementById('trials');
+      const strengthEl = document.getElementById('strength');
+      const responseEl = document.getElementById('response');
+
+      // Association strength (0..1)
+      let association = 0;
+      let trials = 0;
+      let lastMode = null;
+      let lastResponse = 0;
+      let animating = false;
+
+      const LEARNING_RATE = 0.15;
+      const EXTINCTION_RATE = 0.10;
+
+      function updateStats() {
+        trialsEl.textContent = trials;
+        strengthEl.textContent = (association * 100).toFixed(0) + '%';
+        const response = association > 0.6 ? 'Strong' : association > 0.3 ? 'Moderate' : association > 0.1 ? 'Weak' : 'None';
+        responseEl.textContent = response;
+      }
+
+      function runTrial() {
+        if (animating) return;
+        const mode = modeSel.value;
+        trials++;
+
+        if (mode === 'pair') {
+          // Reward: strengthening
+          association = Math.min(1, association + LEARNING_RATE * (1 - association));
+        } else if (mode === 'lightOnly') {
+          // Test: no learning
+        } else if (mode === 'extinguish') {
+          // Extinction: weakening
+          association = Math.max(0, association - EXTINCTION_RATE * association);
+        }
+
+        lastResponse = association;
+        updateStats();
+
+        // Animation: light flashes
+        animating = true;
+        animateTrial(mode);
+      }
+
+      function animateTrial(mode) {
+        const start = performance.now();
+        const duration = 1200;
+
+        const draw = (t) => {
+          const w = canvas.width, h = canvas.height;
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, w, h);
+
+          // Light bulb on left
+          const bulbX = 220, bulbY = h / 2;
+          const isOn = t < 0.5;
+          if (isOn) {
+            const grad = ctx.createRadialGradient(bulbX, bulbY, 10, bulbX, bulbY, 100);
+            grad.addColorStop(0, 'rgba(245, 179, 66, 0.9)');
+            grad.addColorStop(1, 'rgba(245, 179, 66, 0)');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(bulbX, bulbY, 100, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.fillStyle = isOn ? '#f5b342' : '#e0eaf2';
+          ctx.beginPath();
+          ctx.arc(bulbX, bulbY, 40, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#8ba9c0';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          ctx.fillStyle = '#0b2b3f';
+          ctx.font = 'bold 12px system-ui';
+          ctx.textAlign = 'center';
+          ctx.fillText('Light', bulbX, bulbY + 65);
+
+          // Food on right (only in pair mode)
+          const foodX = 600, foodY = h / 2;
+          if (mode === 'pair' && t > 0.4) {
+            ctx.font = '48px system-ui';
+            ctx.fillText('🍖', foodX, foodY + 20);
+          } else {
+            ctx.fillStyle = '#e0eaf2';
+            ctx.beginPath();
+            ctx.arc(foodX, foodY, 40, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.fillStyle = '#0b2b3f';
+          ctx.font = 'bold 12px system-ui';
+          ctx.fillText('Food', foodX, foodY + 65);
+
+          // Arrow from light to food
+          ctx.strokeStyle = '#cfdde9';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(bulbX + 50, bulbY);
+          ctx.lineTo(foodX - 50, foodY);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(foodX - 50, foodY);
+          ctx.lineTo(foodX - 60, foodY - 5);
+          ctx.moveTo(foodX - 50, foodY);
+          ctx.lineTo(foodX - 60, foodY + 5);
+          ctx.stroke();
+
+          // Dog response
+          const dogX = w / 2;
+          const dogY = h - 60;
+          ctx.font = '40px system-ui';
+          ctx.fillText('🐕', dogX, dogY);
+          // Drool
+          if (t > 0.3 && lastResponse > 0.15) {
+            const drops = Math.round(lastResponse * 3);
+            for (let i = 0; i < drops; i++) {
+              ctx.fillStyle = 'rgba(44, 122, 160, 0.7)';
+              ctx.beginPath();
+              ctx.arc(dogX + 30 + i * 8, dogY - 10 + Math.sin(t * 10 + i) * 5, 4, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+          ctx.fillStyle = '#0b2b3f';
+          ctx.font = 'bold 12px system-ui';
+          ctx.textAlign = 'center';
+          ctx.fillText('Response: ' + Math.round(lastResponse * 100) + '%', w / 2, h - 15);
+
+          // Title
+          ctx.fillStyle = '#6f8da3';
+          ctx.font = '12px system-ui';
+          ctx.textAlign = 'left';
+          const labels = { pair: 'Paired trial', lightOnly: 'Light alone', extinguish: 'Extinction trial' };
+          ctx.fillText(labels[mode], 30, 30);
+
+          if (t < 1) {
+            requestAnimationFrame(() => draw(Math.min(1, (performance.now() - start) / duration)));
+          } else {
+            animating = false;
+          }
+        };
+        draw(0);
+      }
+
+      function reset() {
+        association = 0;
+        trials = 0;
+        lastResponse = 0;
+        updateStats();
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#6f8da3';
+        ctx.font = '14px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('Press "Run trial" to begin', canvas.width / 2, canvas.height / 2);
+      }
+
+      trialBtn.addEventListener('click', runTrial);
+      resetBtn.addEventListener('click', reset);
+
+      reset();
+    })();
+  </script>
+</body>
+</html>

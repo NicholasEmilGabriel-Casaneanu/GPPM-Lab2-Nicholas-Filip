@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attentional Blink — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Attentional Blink</h1>
+      <div class="sim-meta">Cognitive Science · Temporal Attention</div>
+    </div>
+
+    <div class="sim-description">
+      Letters flash in rapid succession. Spot the white target letter, then try to spot a second target shortly after. In the ~300–500 ms window after the first, the second is often missed entirely — attention is still "blinking."
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="canvas" width="820" height="400"></canvas>
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>&nbsp;</label>
+        <div class="btn-row">
+          <button class="btn" id="start">Start trial</button>
+        </div>
+      </div>
+      <div class="control">
+        <label>&nbsp;</label>
+        <div class="stat" style="background:#f8fafc; padding:0.6rem 1rem; border-radius:8px; border:1px solid #e2edf5;">
+          <span class="stat-value" id="status" style="font-size:0.95rem;">Press Start</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">T1 accuracy</span><span class="stat-value" id="t1acc">—</span></div>
+      <div class="stat"><span class="stat-label">T2 accuracy</span><span class="stat-value" id="t2acc">—</span></div>
+      <div class="stat"><span class="stat-label">Trials</span><span class="stat-value" id="trials">0</span></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const startBtn = document.getElementById('start');
+      const statusEl = document.getElementById('status');
+      const t1accEl = document.getElementById('t1acc');
+      const t2accEl = document.getElementById('t2acc');
+      const trialsEl = document.getElementById('trials');
+
+      const LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ'.split('');
+      const SOA_FRAMES = 15; // 15 frames × ~50 ms ≈ 750 ms
+
+      let t1Correct = 0;
+      let t2Correct = 0;
+      let trials = 0;
+
+      let sequence = [];
+      let currentFrame = 0;
+      let animHandle = null;
+      let phase = 'idle'; // 'stream' | 'input' | 'idle'
+      let t1Index = 0, t2Index = 0;
+      let t1Char = '', t2Char = '';
+
+      function makeTrial() {
+        const n = 20;
+        const chars = [];
+        for (let i = 0; i < n; i++) {
+          chars.push({ char: pick(LETTERS), target: false });
+        }
+        // T1 at index 5, T2 at index 5 + SOA_FRAMES
+        t1Index = 5;
+        t2Index = t1Index + SOA_FRAMES;
+        if (t2Index >= n) t2Index = n - 1;
+        chars[t1Index] = { char: pick(LETTERS), target: true };
+        chars[t2Index] = { char: pick(LETTERS), target: true };
+        return chars;
+      }
+
+      function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+      function drawChar(idx) {
+        const w = canvas.width, h = canvas.height;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+
+        if (idx < 0 || idx >= sequence.length) return;
+
+        const c = sequence[idx];
+        ctx.font = 'bold 120px system-ui';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = c.target ? '#f5b342' : '#0b2b3f';
+        ctx.fillText(c.char, w / 2, h / 2);
+      }
+
+      function runStream() {
+        phase = 'stream';
+        currentFrame = 0;
+
+        const step = () => {
+          if (currentFrame >= sequence.length) {
+            phase = 'input';
+            askInput();
+            return;
+          }
+          drawChar(currentFrame);
+          currentFrame++;
+          animHandle = setTimeout(step, 50);
+        };
+        step();
+      }
+
+      function askInput() {
+        const w = canvas.width, h = canvas.height;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = '#0b2b3f';
+        ctx.font = 'bold 22px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('Type the two yellow letters:', w / 2, h / 2 - 60);
+        ctx.font = '16px system-ui';
+        ctx.fillStyle = '#6f8da3';
+        ctx.fillText('First letter then second letter — or "?" if missed', w / 2, h / 2 - 20);
+        statusEl.textContent = 'Input: type 2 characters';
+
+        // Show input display
+        ctx.fillStyle = '#f0f4f9';
+        ctx.fillRect(w / 2 - 100, h / 2, 200, 50);
+        ctx.fillStyle = '#2c7aa0';
+        ctx.font = 'bold 24px system-ui';
+        ctx.fillText(t2Char ? t1Char + t2Char : t1Char || '…', w / 2, h / 2 + 34);
+
+        const handler = (e) => {
+          if (e.key === 'Backspace') {
+            if (t2Char) t2Char = '';
+            else t1Char = '';
+            askInput();
+            return;
+          }
+          if (e.key.length === 1 && /[a-zA-Z?]/.test(e.key)) {
+            const upper = e.key.toUpperCase();
+            if (!t1Char) {
+              t1Char = upper;
+            } else if (!t2Char) {
+              t2Char = upper;
+              checkAnswer();
+              window.removeEventListener('keydown', handler);
+              return;
+            }
+            askInput();
+          }
+        };
+        window.addEventListener('keydown', handler);
+      }
+
+      function checkAnswer() {
+        const correct1 = t1Char === sequence[t1Index].char;
+        const correct2 = t2Char === sequence[t2Index].char;
+        if (correct1) t1Correct++;
+        if (correct2) t2Correct++;
+        trials++;
+
+        trialsEl.textContent = trials;
+        t1accEl.textContent = Math.round((t1Correct / trials) * 100) + '%';
+        t2accEl.textContent = Math.round((t2Correct / trials) * 100) + '%';
+
+        const w = canvas.width, h = canvas.height;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+        ctx.textAlign = 'center';
+        ctx.font = 'bold 24px system-ui';
+        ctx.fillStyle = correct1 && correct2 ? '#5a8a4a' : '#c76b3b';
+        ctx.fillText(correct1 && correct2 ? '✓ Both correct!' : 'Not quite', w / 2, h / 2 - 30);
+        ctx.font = '16px system-ui';
+        ctx.fillStyle = '#0b2b3f';
+        ctx.fillText(`T1 was "${sequence[t1Index].char}" — you said "${t1Char}"`, w / 2, h / 2 + 10);
+        ctx.fillText(`T2 was "${sequence[t2Index].char}" — you said "${t2Char}"`, w / 2, h / 2 + 40);
+
+        phase = 'idle';
+        statusEl.textContent = 'Press Start to try again';
+        t1Char = '';
+        t2Char = '';
+      }
+
+      function start() {
+        sequence = makeTrial();
+        t1Char = '';
+        t2Char = '';
+        statusEl.textContent = 'Watch closely…';
+        runStream();
+      }
+
+      startBtn.addEventListener('click', () => {
+        if (phase === 'stream') return;
+        start();
+      });
+
+      // Initial state
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#6f8da3';
+      ctx.font = '16px system-ui';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('Press Start', canvas.width / 2, canvas.height / 2);
+    })();
+  </script>
+</body>
+</html>
