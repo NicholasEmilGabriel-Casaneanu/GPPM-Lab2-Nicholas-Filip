@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Truss Analyzer — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Truss Analyzer</h1>
+      <div class="sim-meta">Engineering · Statics &amp; Structural Analysis</div>
+    </div>
+
+    <div class="sim-description">
+      A pin-jointed Warren truss bridge under a moving point load. Each member is coloured by its internal force: red = tension, blue = compression, grey ≈ zero. Forces are computed from joint equilibrium (method of joints).
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="canvas" width="820" height="360"></canvas>
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>Load position: <span id="posLabel">50%</span></label>
+        <input type="range" id="pos" min="0" max="100" value="50" step="1">
+      </div>
+      <div class="control">
+        <label>Load magnitude: <span id="loadLabel">100 kN</span></label>
+        <input type="range" id="load" min="10" max="200" value="100" step="5">
+      </div>
+      <div class="control">
+        <label>&nbsp;</label>
+        <div class="btn-row">
+          <button class="btn secondary" id="toggleLabels">Show force values</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">Max tension</span><span class="stat-value" id="maxT">—</span></div>
+      <div class="stat"><span class="stat-label">Max compression</span><span class="stat-value" id="maxC">—</span></div>
+      <div class="stat"><span class="stat-label">Support reactions</span><span class="stat-value" id="reactions">—</span></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const posInput = document.getElementById('pos');
+      const loadInput = document.getElementById('load');
+      const posLabel = document.getElementById('posLabel');
+      const loadLabel = document.getElementById('loadLabel');
+      const labelsBtn = document.getElementById('toggleLabels');
+      const maxTEl = document.getElementById('maxT');
+      const maxCEl = document.getElementById('maxC');
+      const reactionsEl = document.getElementById('reactions');
+
+      let showLabels = false;
+
+      // ---- Truss geometry (2D) ----
+      // Warren truss, 6 panels, 7 bottom nodes (0..6), 6 top nodes (7..12)
+      // Units: metres. x from 0..12, y=0 bottom, y=2 top apex.
+      const bottom = [];
+      const top = [];
+      const N_PANELS = 6;
+      const PANEL = 2; // metres
+      const HEIGHT = 2;
+      for (let i = 0; i <= N_PANELS; i++) {
+        bottom.push({ x: i * PANEL, y: 0, id: i });
+      }
+      for (let i = 0; i < N_PANELS; i++) {
+        top.push({ x: i * PANEL + PANEL / 2, y: HEIGHT, id: N_PANELS + 1 + i });
+      }
+      const nodes = [...bottom, ...top];
+
+      // Members: [nodeA, nodeB]
+      const members = [];
+      // Bottom chord
+      for (let i = 0; i < N_PANELS; i++) members.push([i, i + 1]);
+      // Top chord
+      for (let i = 0; i < N_PANELS - 1; i++) {
+        members.push([N_PANELS + 1 + i, N_PANELS + 1 + i + 1]);
+      }
+      // Diagonals: bottom[i] -> top[i] and top[i] -> bottom[i+1]
+      for (let i = 0; i < N_PANELS; i++) {
+        const t = N_PANELS + 1 + i;
+        members.push([i, t]);
+        members.push([t, i + 1]);
+      }
+
+      // ---- Solve joint equilibrium by iterative relaxation ----
+      // We treat each member force as unknown and iterate: each node
+      // requires sum of forces = 0. Use a simple least-squares-free
+      // approach: method of sections is overkill; we use a relaxation
+      // iterative scheme on member forces, seeded at 0.
+      function solveForces(loadPos, loadMag) {
+        const n = members.length;
+        const F = new Array(n).fill(0);
+
+        // External loads: downward at a point along bottom chord
+        const loads = nodes.map(() => ({ fx: 0, fy: 0 }));
+        // Support reactions: left (node 0) vertical, right (node 6) vertical
+        // Load at horizontal position x = loadPos (0..12)
+        const L = N_PANELS * PANEL;
+        // Split load between supports based on position
+        const xLoad = loadPos * L;
+        const R_left = loadMag * (L - xLoad) / L;
+        const R_right = loadMag * xLoad / L;
+        loads[0].fy += R_left;
+        loads[N_PANELS].fy += R_right;
+
+        // Find which bottom node the load is nearest to
+        let loadNode = 0;
+        let bestDist = Infinity;
+        for (let i = 0; i <= N_PANELS; i++) {
+          const d = Math.abs(bottom[i].x - xLoad);
+          if (d < bestDist) { bestDist = d; loadNode = i; }
+        }
+        loads[loadNode].fy -= loadMag;
+
+        // Relaxation
+        const memberDir = members.map(([a, b]) => {
+          const dx = nodes[b].x - nodes[a].x;
+          const dy = nodes[b].y - nodes[a].y;
+          const len = Math.hypot(dx, dy);
+          return { dx: dx / len, dy: dy / len, len };
+        });
+
+        // Iterate
+        for (let iter = 0; iter < 8000; iter++) {
+          const residual = nodes.map(() => ({ fx: 0, fy: 0 }));
+          // Accumulate member forces at nodes
+          members.forEach(([a, b], idx) => {
+            const d = memberDir[idx];
+            const f = F[idx];
+            residual[a].fx += f * d.dx;
+            residual[a].fy += f * d.dy;
+            residual[b].fx -= f * d.dx;
+            residual[b].fy -= f * d.dy;
+          });
+          // Add external loads
+          nodes.forEach((_, i) => {
+            residual[i].fx += loads[i].fx;
+            residual[i].fy += loads[i].fy;
+          });
+          // Update member forces to reduce residual (relaxation)
+          members.forEach(([a, b], idx) => {
+            const d = memberDir[idx];
+            // Project residual onto member direction
+            const proj = (residual[a].fx * d.dx + residual[a].fy * d.dy)
+                       + (residual[b].fx * (-d.dx) + residual[b].fy * (-d.dy));
+            F[idx] -= proj * 0.5; // relaxation factor
+          });
+        }
+
+        return F;
+      }
+
+      function draw(loadPos, loadMag, forces) {
+        const w = canvas.width, h = canvas.height;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+
+        const pad = 40;
+        const L = N_PANELS * PANEL;
+        const sx = (w - 2 * pad) / L;
+        const sy = (h - 2 * pad) / HEIGHT;
+        const scale = Math.min(sx, sy) * 0.85;
+
+        const ox = pad + (w - 2 * pad - L * scale) / 2;
+        const oy = h - pad - 40;
+
+        const toPx = (n) => ({
+          x: ox + n.x * scale,
+          y: oy - n.y * scale,
+        });
+
+        // ---- Supports (triangles at bottom nodes 0 and N_PANELS) ----
+        [0, N_PANELS].forEach((i) => {
+          const p = toPx(nodes[i]);
+          ctx.fillStyle = '#8ba9c0';
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(p.x - 12, p.y + 20);
+          ctx.lineTo(p.x + 12, p.y + 20);
+          ctx.closePath();
+          ctx.fill();
+          // hatch lines
+          ctx.strokeStyle = '#6f8da3';
+          ctx.lineWidth = 1;
+          for (let k = -12; k <= 12; k += 6) {
+            ctx.beginPath();
+            ctx.moveTo(p.x + k, p.y + 20);
+            ctx.lineTo(p.x + k - 6, p.y + 26);
+            ctx.stroke();
+          }
+        });
+
+        // ---- Members ----
+        const maxF = Math.max(...forces.map((f) => Math.abs(f)), 1);
+        members.forEach(([a, b], idx) => {
+          const p1 = toPx(nodes[a]);
+          const p2 = toPx(nodes[b]);
+          const f = forces[idx];
+          const mag = Math.abs(f) / maxF;
+          let color;
+          let width;
+          if (f > 0.05) {
+            // Tension: red
+            color = `rgba(${199}, ${Math.round(107 + (1 - mag) * 100)}, ${Math.round(59 + (1 - mag) * 150)}, ${0.4 + 0.6 * mag})`;
+            width = 2 + mag * 5;
+          } else if (f < -0.05) {
+            // Compression: blue
+            color = `rgba(${Math.round(44 + (1 - mag) * 100)}, ${Math.round(122 + (1 - mag) * 80)}, ${Math.round(160 + (1 - mag) * 60)}, ${0.4 + 0.6 * mag})`;
+            width = 2 + mag * 5;
+          } else {
+            color = '#cfdde9';
+            width = 1.5;
+          }
+          ctx.strokeStyle = color;
+          ctx.lineWidth = width;
+          ctx.beginPath();
+          ctx.moveTo(p1.x, p1.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.stroke();
+
+          if (showLabels && mag > 0.15) {
+            ctx.fillStyle = '#0b2b3f';
+            ctx.font = 'bold 10px system-ui';
+            ctx.textAlign = 'center';
+            const mx = (p1.x + p2.x) / 2;
+            const my = (p1.y + p2.y) / 2;
+            ctx.fillText(Math.round(f) + '', mx, my - 4);
+          }
+        });
+
+        // ---- Joints ----
+        nodes.forEach((n) => {
+          const p = toPx(n);
+          ctx.fillStyle = '#0b2b3f';
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        // ---- Load arrow ----
+        const L_m = N_PANELS * PANEL;
+        const xLoad = loadPos * L_m;
+        let nearestNode = 0;
+        let bestD = Infinity;
+        for (let i = 0; i <= N_PANELS; i++) {
+          const d = Math.abs(bottom[i].x - xLoad);
+          if (d < bestD) { bestD = d; nearestNode = i; }
+        }
+        const loadPoint = toPx(nodes[nearestNode]);
+        ctx.strokeStyle = '#c76b3b';
+        ctx.fillStyle = '#c76b3b';
+        ctx.lineWidth = 3;
+        const arrowLen = 40 + loadMag * 0.3;
+        ctx.beginPath();
+        ctx.moveTo(loadPoint.x, loadPoint.y - arrowLen - 20);
+        ctx.lineTo(loadPoint.x, loadPoint.y - 8);
+        ctx.stroke();
+        // arrowhead
+        ctx.beginPath();
+        ctx.moveTo(loadPoint.x, loadPoint.y - 4);
+        ctx.lineTo(loadPoint.x - 7, loadPoint.y - 16);
+        ctx.lineTo(loadPoint.x + 7, loadPoint.y - 16);
+        ctx.closePath();
+        ctx.fill();
+        ctx.font = 'bold 12px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText(loadMag + ' kN', loadPoint.x, loadPoint.y - arrowLen - 26);
+      }
+
+      function update() {
+        const pos = parseFloat(posInput.value) / 100;
+        const load = parseFloat(loadInput.value);
+        posLabel.textContent = Math.round(pos * 100) + '%';
+        loadLabel.textContent = load + ' kN';
+
+        const forces = solveForces(pos, load);
+        const maxT = Math.max(0, ...forces);
+        const maxC = Math.max(0, ...forces.map((f) => -f));
+        maxTEl.textContent = maxT.toFixed(1) + ' kN';
+        maxCEl.textContent = maxC.toFixed(1) + ' kN';
+
+        const L = N_PANELS * PANEL;
+        const xLoad = pos * L;
+        const Rl = load * (L - xLoad) / L;
+        const Rr = load * xLoad / L;
+        reactionsEl.textContent = Rl.toFixed(1) + ' / ' + Rr.toFixed(1) + ' kN';
+
+        draw(pos, load, forces);
+      }
+
+      posInput.addEventListener('input', update);
+      loadInput.addEventListener('input', update);
+      labelsBtn.addEventListener('click', () => {
+        showLabels = !showLabels;
+        labelsBtn.textContent = showLabels ? 'Hide force values' : 'Show force values';
+        update();
+      });
+
+      update();
+    })();
+  </script>
+</body>
+</html>

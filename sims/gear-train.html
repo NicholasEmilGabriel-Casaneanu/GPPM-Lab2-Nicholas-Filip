@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gear Train — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Gear Train</h1>
+      <div class="sim-meta">Engineering · Rotational Mechanics</div>
+    </div>
+
+    <div class="sim-description">
+      Meshing gears trade speed for torque. Spin the input gear and watch the output gear rotate slower and stronger. The gear ratio is simply the ratio of teeth counts — and it's why a bicycle's lowest gear gets you up a hill.
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="canvas" width="820" height="420"></canvas>
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>Input teeth: <span id="inTeethLabel">12</span></label>
+        <input type="range" id="inTeeth" min="8" max="48" value="12" step="1">
+      </div>
+      <div class="control">
+        <label>Output teeth: <span id="outTeethLabel">36</span></label>
+        <input type="range" id="outTeeth" min="8" max="48" value="36" step="1">
+      </div>
+      <div class="control">
+        <label>Input RPM: <span id="rpmLabel">120</span></label>
+        <input type="range" id="rpm" min="1" max="500" value="120" step="1">
+      </div>
+      <div class="control">
+        <label>&nbsp;</label>
+        <div class="btn-row">
+          <button class="btn" id="toggle">Pause</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">Gear ratio</span><span class="stat-value" id="ratio">—</span></div>
+      <div class="stat"><span class="stat-label">Output RPM</span><span class="stat-value" id="outRpm">—</span></div>
+      <div class="stat"><span class="stat-label">Torque multiplier</span><span class="stat-value" id="torque">—</span></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const inTeethInput = document.getElementById('inTeeth');
+      const outTeethInput = document.getElementById('outTeeth');
+      const rpmInput = document.getElementById('rpm');
+      const inTeethLabel = document.getElementById('inTeethLabel');
+      const outTeethLabel = document.getElementById('outTeethLabel');
+      const rpmLabel = document.getElementById('rpmLabel');
+      const toggleBtn = document.getElementById('toggle');
+      const ratioEl = document.getElementById('ratio');
+      const outRpmEl = document.getElementById('outRpm');
+      const torqueEl = document.getElementById('torque');
+
+      let running = true;
+      let angleIn = 0;
+      let lastTime = 0;
+      let animHandle = null;
+
+      function getParams() {
+        const inT = parseInt(inTeethInput.value, 10);
+        const outT = parseInt(outTeethInput.value, 10);
+        const rpm = parseFloat(rpmInput.value);
+        const ratio = outT / inT;
+        const outRpm = rpm / ratio;
+        return { inT, outT, rpm, ratio, outRpm };
+      }
+
+      function updateStats() {
+        const { inT, outT, rpm, ratio, outRpm } = getParams();
+        inTeethLabel.textContent = inT;
+        outTeethLabel.textContent = outT;
+        rpmLabel.textContent = rpm;
+        ratioEl.textContent = '1 : ' + ratio.toFixed(2);
+        outRpmEl.textContent = outRpm.toFixed(1) + ' RPM';
+        torqueEl.textContent = '× ' + ratio.toFixed(2);
+      }
+
+      function drawGear(cx, cy, radius, teeth, rotation, color) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(rotation);
+
+        const innerR = radius * 0.75;
+        const toothH = radius - innerR;
+        const toothW = (2 * Math.PI * radius) / teeth / 2;
+
+        // Gear body
+        ctx.beginPath();
+        for (let i = 0; i < teeth; i++) {
+          const a = (i / teeth) * Math.PI * 2;
+          const aNext = ((i + 0.5) / teeth) * Math.PI * 2;
+          const aNext2 = ((i + 1) / teeth) * Math.PI * 2;
+          const x1 = Math.cos(a) * innerR;
+          const y1 = Math.sin(a) * innerR;
+          const x2 = Math.cos(a) * radius;
+          const y2 = Math.sin(a) * radius;
+          const x3 = Math.cos(aNext2) * radius;
+          const y3 = Math.sin(aNext2) * radius;
+          const x4 = Math.cos(aNext2) * innerR;
+          const y4 = Math.sin(aNext2) * innerR;
+          if (i === 0) ctx.moveTo(x1, y1);
+          else ctx.lineTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          // tooth tip
+          const ax = Math.cos(a + toothW) * radius;
+          const ay = Math.sin(a + toothW) * radius;
+          ctx.lineTo(ax, ay);
+          ctx.lineTo(x3, y3);
+          ctx.lineTo(x4, y4);
+        }
+        ctx.closePath();
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.strokeStyle = '#0b2b3f';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Center
+        ctx.beginPath();
+        ctx.arc(0, 0, innerR * 0.25, 0, Math.PI * 2);
+        ctx.fillStyle = '#0b2b3f';
+        ctx.fill();
+
+        // Spoke marker
+        ctx.strokeStyle = '#0b2b3f';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(innerR * 0.9, 0);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      function draw() {
+        const w = canvas.width, h = canvas.height;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+
+        const { inT, outT, ratio } = getParams();
+
+        // Radii proportional to teeth
+        const maxR = 110;
+        const rIn = Math.min(maxR, 20 + inT * 2.5);
+        const rOut = Math.min(maxR, 20 + outT * 2.5);
+
+        // Position so gears mesh (centers spaced by rIn + rOut)
+        const totalW = rIn + rOut + 20;
+        const cx = w / 2 - totalW / 2 + rIn + 10;
+        const cy = h / 2;
+        const cxOut = cx + rIn + rOut - 6;
+
+        // Out gear angle: rotates opposite direction, at 1/ratio speed
+        const angleOut = -angleIn / ratio;
+
+        // Draw input gear
+        drawGear(cx, cy, rIn, inT, angleIn, '#8db3d0');
+
+        // Draw output gear
+        drawGear(cxOut, cy, rOut, outT, angleOut, '#f5b342');
+
+        // Labels
+        ctx.fillStyle = '#0b2b3f';
+        ctx.font = 'bold 13px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('Input', cx, cy + rIn + 24);
+        ctx.fillStyle = '#6f8da3';
+        ctx.font = '11px system-ui';
+        ctx.fillText(inT + ' teeth', cx, cy + rIn + 40);
+
+        ctx.fillStyle = '#0b2b3f';
+        ctx.font = 'bold 13px system-ui';
+        ctx.fillText('Output', cxOut, cy + rOut + 24);
+        ctx.fillStyle = '#6f8da3';
+        ctx.font = '11px system-ui';
+        ctx.fillText(outT + ' teeth', cxOut, cy + rOut + 40);
+
+        // Direction arrows
+        ctx.fillStyle = '#2c7aa0';
+        ctx.font = '11px system-ui';
+        ctx.fillText('CW', cx, cy - rIn - 20);
+        ctx.fillStyle = '#c76b3b';
+        ctx.fillText('CCW', cxOut, cy - rOut - 20);
+      }
+
+      function step(now) {
+        if (!running) {
+          lastTime = now;
+          animHandle = requestAnimationFrame(step);
+          return;
+        }
+        const dt = Math.min(0.05, (now - lastTime) / 1000);
+        lastTime = now;
+
+        const { rpm } = getParams();
+        // rad per second
+        const omega = (rpm / 60) * Math.PI * 2;
+        angleIn += omega * dt;
+
+        draw();
+        animHandle = requestAnimationFrame(step);
+      }
+
+      [inTeethInput, outTeethInput, rpmInput].forEach((el) =>
+        el.addEventListener('input', () => {
+          updateStats();
+        })
+      );
+
+      toggleBtn.addEventListener('click', () => {
+        running = !running;
+        toggleBtn.textContent = running ? 'Pause' : 'Play';
+      });
+
+      updateStats();
+      lastTime = performance.now();
+      animHandle = requestAnimationFrame(step);
+    })();
+  </script>
+</body>
+</html>

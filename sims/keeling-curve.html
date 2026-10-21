@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Keeling Curve — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Keeling Curve</h1>
+      <div class="sim-meta">Climate &amp; Sustainability · Atmospheric Observation</div>
+    </div>
+
+    <div class="sim-description">
+      Since 1958, CO₂ has been measured continuously at Mauna Loa, Hawaii. The famous "sawtooth" curve climbs relentlessly but wiggles every year as the Northern Hemisphere breathes in and out. See the data and the seasonality.
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="canvas" width="820" height="420"></canvas>
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>Year: <span id="yearLabel">2020</span></label>
+        <input type="range" id="year" min="1958" max="2024" value="2020" step="1">
+      </div>
+      <div class="control">
+        <label>&nbsp;</label>
+        <div class="btn-row">
+          <button class="btn secondary" id="showSeasonal">Toggle seasonality</button>
+          <button class="btn secondary" id="showTrend">Toggle trend line</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">CO₂ at year</span><span class="stat-value" id="co2Now">—</span></div>
+      <div class="stat"><span class="stat-label">Increase since 1958</span><span class="stat-value" id="increase">—</span></div>
+      <div class="stat"><span class="stat-label">Seasonal amplitude</span><span class="stat-value" id="amplitude">~3 ppm</span></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const yearInput = document.getElementById('year');
+      const yearLabel = document.getElementById('yearLabel');
+      const co2NowEl = document.getElementById('co2Now');
+      const increaseEl = document.getElementById('increase');
+      const seasonalBtn = document.getElementById('showSeasonal');
+      const trendBtn = document.getElementById('showTrend');
+
+      let showSeasonality = true;
+      let showTrend = true;
+
+      // Approximate Keeling Curve: ~315 ppm in 1958, ~420 ppm in 2024
+      // Trend: roughly quadratic (accelerating growth)
+      function trendCO2(year) {
+        // Anchors: 1958→315, 1990→355, 2024→424
+        const t = year - 1958;
+        return 315 + 0.8 * t + 0.012 * t * t;
+      }
+
+      // Seasonal wiggle: Northern Hemisphere photosynthesis pulls CO₂ down
+      // in spring/summer, releases it in winter. Peak in May, trough in Sep.
+      // Amplitude has grown from ~0.8 ppm in the 1960s to ~3 ppm today.
+      function seasonalCO2(year, month) {
+        const t = year - 1958;
+        const amplitude = 0.8 + t * 0.03;
+        // Peak around May (month 5), trough around Sep (month 9)
+        const phase = (month - 9) / 12 * 2 * Math.PI;
+        return amplitude * Math.cos(phase);
+      }
+
+      function co2At(year, month) {
+        return trendCO2(year) + (showSeasonality ? seasonalCO2(year, month) : 0);
+      }
+
+      function update() {
+        const year = parseInt(yearInput.value, 10);
+        yearLabel.textContent = year;
+
+        const co2 = co2At(year, 5); // May peak
+        co2NowEl.textContent = co2.toFixed(1) + ' ppm';
+        increaseEl.textContent = '+' + (co2 - 315).toFixed(0) + ' ppm';
+
+        draw(year);
+      }
+
+      function draw(currentYear) {
+        const w = canvas.width, h = canvas.height;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+
+        const padL = 70, padR = 30, padT = 40, padB = 60;
+        const plotW = w - padL - padR;
+        const plotH = h - padT - padB;
+
+        // Generate monthly series
+        const series = [];
+        for (let y = 1958; y <= 2024; y++) {
+          for (let m = 0; m < 12; m++) {
+            const yr = y + m / 12;
+            series.push({ year: yr, co2: co2At(yr, m + 1) });
+          }
+        }
+
+        const minY = 310;
+        const maxY = 430;
+
+        // Axes
+        ctx.strokeStyle = '#cfdde9';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(padL, padT);
+        ctx.lineTo(padL, padT + plotH);
+        ctx.lineTo(padL + plotW, padT + plotH);
+        ctx.stroke();
+
+        // Gridlines
+        ctx.fillStyle = '#6f8da3';
+        ctx.font = '11px system-ui';
+        ctx.textAlign = 'right';
+        for (let yv = 320; yv <= 420; yv += 20) {
+          const py = padT + plotH - ((yv - minY) / (maxY - minY)) * plotH;
+          ctx.fillText(yv, padL - 8, py + 4);
+          ctx.strokeStyle = '#eef4fa';
+          ctx.beginPath();
+          ctx.moveTo(padL, py);
+          ctx.lineTo(padL + plotW, py);
+          ctx.stroke();
+        }
+
+        // X labels
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#6f8da3';
+        for (let yv = 1960; yv <= 2020; yv += 10) {
+          const px = padL + ((yv - 1958) / (2024 - 1958)) * plotW;
+          ctx.fillText(yv, px, padT + plotH + 18);
+        }
+
+        const xFor = (yr) => padL + ((yr - 1958) / (2024 - 1958)) * plotW;
+        const yFor = (co2) => padT + plotH - ((co2 - minY) / (maxY - minY)) * plotH;
+
+        // Trend line
+        if (showTrend) {
+          ctx.strokeStyle = '#c76b3b';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([4, 4]);
+          ctx.beginPath();
+          for (let y = 1958; y <= 2024; y += 0.25) {
+            const px = xFor(y);
+            const py = yFor(trendCO2(y));
+            if (y === 1958) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+          }
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        // Main series
+        ctx.strokeStyle = '#2c7aa0';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        series.forEach((p, i) => {
+          const px = xFor(p.year);
+          const py = yFor(p.co2);
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        });
+        ctx.stroke();
+
+        // Highlight current year
+        const px = xFor(currentYear);
+        ctx.strokeStyle = 'rgba(11, 43, 63, 0.3)';
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        ctx.moveTo(px, padT);
+        ctx.lineTo(px, padT + plotH);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Current dot
+        const cy = co2At(currentYear, 5);
+        ctx.fillStyle = '#f5b342';
+        ctx.beginPath();
+        ctx.arc(px, yFor(cy), 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#e09a20';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Axis labels
+        ctx.fillStyle = '#1b4a6b';
+        ctx.font = 'bold 12px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('Year', padL + plotW / 2, h - 15);
+        ctx.save();
+        ctx.translate(20, padT + plotH / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText('CO₂ (ppm)', 0, 0);
+        ctx.restore();
+
+        // Title
+        ctx.fillStyle = '#0b2b3f';
+        ctx.font = 'bold 13px system-ui';
+        ctx.textAlign = 'left';
+        ctx.fillText('Keeling Curve — Atmospheric CO₂ at Mauna Loa', padL, padT - 12);
+      }
+
+      yearInput.addEventListener('input', update);
+      seasonalBtn.addEventListener('click', () => {
+        showSeasonality = !showSeasonality;
+        seasonalBtn.textContent = showSeasonality ? 'Hide seasonality' : 'Show seasonality';
+        update();
+      });
+      trendBtn.addEventListener('click', () => {
+        showTrend = !showTrend;
+        trendBtn.textContent = showTrend ? 'Hide trend line' : 'Show trend line';
+        update();
+      });
+
+      update();
+    })();
+  </script>
+</body>
+</html>

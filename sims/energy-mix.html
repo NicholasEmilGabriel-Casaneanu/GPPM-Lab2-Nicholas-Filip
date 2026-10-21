@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Energy Mix — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Energy Mix</h1>
+      <div class="sim-meta">Climate &amp; Sustainability · Power System Planning</div>
+    </div>
+
+    <div class="sim-description">
+      Build a power grid: choose how much electricity comes from coal, gas, nuclear, solar, wind, and hydro. Each source has a different carbon intensity and cost. Try to hit a 2035 emissions target without breaking the bank.
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="canvas" width="820" height="420"></canvas>
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>Coal: <span id="coalLabel">30%</span></label>
+        <input type="range" id="coal" min="0" max="100" value="30" step="1">
+      </div>
+      <div class="control">
+        <label>Natural gas: <span id="gasLabel">30%</span></label>
+        <input type="range" id="gas" min="0" max="100" value="30" step="1">
+      </div>
+      <div class="control">
+        <label>Nuclear: <span id="nuclearLabel">10%</span></label>
+        <input type="range" id="nuclear" min="0" max="100" value="10" step="1">
+      </div>
+      <div class="control">
+        <label>Solar: <span id="solarLabel">10%</span></label>
+        <input type="range" id="solar" min="0" max="100" value="10" step="1">
+      </div>
+      <div class="control">
+        <label>Wind: <span id="windLabel">15%</span></label>
+        <input type="range" id="wind" min="0" max="100" value="15" step="1">
+      </div>
+      <div class="control">
+        <label>Hydro: <span id="hydroLabel">5%</span></label>
+        <input type="range" id="hydro" min="0" max="100" value="5" step="1">
+      </div>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">Total mix</span><span class="stat-value" id="totalMix">—</span></div>
+      <div class="stat"><span class="stat-label">CO₂ intensity</span><span class="stat-value" id="co2">—</span></div>
+      <div class="stat"><span class="stat-label">Cost</span><span class="stat-value" id="cost">—</span></div>
+      <div class="stat"><span class="stat-label">Verdict</span><span class="stat-value" id="verdict">—</span></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const sources = ['coal', 'gas', 'nuclear', 'solar', 'wind', 'hydro'];
+      const labels = {
+        coal: 'Coal', gas: 'Gas', nuclear: 'Nuclear',
+        solar: 'Solar', wind: 'Wind', hydro: 'Hydro',
+      };
+      const colors = {
+        coal: '#3a3a3a',
+        gas: '#8a7a5a',
+        nuclear: '#8a5ac7',
+        solar: '#f5b342',
+        wind: '#7ad4c7',
+        hydro: '#2c7aa0',
+      };
+      // gCO2/kWh and cost (relative, €/MWh)
+      const CO2_INTENSITY = {
+        coal: 820, gas: 490, nuclear: 12, solar: 48, wind: 11, hydro: 24,
+      };
+      const COST = {
+        coal: 60, gas: 55, nuclear: 110, solar: 45, wind: 50, hydro: 40,
+      };
+
+      const inputs = {};
+      const valueLabels = {};
+
+      sources.forEach((s) => {
+        inputs[s] = document.getElementById(s);
+        valueLabels[s] = document.getElementById(s + 'Label');
+      });
+
+      const totalMixEl = document.getElementById('totalMix');
+      const co2El = document.getElementById('co2');
+      const costEl = document.getElementById('cost');
+      const verdictEl = document.getElementById('verdict');
+
+      function update() {
+        const values = {};
+        let total = 0;
+        sources.forEach((s) => {
+          values[s] = parseFloat(inputs[s].value);
+          total += values[s];
+          valueLabels[s].textContent = values[s] + '%';
+        });
+
+        totalMixEl.textContent = total + '%';
+
+        if (total === 0) {
+          co2El.textContent = '—';
+          costEl.textContent = '—';
+          verdictEl.textContent = 'No power!';
+          draw(values, total, 0, 0);
+          return;
+        }
+
+        // Normalize
+        let co2 = 0, cost = 0;
+        sources.forEach((s) => {
+          const frac = values[s] / total;
+          co2 += CO2_INTENSITY[s] * frac;
+          cost += COST[s] * frac;
+        });
+
+        co2El.textContent = Math.round(co2) + ' gCO₂/kWh';
+        costEl.textContent = '$' + Math.round(cost) + '/MWh';
+
+        // Verdict
+        let verdict, color;
+        if (total < 95 || total > 105) {
+          verdict = 'Mix should total ~100%';
+          color = '#c76b3b';
+        } else if (co2 < 100) {
+          verdict = '🌱 Clean grid!';
+          color = '#5a8a4a';
+        } else if (co2 < 300) {
+          verdict = '👍 Low carbon';
+          color = '#2c7aa0';
+        } else if (co2 < 500) {
+          verdict = '⚠ Still high';
+          color = '#c76b3b';
+        } else {
+          verdict = '🔥 Fossil-heavy';
+          color = '#c0392b';
+        }
+        verdictEl.textContent = verdict;
+        verdictEl.style.color = color;
+
+        draw(values, total, co2, cost);
+      }
+
+      function draw(values, total, co2, cost) {
+        const w = canvas.width, h = canvas.height;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+
+        const padL = 60, padR = 60, padT = 50, padB = 80;
+        const plotW = w - padL - padR;
+        const plotH = h - padT - padB;
+
+        // Draw stacked bar
+        const barW = plotW * 0.6;
+        const barX = padL + (plotW - barW) / 2;
+        const totalVal = total || 1;
+        let y = padT;
+
+        sources.forEach((s) => {
+          const frac = values[s] / totalVal;
+          const barH = plotH * frac;
+          if (barH > 0) {
+            ctx.fillStyle = colors[s];
+            ctx.fillRect(barX, y, barW, barH);
+            // Label inside bar if large enough
+            if (barH > 20) {
+              ctx.fillStyle = '#ffffff';
+              ctx.font = 'bold 12px system-ui';
+              ctx.textAlign = 'center';
+              ctx.fillText(values[s] + '%', barX + barW / 2, y + barH / 2 + 4);
+            }
+          }
+          y += barH;
+        });
+
+        // Border
+        ctx.strokeStyle = '#0b2b3f';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(barX, padT, barW, plotH);
+
+        // Legend
+        const legendX = padL + plotW + 10;
+        let ly = padT;
+        ctx.font = '12px system-ui';
+        ctx.textAlign = 'left';
+        sources.forEach((s) => {
+          ctx.fillStyle = colors[s];
+          ctx.fillRect(legendX, ly, 16, 16);
+          ctx.fillStyle = '#0b2b3f';
+          ctx.fillText(labels[s], legendX + 22, ly + 12);
+          ly += 22;
+        });
+
+        // Title
+        ctx.fillStyle = '#0b2b3f';
+        ctx.font = 'bold 13px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('Electricity mix', w / 2, 30);
+
+        // CO2 intensity gauge
+        const gX = padL + 20, gY = h - 50, gW = plotW - 40, gH = 20;
+        ctx.fillStyle = '#f0f4f8';
+        ctx.fillRect(gX, gY, gW, gH);
+        const gaugeFrac = Math.min(1, co2 / 800);
+        const gaugeColor = co2 < 100 ? '#5a8a4a' : co2 < 300 ? '#2c7aa0' : co2 < 500 ? '#f5b342' : '#c0392b';
+        ctx.fillStyle = gaugeColor;
+        ctx.fillRect(gX, gY, gW * gaugeFrac, gH);
+        ctx.strokeStyle = '#cfdde9';
+        ctx.strokeRect(gX, gY, gW, gH);
+
+        ctx.fillStyle = '#0b2b3f';
+        ctx.font = 'bold 11px system-ui';
+        ctx.textAlign = 'left';
+        ctx.fillText('0', gX, gY + gH + 14);
+        ctx.textAlign = 'center';
+        ctx.fillText('CO₂ intensity (gCO₂/kWh)', gX + gW / 2, gY + gH + 14);
+        ctx.textAlign = 'right';
+        ctx.fillText('800', gX + gW, gY + gH + 14);
+      }
+
+      sources.forEach((s) => inputs[s].addEventListener('input', update));
+
+      update();
+    })();
+  </script>
+</body>
+</html>

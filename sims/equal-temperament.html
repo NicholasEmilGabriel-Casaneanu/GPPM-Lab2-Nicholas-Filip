@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Equal Temperament — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Equal Temperament</h1>
+      <div class="sim-meta">Music &amp; Acoustics · Tuning Systems</div>
+    </div>
+
+    <div class="sim-description">
+      Why is a piano slightly out of tune with itself? Compare just intonation (pure ratios like 3:2) with equal temperament (twelfth root of 2). The small errors are what let you play in every key.
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="canvas" width="820" height="360"></canvas>
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>Base frequency: <span id="baseLabel">220 Hz</span></label>
+        <input type="range" id="base" min="110" max="440" value="220" step="1">
+      </div>
+      <div class="control">
+        <label>Note</label>
+        <select id="note">
+          <option value="0">Unison (1:1)</option>
+          <option value="1">Minor 2nd</option>
+          <option value="2">Major 2nd (9:8)</option>
+          <option value="3">Minor 3rd (6:5)</option>
+          <option value="4">Major 3rd (5:4)</option>
+          <option value="5">Perfect 4th (4:3)</option>
+          <option value="6" selected>Tritone</option>
+          <option value="7">Perfect 5th (3:2)</option>
+          <option value="8">Minor 6th (8:5)</option>
+          <option value="9">Major 6th (5:3)</option>
+          <option value="10">Minor 7th (9:5)</option>
+          <option value="11">Major 7th (15:8)</option>
+          <option value="12">Octave (2:1)</option>
+        </select>
+      </div>
+      <div class="control">
+        <label>&nbsp;</label>
+        <div class="btn-row">
+          <button class="btn" id="playJust">Play just</button>
+          <button class="btn secondary" id="playET">Play equal temp.</button>
+          <button class="btn secondary" id="stop">Stop</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">Just ratio</span><span class="stat-value" id="ratio">—</span></div>
+      <div class="stat"><span class="stat-label">Just freq</span><span class="stat-value" id="justF">—</span></div>
+      <div class="stat"><span class="stat-label">ET freq</span><span class="stat-value" id="etF">—</span></div>
+      <div class="stat"><span class="stat-label">Cent difference</span><span class="stat-value" id="cents">—</span></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const baseInput = document.getElementById('base');
+      const noteSel = document.getElementById('note');
+      const baseLabel = document.getElementById('baseLabel');
+      const ratioEl = document.getElementById('ratio');
+      const justFEl = document.getElementById('justF');
+      const etFEl = document.getElementById('etF');
+      const centsEl = document.getElementById('cents');
+      const playJustBtn = document.getElementById('playJust');
+      const playETBtn = document.getElementById('playET');
+      const stopBtn = document.getElementById('stop');
+
+      // Just intonation ratios (freq / base) for each semitone 0..12
+      const justRatios = [1, 16/15, 9/8, 6/5, 5/4, 4/3, 45/32, 3/2, 8/5, 5/3, 9/5, 15/8, 2];
+      const justNames = ['1:1', '16:15', '9:8', '6:5', '5:4', '4:3', '45:32', '3:2', '8:5', '5:3', '9:5', '15:8', '2:1'];
+
+      let audioCtx = null;
+      let osc1 = null;
+      let osc2 = null;
+      let gain1 = null;
+      let gain2 = null;
+
+      function getSelection() {
+        const base = parseFloat(baseInput.value);
+        const idx = parseInt(noteSel.value, 10);
+        const justRatio = justRatios[idx];
+        const justF = base * justRatio;
+        const etRatio = Math.pow(2, idx / 12);
+        const etF = base * etRatio;
+        const cents = 1200 * Math.log2(justRatio / etRatio);
+        return { base, idx, justRatio, justF, etRatio, etF, cents };
+      }
+
+      function updateStats() {
+        const { base, idx, justRatio, justF, etF, cents } = getSelection();
+        baseLabel.textContent = base + ' Hz';
+        ratioEl.textContent = justNames[idx];
+        justFEl.textContent = justF.toFixed(2) + ' Hz';
+        etFEl.textContent = etF.toFixed(2) + ' Hz';
+        centsEl.textContent = cents.toFixed(1) + ' cents';
+        draw();
+      }
+
+      function draw() {
+        const w = canvas.width, h = canvas.height;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+
+        const padL = 60, padR = 40, padT = 40, padB = 60;
+        const plotW = w - padL - padR;
+        const plotH = h - padT - padB;
+        const { base, idx, justF, etF, cents } = getSelection();
+
+        // Show two bars: just vs ET, normalized
+        const maxF = Math.max(justF, etF) * 1.1;
+        const barW = 100;
+        const gap = 100;
+        const groupW = barW * 2 + gap;
+        const startX = padL + (plotW - groupW) / 2;
+
+        // Just bar
+        const jH = (justF / maxF) * plotH * 0.9;
+        ctx.fillStyle = '#2c7aa0';
+        ctx.fillRect(startX, padT + plotH - jH, barW, jH);
+        ctx.fillStyle = '#0b2b3f';
+        ctx.font = 'bold 13px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('Just', startX + barW / 2, padT + plotH + 20);
+        ctx.font = 'bold 12px system-ui';
+        ctx.fillText(justF.toFixed(2) + ' Hz', startX + barW / 2, padT + plotH - jH - 8);
+
+        // ET bar
+        const eH = (etF / maxF) * plotH * 0.9;
+        ctx.fillStyle = '#f5b342';
+        ctx.fillRect(startX + barW + gap, padT + plotH - eH, barW, eH);
+        ctx.fillStyle = '#0b2b3f';
+        ctx.font = 'bold 13px system-ui';
+        ctx.fillText('Equal temp.', startX + barW + gap + barW / 2, padT + plotH + 20);
+        ctx.font = 'bold 12px system-ui';
+        ctx.fillText(etF.toFixed(2) + ' Hz', startX + barW + gap + barW / 2, padT + plotH - eH - 8);
+
+        // Difference label
+        ctx.fillStyle = '#c76b3b';
+        ctx.font = 'bold 14px system-ui';
+        ctx.fillText(cents.toFixed(1) + ' cents', padL + plotW / 2, padT - 10);
+
+        // Reference line
+        ctx.strokeStyle = '#e0eaf2';
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(padL, padT + plotH * 0.1);
+        ctx.lineTo(padL + plotW, padT + plotH * 0.1);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Note name
+        const names = ['Unison','m2','M2','m3','M3','P4','TT','P5','m6','M6','m7','M7','Octave'];
+        ctx.fillStyle = '#0b2b3f';
+        ctx.font = 'bold 13px system-ui';
+        ctx.textAlign = 'left';
+        ctx.fillText(names[idx] + '  from  ' + base + ' Hz', padL, padT - 10);
+      }
+
+      function playFreqs(f1, f2) {
+        stopAudio();
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        gain1 = audioCtx.createGain();
+        gain2 = audioCtx.createGain();
+        gain1.gain.value = 0.15;
+        gain2.gain.value = 0.15;
+        osc1 = audioCtx.createOscillator();
+        osc2 = audioCtx.createOscillator();
+        osc1.type = 'sine';
+        osc2.type = 'sine';
+        osc1.frequency.value = f1;
+        osc2.frequency.value = f2;
+        osc1.connect(gain1).connect(audioCtx.destination);
+        osc2.connect(gain2).connect(audioCtx.destination);
+        osc1.start();
+        osc2.start();
+      }
+
+      function stopAudio() {
+        try {
+          if (osc1) { osc1.stop(); osc1.disconnect(); }
+          if (osc2) { osc2.stop(); osc2.disconnect(); }
+          if (gain1) gain1.disconnect();
+          if (gain2) gain2.disconnect();
+        } catch (e) {}
+        osc1 = osc2 = gain1 = gain2 = null;
+      }
+
+      baseInput.addEventListener('input', updateStats);
+      noteSel.addEventListener('change', updateStats);
+      playJustBtn.addEventListener('click', () => {
+        const { base, justF } = getSelection();
+        playFreqs(base, justF);
+      });
+      playETBtn.addEventListener('click', () => {
+        const { base, etF } = getSelection();
+        playFreqs(base, etF);
+      });
+      stopBtn.addEventListener('click', stopAudio);
+
+      updateStats();
+    })();
+  </script>
+</body>
+</html>

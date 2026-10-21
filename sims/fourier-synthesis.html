@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fourier Synthesis — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Fourier Synthesis of Instruments</h1>
+      <div class="sim-meta">Music &amp; Acoustics · Timbre Synthesis</div>
+    </div>
+
+    <div class="sim-description">
+      Any periodic waveform — the sound of a violin, oboe, or synth — is a sum of sine waves. Add harmonics with different amplitudes and hear the timbre shift from a pure tone to something that sounds like a real instrument.
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="canvas" width="820" height="420"></canvas>
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>Fundamental: <span id="f0Label">330 Hz</span></label>
+        <input type="range" id="f0" min="100" max="500" value="330" step="1">
+      </div>
+      <div class="control">
+        <label>Instrument preset</label>
+        <select id="preset">
+          <option value="pure">Pure sine</option>
+          <option value="flute">Flute (weak harmonics)</option>
+          <option value="clarinet">Clarinet (odd only)</option>
+          <option value="violin">Violin (sawtooth-like)</option>
+          <option value="trumpet">Trumpet (bright)</option>
+          <option value="bass">Bass guitar (low &amp; warm)</option>
+        </select>
+      </div>
+      <div class="control">
+        <label>&nbsp;</label>
+        <div class="btn-row">
+          <button class="btn" id="play">Play</button>
+          <button class="btn secondary" id="stop">Stop</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">Harmonics active</span><span class="stat-value" id="harmCount">—</span></div>
+      <div class="stat"><span class="stat-label">Brightness (centroid)</span><span class="stat-value" id="centroid">—</span></div>
+      <div class="stat"><span class="stat-label">Audio</span><span class="stat-value" id="audioStatus">off</span></div>
+    </div>
+
+    <div class="sim-canvas-wrap" style="padding: 1.5rem;">
+      <div id="harmonics" style="display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center;"></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const f0Input = document.getElementById('f0');
+      const f0Label = document.getElementById('f0Label');
+      const presetSel = document.getElementById('preset');
+      const harmonicsEl = document.getElementById('harmonics');
+      const harmCountEl = document.getElementById('harmCount');
+      const centroidEl = document.getElementById('centroid');
+      const audioStatusEl = document.getElementById('audioStatus');
+      const playBtn = document.getElementById('play');
+      const stopBtn = document.getElementById('stop');
+
+      const N = 12;
+      let amplitudes = new Array(N).fill(0);
+      let audioCtx = null;
+      let oscillators = [];
+      let masterGain = null;
+      let isPlaying = false;
+      let animHandle = null;
+      let wavePhase = 0;
+      let lastTime = 0;
+
+      function applyPreset(name) {
+        const presets = {
+          pure: [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          flute: [1, 0.15, 0.05, 0.02, 0.01, 0, 0, 0, 0, 0, 0, 0],
+          clarinet: [1, 0.05, 0.7, 0.03, 0.5, 0.02, 0.35, 0.01, 0.2, 0, 0.1, 0],
+          violin: [1, 0.5, 0.33, 0.25, 0.2, 0.16, 0.14, 0.12, 0.1, 0.09, 0.08, 0.07],
+          trumpet: [1, 0.9, 0.8, 0.7, 0.6, 0.55, 0.5, 0.45, 0.4, 0.35, 0.3, 0.25],
+          bass: [1, 0.6, 0.2, 0.1, 0.05, 0.02, 0.01, 0, 0, 0, 0, 0],
+        };
+        amplitudes = presets[name].slice();
+        renderHarmonicBars();
+        updateAudioAmps();
+        updateStats();
+        draw();
+      }
+
+      function renderHarmonicBars() {
+        harmonicsEl.innerHTML = '';
+        for (let i = 0; i < N; i++) {
+          const wrap = document.createElement('div');
+          wrap.style.cssText = 'display:flex; flex-direction:column; align-items:center; gap:4px;';
+
+          const bar = document.createElement('div');
+          bar.style.cssText = `
+            width: 38px; height: 80px; background: #f0f4f8;
+            border-radius: 6px; position: relative; cursor: pointer;
+            border: 1px solid #cfdde9; overflow: hidden;
+          `;
+
+          const fill = document.createElement('div');
+          fill.style.cssText = `
+            position: absolute; bottom: 0; left: 0; right: 0;
+            height: ${amplitudes[i] * 100}%;
+            background: linear-gradient(to top, #2c7aa0, #8db3d0);
+            transition: height 0.15s ease;
+          `;
+          bar.appendChild(fill);
+
+          bar.addEventListener('click', () => {
+            amplitudes[i] = amplitudes[i] > 0 ? 0 : (i === 0 ? 1 : 0.5);
+            fill.style.height = (amplitudes[i] * 100) + '%';
+            updateAudioAmps();
+            updateStats();
+          });
+
+          const label = document.createElement('div');
+          label.style.cssText = 'font-size: 0.7rem; color: #1b4a6b; font-weight: 600;';
+          label.textContent = (i + 1) + '×';
+
+          wrap.appendChild(bar);
+          wrap.appendChild(label);
+          harmonicsEl.appendChild(wrap);
+        }
+      }
+
+      function updateAudioAmps() {
+        if (!isPlaying || !oscillators.length) return;
+        const now = audioCtx.currentTime;
+        oscillators.forEach((osc, i) => {
+          const g = osc._gain;
+          g.gain.setTargetAtTime(amplitudes[i] * 0.12, now, 0.05);
+        });
+      }
+
+      function startAudio() {
+        if (isPlaying) return;
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        masterGain = audioCtx.createGain();
+        masterGain.gain.value = 0.6;
+        masterGain.connect(audioCtx.destination);
+        const f0 = parseFloat(f0Input.value);
+        oscillators = [];
+        for (let i = 0; i < N; i++) {
+          const osc = audioCtx.createOscillator();
+          osc.type = 'sine';
+          osc.frequency.value = f0 * (i + 1);
+          const gain = audioCtx.createGain();
+          gain.gain.value = amplitudes[i] * 0.12;
+          osc._gain = gain;
+          osc.connect(gain).connect(masterGain);
+          osc.start();
+          oscillators.push(osc);
+        }
+        isPlaying = true;
+        audioStatusEl.textContent = 'playing';
+      }
+
+      function stopAudio() {
+        if (!isPlaying) return;
+        oscillators.forEach((osc) => {
+          try { osc.stop(); osc.disconnect(); } catch (e) {}
+        });
+        oscillators = [];
+        if (masterGain) { try { masterGain.disconnect(); } catch (e) {} }
+        isPlaying = false;
+        audioStatusEl.textContent = 'off';
+      }
+
+      function updateStats() {
+        let count = 0;
+        let weightedSum = 0;
+        let totalAmp = 0;
+        for (let i = 0; i < N; i++) {
+          if (amplitudes[i] > 0.01) {
+            count++;
+            weightedSum += (i + 1) * amplitudes[i];
+            totalAmp += amplitudes[i];
+          }
+        }
+        harmCountEl.textContent = count;
+        if (totalAmp > 0) {
+          const centroid = weightedSum / totalAmp;
+          centroidEl.textContent = '×' + centroid.toFixed(2);
+        } else {
+          centroidEl.textContent = '—';
+        }
+      }
+
+      function draw() {
+        const w = canvas.width, h = canvas.height;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+
+        const padL = 50, padR = 50, padT = 30, padB = 50;
+        const plotW = w - padL - padR;
+        const plotH = h - padT - padB;
+        const midY = padT + plotH / 2;
+        const f0 = parseFloat(f0Input.value);
+
+        // Waveform over 2 periods of fundamental
+        const windowSec = 2 / f0;
+        const samples = 800;
+        let vals = [];
+        let maxAbs = 0;
+        for (let i = 0; i < samples; i++) {
+          const t = (i / samples) * windowSec;
+          let v = 0;
+          for (let k = 0; k < N; k++) {
+            if (amplitudes[k] === 0) continue;
+            v += amplitudes[k] * Math.sin(2 * Math.PI * f0 * (k + 1) * t + wavePhase * (k + 1));
+          }
+          vals.push(v);
+          if (Math.abs(v) > maxAbs) maxAbs = Math.abs(v);
+        }
+        if (maxAbs === 0) maxAbs = 1;
+
+        // Zero line
+        ctx.strokeStyle = '#e0eaf2';
+        ctx.beginPath();
+        ctx.moveTo(padL, midY);
+        ctx.lineTo(padL + plotW, midY);
+        ctx.stroke();
+
+        // Waveform
+        ctx.strokeStyle = '#2c7aa0';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let i = 0; i < samples; i++) {
+          const x = padL + (i / samples) * plotW;
+          const y = midY - (vals[i] / maxAbs) * (plotH / 2) * 0.9;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        // Label
+        ctx.fillStyle = '#0b2b3f';
+        ctx.font = 'bold 12px system-ui';
+        ctx.textAlign = 'left';
+        ctx.fillText('Synthesized waveform', padL, padT - 8);
+        ctx.fillStyle = '#6f8da3';
+        ctx.font = '11px system-ui';
+        ctx.textAlign = 'right';
+        ctx.fillText('f₀ = ' + f0 + ' Hz · 2 cycles shown', padL + plotW, padT - 8);
+      }
+
+      function loop(now) {
+        if (!lastTime) lastTime = now;
+        const dt = Math.min(0.05, (now - lastTime) / 1000);
+        lastTime = now;
+        wavePhase += dt * 2 * Math.PI;
+        if (isPlaying) draw();
+        animHandle = requestAnimationFrame(loop);
+      }
+
+      f0Input.addEventListener('input', () => {
+        f0Label.textContent = f0Input.value + ' Hz';
+        if (isPlaying && oscillators.length) {
+          const now = audioCtx.currentTime;
+          const f0 = parseFloat(f0Input.value);
+          oscillators.forEach((osc, i) => {
+            osc.frequency.setTargetAtTime(f0 * (i + 1), now, 0.05);
+          });
+        }
+        draw();
+      });
+
+      presetSel.addEventListener('change', () => applyPreset(presetSel.value));
+      playBtn.addEventListener('click', startAudio);
+      stopBtn.addEventListener('click', stopAudio);
+
+      f0Label.textContent = f0Input.value + ' Hz';
+      applyPreset('violin');
+      animHandle = requestAnimationFrame(loop);
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pendulum — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Pendulum</h1>
+      <div class="sim-meta">Engineering · Oscillations &amp; Dynamics</div>
+    </div>
+
+    <div class="sim-description">
+      A simple pendulum swings back and forth. Change length, gravity, and damping to see how the period changes — and how energy leaks away when you add friction. The small-angle period is T = 2π√(L/g).
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="canvas" width="820" height="480"></canvas>
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>Length: <span id="lengthLabel">1.5 m</span></label>
+        <input type="range" id="length" min="0.3" max="3" value="1.5" step="0.1">
+      </div>
+      <div class="control">
+        <label>Gravity</label>
+        <select id="gravity">
+          <option value="9.81">Earth (9.81)</option>
+          <option value="1.62">Moon (1.62)</option>
+          <option value="3.71">Mars (3.71)</option>
+          <option value="24.79">Jupiter (24.79)</option>
+        </select>
+      </div>
+      <div class="control">
+        <label>Damping: <span id="dampLabel">0.05</span></label>
+        <input type="range" id="damping" min="0" max="0.5" value="0.05" step="0.01">
+      </div>
+      <div class="control">
+        <label>Initial angle: <span id="angleLabel">30°</span></label>
+        <input type="range" id="angle" min="5" max="80" value="30" step="1">
+      </div>
+      <div class="control">
+        <label>&nbsp;</label>
+        <div class="btn-row">
+          <button class="btn" id="release">Release</button>
+          <button class="btn secondary" id="reset">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">Period (small angle)</span><span class="stat-value" id="period">—</span></div>
+      <div class="stat"><span class="stat-label">Energy (KE)</span><span class="stat-value" id="ke">—</span></div>
+      <div class="stat"><span class="stat-label">Energy (PE)</span><span class="stat-value" id="pe">—</span></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const lengthInput = document.getElementById('length');
+      const gravitySel = document.getElementById('gravity');
+      const dampingInput = document.getElementById('damping');
+      const angleInput = document.getElementById('angle');
+      const lengthLabel = document.getElementById('lengthLabel');
+      const dampLabel = document.getElementById('dampLabel');
+      const angleLabel = document.getElementById('angleLabel');
+      const releaseBtn = document.getElementById('release');
+      const resetBtn = document.getElementById('reset');
+      const periodEl = document.getElementById('period');
+      const keEl = document.getElementById('ke');
+      const peEl = document.getElementById('pe');
+
+      // State
+      let theta = 30 * Math.PI / 180; // angle from vertical
+      let omega = 0;
+      let running = false;
+      let animHandle = null;
+      let lastTime = 0;
+      let history = [];
+
+      const pivot = { x: 0, y: 0 };
+      const pivotY = 80;
+
+      function getParams() {
+        const L = parseFloat(lengthInput.value);
+        const g = parseFloat(gravitySel.value);
+        const b = parseFloat(dampingInput.value);
+        return { L, g, b };
+      }
+
+      function updatePeriod() {
+        const { L, g } = getParams();
+        const T = 2 * Math.PI * Math.sqrt(L / g);
+        periodEl.textContent = T.toFixed(2) + ' s';
+      }
+
+      function resetPendulum() {
+        running = false;
+        if (animHandle) cancelAnimationFrame(animHandle);
+        animHandle = null;
+        theta = parseFloat(angleInput.value) * Math.PI / 180;
+        omega = 0;
+        history = [];
+        draw();
+      }
+
+      function release() {
+        if (animHandle) cancelAnimationFrame(animHandle);
+        theta = parseFloat(angleInput.value) * Math.PI / 180;
+        omega = 0;
+        history = [];
+        running = true;
+        lastTime = performance.now();
+        animHandle = requestAnimationFrame(step);
+      }
+
+      function step(now) {
+        if (!running) return;
+        const dt = Math.min(0.03, (now - lastTime) / 1000);
+        lastTime = now;
+        const { L, g, b } = getParams();
+
+        // Pendulum ODE: theta'' = -(g/L) * sin(theta) - b * omega
+        const alpha = -(g / L) * Math.sin(theta) - b * omega;
+        omega += alpha * dt;
+        theta += omega * dt;
+
+        // Energy
+        const v = omega * L;
+        const h = L * (1 - Math.cos(theta));
+        const ke = 0.5 * v * v;
+        const pe = g * h;
+
+        keEl.textContent = ke.toFixed(2) + ' J';
+        peEl.textContent = pe.toFixed(2) + ' J';
+
+        // Track history
+        history.push(theta);
+        if (history.length > 400) history.shift();
+
+        draw();
+        animHandle = requestAnimationFrame(step);
+      }
+
+      function draw() {
+        const w = canvas.width, h = canvas.height;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+
+        const { L } = getParams();
+        // px per metre
+        const pxPerM = Math.min(200, (h - 160) / 3);
+        const cx = w / 2;
+        const cy = pivotY;
+
+        // Pivot
+        ctx.fillStyle = '#1b4a6b';
+        ctx.beginPath();
+        ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Ceiling
+        ctx.strokeStyle = '#6f8da3';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cx - 80, cy);
+        ctx.lineTo(cx + 80, cy);
+        ctx.stroke();
+        for (let x = cx - 80; x <= cx + 80; x += 12) {
+          ctx.beginPath();
+          ctx.moveTo(x, cy);
+          ctx.lineTo(x - 6, cy - 8);
+          ctx.stroke();
+        }
+
+        // Pendulum rod
+        const bobX = cx + L * pxPerM * Math.sin(theta);
+        const bobY = cy + L * pxPerM * Math.cos(theta);
+        ctx.strokeStyle = '#8ba9c0';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(bobX, bobY);
+        ctx.stroke();
+
+        // Angle arc
+        ctx.strokeStyle = '#cfdde9';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 40, Math.PI / 2 - theta, Math.PI / 2);
+        ctx.stroke();
+
+        // Vertical reference
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx, cy + L * pxPerM);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Bob
+        const bobR = 18;
+        const grad = ctx.createRadialGradient(bobX - 5, bobY - 5, 2, bobX, bobY, bobR);
+        grad.addColorStop(0, '#f5b342');
+        grad.addColorStop(1, '#c76b3b');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(bobX, bobY, bobR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#a0522d';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Angle text
+        ctx.fillStyle = '#0b2b3f';
+        ctx.font = 'bold 13px system-ui';
+        ctx.textAlign = 'left';
+        const deg = (theta * 180 / Math.PI).toFixed(1);
+        ctx.fillText(deg + '°', 20, 30);
+
+        // Period
+        ctx.fillStyle = '#4f6f86';
+        ctx.font = '12px system-ui';
+        ctx.fillText('L = ' + L.toFixed(2) + ' m', 20, 50);
+      }
+
+      lengthInput.addEventListener('input', () => {
+        lengthLabel.textContent = parseFloat(lengthInput.value).toFixed(1) + ' m';
+        updatePeriod();
+        if (!running) draw();
+      });
+      gravitySel.addEventListener('change', () => {
+        updatePeriod();
+        if (!running) draw();
+      });
+      dampingInput.addEventListener('input', () => {
+        dampLabel.textContent = parseFloat(dampingInput.value).toFixed(2);
+      });
+      angleInput.addEventListener('input', () => {
+        angleLabel.textContent = angleInput.value + '°';
+        if (!running) {
+          theta = parseFloat(angleInput.value) * Math.PI / 180;
+          draw();
+        }
+      });
+
+      releaseBtn.addEventListener('click', release);
+      resetBtn.addEventListener('click', resetPendulum);
+
+      // init
+      lengthLabel.textContent = parseFloat(lengthInput.value).toFixed(1) + ' m';
+      dampLabel.textContent = parseFloat(dampingInput.value).toFixed(2);
+      angleLabel.textContent = angleInput.value + '°';
+      updatePeriod();
+      resetPendulum();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sea Level Rise — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Sea Level Rise</h1>
+      <div class="sim-meta">Climate &amp; Sustainability · Coastal Impacts</div>
+    </div>
+
+    <div class="sim-description">
+      Two processes drive sea level: water expands as it warms, and glaciers add meltwater. Toggle each contribution and watch how a coastline changes over the next century. The difference between 1 °C and 3 °C of warming is enormous.
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="canvas" width="820" height="420"></canvas>
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>Global warming: <span id="tempLabel">+2.0 °C</span></label>
+        <input type="range" id="temperature" min="0" max="5" value="2" step="0.1">
+      </div>
+      <div class="control">
+        <label>Years: <span id="yearsLabel">100</span></label>
+        <input type="range" id="years" min="20" max="200" value="100" step="10">
+      </div>
+      <div class="control">
+        <label><input type="checkbox" id="showThermal" checked> Thermal expansion</label>
+        <label style="margin-top:0.3rem;"><input type="checkbox" id="showIce" checked> Ice melt</label>
+      </div>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">Thermal expansion</span><span class="stat-value" id="thermal">—</span></div>
+      <div class="stat"><span class="stat-label">Ice melt</span><span class="stat-value" id="iceMelt">—</span></div>
+      <div class="stat"><span class="stat-label">Total sea level rise</span><span class="stat-value" id="total">—</span></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const tempInput = document.getElementById('temperature');
+      const yearsInput = document.getElementById('years');
+      const thermalCb = document.getElementById('showThermal');
+      const iceCb = document.getElementById('showIce');
+      const tempLabel = document.getElementById('tempLabel');
+      const yearsLabel = document.getElementById('yearsLabel');
+      const thermalEl = document.getElementById('thermal');
+      const iceMeltEl = document.getElementById('iceMelt');
+      const totalEl = document.getElementById('total');
+
+      function computeRise() {
+        const temp = parseFloat(tempInput.value);
+        const years = parseInt(yearsInput.value, 10);
+
+        // Thermal expansion: roughly 0.2 m per °C of equilibrium warming
+        // and approaches equilibrium on a ~century timescale.
+        const thermalEq = 0.25 * temp;
+        const thermal = thermalEq * (1 - Math.exp(-years / 80));
+
+        // Ice melt: Greenland + Antarctica + glaciers, roughly
+        // 0.4 m per °C of warming at century timescale (nonlinear over long)
+        const iceEq = 0.5 * temp;
+        const iceMelt = iceEq * (years / 100) / (1 + years / 300);
+
+        return { thermal, iceMelt, total: thermal + iceMelt };
+      }
+
+      function update() {
+        const temp = parseFloat(tempInput.value);
+        const years = parseInt(yearsInput.value, 10);
+        tempLabel.textContent = (temp >= 0 ? '+' : '') + temp.toFixed(1) + ' °C';
+        yearsLabel.textContent = years;
+
+        const { thermal, iceMelt, total } = computeRise();
+        thermalEl.textContent = thermalCb.checked ? thermal.toFixed(2) + ' m' : '(hidden)';
+        iceMeltEl.textContent = iceCb.checked ? iceMelt.toFixed(2) + ' m' : '(hidden)';
+        totalEl.textContent = total.toFixed(2) + ' m';
+
+        draw(thermal, iceMelt, total, temp);
+      }
+
+      function draw(thermal, iceMelt, total, temp) {
+        const w = canvas.width, h = canvas.height;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+
+        const baseSea = h * 0.7; // baseline sea level in px
+        const mToPx = 100; // 100 px per metre of sea-level rise
+
+        const thermalPx = thermalCb.checked ? thermal * mToPx : 0;
+        const icePx = iceCb.checked ? iceMelt * mToPx : 0;
+        const totalPx = thermalPx + icePx;
+
+        const currentSea = baseSea - totalPx;
+
+        // Sky
+        const skyGrad = ctx.createLinearGradient(0, 0, 0, baseSea);
+        skyGrad.addColorStop(0, '#87ceeb');
+        skyGrad.addColorStop(1, '#e0f0ff');
+        ctx.fillStyle = skyGrad;
+        ctx.fillRect(0, 0, w, baseSea);
+
+        // Baseline marker
+        ctx.strokeStyle = '#cfdde9';
+        ctx.setLineDash([4, 4]);
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, baseSea);
+        ctx.lineTo(w, baseSea);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#6f8da3';
+        ctx.font = '10px system-ui';
+        ctx.textAlign = 'right';
+        ctx.fillText('Baseline (year 0)', w - 10, baseSea - 4);
+
+        // Ocean (current level)
+        const oceanGrad = ctx.createLinearGradient(0, currentSea, 0, h);
+        oceanGrad.addColorStop(0, '#2c7aa0');
+        oceanGrad.addColorStop(1, '#1b4a6b');
+        ctx.fillStyle = oceanGrad;
+        ctx.fillRect(0, currentSea, w, h - currentSea);
+
+        // Wave surface
+        ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let x = 0; x < w; x += 8) {
+          const y = currentSea + Math.sin(x * 0.03) * 3;
+          if (x === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        // Landmass on left (a hill that gets inundated)
+        ctx.fillStyle = '#5a8a4a';
+        ctx.beginPath();
+        ctx.moveTo(0, baseSea);
+        ctx.lineTo(0, baseSea - 120);
+        ctx.quadraticCurveTo(60, baseSea - 130, 120, baseSea - 90);
+        ctx.quadraticCurveTo(180, baseSea - 50, 220, baseSea);
+        ctx.closePath();
+        ctx.fill();
+
+        // Coastline marker
+        ctx.fillStyle = '#f5b342';
+        ctx.font = 'bold 11px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('Coastline', 60, baseSea - 5);
+
+        // Small house on the hill
+        const houseX = 80;
+        const houseY = baseSea - 70;
+        ctx.fillStyle = '#c76b3b';
+        ctx.fillRect(houseX, houseY, 25, 20);
+        ctx.fillStyle = '#8b3a1a';
+        ctx.beginPath();
+        ctx.moveTo(houseX - 5, houseY);
+        ctx.lineTo(houseX + 12, houseY - 12);
+        ctx.lineTo(houseX + 30, houseY);
+        ctx.closePath();
+        ctx.fill();
+
+        // Show water rising over the house if applicable
+        if (currentSea < houseY + 20) {
+          ctx.fillStyle = 'rgba(199, 107, 59, 0.8)';
+          ctx.font = 'bold 12px system-ui';
+          ctx.textAlign = 'left';
+          ctx.fillText('⚠ House flooding risk', 120, houseY + 5);
+        }
+
+        // Water level indicator
+        ctx.fillStyle = '#0b2b3f';
+        ctx.font = 'bold 13px system-ui';
+        ctx.textAlign = 'right';
+        ctx.fillText('Sea level: +' + total.toFixed(2) + ' m', w - 20, 30);
+        ctx.font = '11px system-ui';
+        ctx.fillStyle = '#6f8da3';
+        ctx.fillText('Warming: +' + temp.toFixed(1) + ' °C', w - 20, 50);
+
+        // Contribution bars on the right
+        const barX = w - 200;
+        const barY = 80;
+        if (thermalCb.checked) {
+          ctx.fillStyle = '#c76b3b';
+          const barH = Math.min(100, thermal * 80);
+          ctx.fillRect(barX, barY + (100 - barH), 30, barH);
+          ctx.fillStyle = '#0b2b3f';
+          ctx.font = '10px system-ui';
+          ctx.textAlign = 'left';
+          ctx.fillText('Thermal', barX, barY + 120);
+        }
+        if (iceCb.checked) {
+          ctx.fillStyle = '#8db3d0';
+          const barH = Math.min(100, iceMelt * 80);
+          ctx.fillRect(barX + 40, barY + (100 - barH), 30, barH);
+          ctx.fillStyle = '#0b2b3f';
+          ctx.font = '10px system-ui';
+          ctx.textAlign = 'left';
+          ctx.fillText('Ice melt', barX + 40, barY + 120);
+        }
+      }
+
+      [tempInput, yearsInput, thermalCb, iceCb].forEach((el) => {
+        el.addEventListener('input', update);
+        el.addEventListener('change', update);
+      });
+
+      update();
+    })();
+  </script>
+</body>
+</html>
