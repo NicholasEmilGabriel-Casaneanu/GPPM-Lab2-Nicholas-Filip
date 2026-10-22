@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Electric Field & Charges — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+    body { background: #f8fafc; color: #0b2b3f; min-height: 100vh; display: flex; flex-direction: column; line-height: 1.5; }
+
+    .sim-header {
+      background: linear-gradient(135deg, #0b2b3f 0%, #1b4a6b 100%);
+      color: white; padding: 1rem 0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .sim-header .container {
+      max-width: 1180px; margin: 0 auto; padding: 0 1.5rem;
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 1rem; flex-wrap: wrap;
+    }
+    .sim-header h1 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.3px; }
+    .sim-tag {
+      font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;
+      font-weight: 600; color: #bfe0f5; display: block; margin-bottom: 0.15rem;
+    }
+    .back-link {
+      color: white; background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 0.5rem 1.1rem; border-radius: 30px;
+      font-size: 0.85rem; font-weight: 500; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      transition: all 0.15s ease;
+    }
+    .back-link:hover { background: rgba(255,255,255,0.28); border-color: rgba(255,255,255,0.55); }
+
+    .sim-main {
+      flex: 1; max-width: 1180px; margin: 0 auto;
+      padding: 2rem 1.5rem 3rem; width: 100%;
+    }
+    .sim-intro { color: #4f6f86; font-size: 0.95rem; margin-bottom: 1.5rem; max-width: 85ch; }
+
+    .sim-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 1.25rem;
+      align-items: start;
+    }
+    @media (max-width: 1000px) {
+      .sim-layout { grid-template-columns: 1fr; }
+    }
+
+    .sim-panel {
+      background: white; border-radius: 18px; padding: 1.25rem;
+      border: 1px solid #e2edf5;
+      box-shadow: 0 8px 18px -6px rgba(0,20,30,0.08);
+    }
+    .sim-panel h3 {
+      font-size: 0.85rem; font-weight: 600; color: #1b4a6b;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      margin-bottom: 0.75rem;
+    }
+
+    .sim-panel canvas {
+      display: block; max-width: 100%;
+      border-radius: 12px; background: #f4f8fb;
+      border: 1px solid #dbe8f2; touch-action: none; margin: 0 auto;
+    }
+    .sim-panel canvas.mode-place { cursor: crosshair; }
+    .sim-panel canvas.mode-probe { cursor: cell; }
+
+    .sim-toolbar {
+      display: flex; flex-wrap: wrap; gap: 0.75rem;
+      margin-bottom: 1rem;
+      align-items: center;
+    }
+
+    .sim-toggles { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .sim-toggle {
+      background: white; border: 1px solid #cfdde9; color: #1b4a6b;
+      padding: 0.4rem 0.85rem; border-radius: 30px;
+      font-size: 0.78rem; font-weight: 500; cursor: pointer;
+      transition: all 0.12s ease; font-family: inherit;
+    }
+    .sim-toggle.active { background: #2c7aa0; border-color: #2c7aa0; color: white; }
+    .sim-toggle:hover:not(.active) { background: #eef4fa; }
+
+    /* Mode switch — distinct look, bigger */
+    .mode-switch {
+      display: inline-flex;
+      background: #eef4fa;
+      border-radius: 30px;
+      padding: 3px;
+      border: 1px solid #cfdde9;
+    }
+    .mode-switch button {
+      background: transparent;
+      border: none;
+      padding: 0.45rem 1rem;
+      border-radius: 26px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      color: #1b4a6b;
+      font-family: inherit;
+      transition: all 0.15s ease;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+    }
+    .mode-switch button.active {
+      background: #2c7aa0;
+      color: white;
+      box-shadow: 0 2px 6px -1px rgba(44,122,160,0.4);
+    }
+    .mode-switch button:not(.active):hover { background: #dceafa; }
+
+    .sim-readout {
+      padding: 0.85rem 1rem;
+      background: #f4f9ff; border-radius: 12px;
+      border: 1px solid #cde0ef;
+      font-size: 0.85rem; color: #1e5a7a; line-height: 1.6;
+    }
+    .sim-readout strong { color: #0b2b3f; }
+    .sim-readout .value { font-variant-numeric: tabular-nums; font-weight: 600; color: #2c7aa0; }
+
+    .readout-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.4rem 1rem;
+      margin-bottom: 0.6rem;
+    }
+    .readout-grid div {
+      display: flex; justify-content: space-between;
+      font-size: 0.82rem;
+    }
+    .readout-grid span:first-child { color: #4f6f86; }
+    .readout-grid span:last-child { font-weight: 600; font-variant-numeric: tabular-nums; color: #0b2b3f; }
+
+    .sim-btn {
+      background: #2c7aa0; color: white; border: none;
+      padding: 0.5rem 1.1rem; border-radius: 30px;
+      font-weight: 500; font-size: 0.85rem; cursor: pointer;
+      transition: background 0.15s ease;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      font-family: inherit;
+    }
+    .sim-btn:hover { background: #1b5a7a; }
+    .sim-btn.secondary { background: #e4f0f9; color: #1b4a6b; }
+    .sim-btn.secondary:hover { background: #cfe4f4; }
+    .sim-btn.danger { background: #fde2e1; color: #b03a2e; }
+    .sim-btn.danger:hover { background: #f8c9c6; }
+    .sim-btn-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem; }
+
+    .charge-info {
+      font-size: 0.85rem; color: #4f6f86;
+      padding: 0.75rem 0.9rem;
+      background: #f8fbfe; border-radius: 10px;
+      border: 1px dashed #cde0ef;
+      min-height: 62px;
+    }
+    .charge-info strong { color: #0b2b3f; }
+    .charge-info .muted { color: #8aa5ba; font-style: italic; }
+
+    .slider-group {
+      display: flex; flex-direction: column; gap: 0.35rem;
+      margin-top: 0.75rem;
+    }
+    .slider-group label {
+      font-size: 0.72rem; font-weight: 600; color: #1b4a6b;
+      text-transform: uppercase; letter-spacing: 0.03em;
+    }
+    .slider-group input[type="range"] { width: 100%; accent-color: #2c7aa0; }
+    .slider-group .range-value {
+      font-size: 0.8rem; color: #2c7aa0; font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .legend-row {
+      display: flex; flex-wrap: wrap; gap: 0.75rem;
+      font-size: 0.75rem; color: #4f6f86;
+      margin-top: 0.5rem;
+    }
+    .legend-row span { display: flex; align-items: center; gap: 0.35rem; }
+    .legend-swatch {
+      display: inline-block; width: 12px; height: 12px;
+      border-radius: 3px;
+    }
+
+    /* Export modal */
+    .export-overlay {
+      position: fixed; inset: 0;
+      background: rgba(8,30,45,0.7);
+      backdrop-filter: blur(3px);
+      display: none;
+      align-items: center; justify-content: center;
+      padding: 1.5rem;
+      z-index: 50;
+    }
+    .export-overlay.active { display: flex; }
+    .export-dialog {
+      background: white;
+      border-radius: 16px;
+      max-width: 640px; width: 100%;
+      max-height: 90vh;
+      display: flex; flex-direction: column;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4);
+      overflow: hidden;
+    }
+    .export-header {
+      padding: 1rem 1.25rem;
+      background: linear-gradient(135deg, #0b2b3f 0%, #1b4a6b 100%);
+      color: white;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .export-header h3 { font-size: 1rem; font-weight: 600; }
+    .export-close {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white; width: 32px; height: 32px;
+      border-radius: 50%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s ease;
+    }
+    .export-close:hover { background: rgba(255,255,255,0.3); transform: rotate(90deg); }
+    .export-body {
+      padding: 1.25rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .export-body textarea {
+      width: 100%;
+      min-height: 340px;
+      padding: 0.85rem;
+      border-radius: 10px;
+      border: 1px solid #cfdde9;
+      font-family: 'Courier New', monospace;
+      font-size: 0.78rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: #0b2b3f;
+      background: #f8fbfe;
+    }
+    .export-footer {
+      padding: 1rem 1.25rem;
+      border-top: 1px solid #eaf1f7;
+      display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: flex-end;
+    }
+    .copy-feedback {
+      color: #27ae60; font-size: 0.85rem; font-weight: 500;
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      align-self: center; margin-right: auto;
+      opacity: 0; transition: opacity 0.2s;
+    }
+    .copy-feedback.show { opacity: 1; }
+
+    .sim-footer {
+      text-align: center; font-size: 0.8rem; color: #6f8da3;
+      padding: 1.5rem; border-top: 1px solid #d9e6f0;
+    }
+    .sim-footer a { color: #2c7aa0; text-decoration: none; }
+    .sim-footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <header class="sim-header">
+    <div class="container">
+      <div>
+        <span class="sim-tag">Physics · Electrostatics</span>
+        <h1>Electric Field &amp; Charges — Measurement Lab</h1>
+      </div>
+      <a class="back-link" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <p class="sim-intro">
+      Switch between <strong>Place Charge</strong> and <strong>Probe</strong> modes. In Place mode,
+      click empty space to add a charge, or click a charge to select/drag it. In Probe mode, click
+      anywhere to drop a probe — it stays there measuring E, V, and distance to each charge until
+      you click elsewhere. Launch a test charge to watch it drift through the field (it stops on
+      contact with any charge). Use <em>Export data</em> to save a full report.
+    </p>
+
+    <div class="sim-layout">
+      <div class="sim-panel">
+        <div class="sim-toolbar">
+          <div class="mode-switch" id="modeSwitch">
+            <button class="active" data-action="place"><i class="fas fa-plus-circle"></i> Place Charge</button>
+            <button data-action="probe"><i class="fas fa-crosshairs"></i> Probe</button>
+          </div>
+          <div class="sim-toggles">
+            <button class="sim-toggle active" data-mode="vectors">Vectors</button>
+            <button class="sim-toggle" data-mode="lines">Field Lines</button>
+            <button class="sim-toggle" data-mode="equipotential">Equipotentials</button>
+          </div>
+        </div>
+
+        <canvas id="c" width="780" height="520" class="mode-place"></canvas>
+
+        <div class="sim-readout" id="probeReadout" style="margin-top: 1rem;">
+          <div class="readout-grid">
+            <div><span>Probe x</span><span id="probeX">—</span></div>
+            <div><span>Probe y</span><span id="probeY">—</span></div>
+            <div><span>|E|</span><span id="probeE">—</span></div>
+            <div><span>Direction</span><span id="probeDir">—</span></div>
+            <div><span>Potential V</span><span id="probeV">—</span></div>
+            <div><span>Nearest charge</span><span id="probeNear">—</span></div>
+          </div>
+          <div id="probeHint" style="font-size:0.78rem; color:#4f6f86;">
+            Switch to <strong>Probe</strong> mode and click on the canvas to place a probe.
+          </div>
+        </div>
+
+        <div class="legend-row">
+          <span><span class="legend-swatch" style="background:#e74c3c;"></span> positive charge</span>
+          <span><span class="legend-swatch" style="background:#3498db;"></span> negative charge</span>
+          <span><span class="legend-swatch" style="background:#f39c12;"></span> test charge</span>
+          <span><span class="legend-swatch" style="background:#27ae60;"></span> probe</span>
+        </div>
+      </div>
+
+      <div>
+        <div class="sim-panel">
+          <h3><i class="fas fa-crosshairs"></i> Selected charge</h3>
+          <div class="charge-info" id="chargeInfo">
+            <span class="muted">Click a charge (in Place mode) to select it.</span>
+          </div>
+          <div id="chargeControls" style="display:none;">
+            <div class="slider-group">
+              <label>Charge magnitude (nC)</label>
+              <input type="range" id="chargeMag" min="-10" max="10" step="0.5" value="1">
+              <span class="range-value" id="chargeMagVal">+1.0 nC</span>
+            </div>
+            <div class="sim-btn-row">
+              <button class="sim-btn danger" id="deleteCharge">
+                <i class="fas fa-trash"></i> Delete
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="sim-panel" style="margin-top: 1rem;">
+          <h3><i class="fas fa-flask"></i> Experiment tools</h3>
+          <div class="sim-btn-row" style="margin-top: 0;">
+            <button class="sim-btn" id="launchTestCharge">
+              <i class="fas fa-play"></i> Launch test charge
+            </button>
+            <button class="sim-btn secondary" id="clearTestCharge">
+              <i class="fas fa-eraser"></i> Clear
+            </button>
+          </div>
+          <div class="sim-btn-row">
+            <button class="sim-btn secondary" id="presetDipole">
+              <i class="fas fa-arrows-alt-h"></i> Dipole
+            </button>
+            <button class="sim-btn secondary" id="presetQuadrupole">
+              <i class="fas fa-th"></i> Quadrupole
+            </button>
+            <button class="sim-btn secondary" id="presetSame">
+              <i class="fas fa-plus-circle"></i> Two +
+            </button>
+            <button class="sim-btn secondary" id="presetReset">
+              <i class="fas fa-rotate-left"></i> Reset
+            </button>
+          </div>
+        </div>
+
+        <div class="sim-panel" style="margin-top: 1rem;">
+          <h3><i class="fas fa-chart-line"></i> System metrics</h3>
+          <div class="readout-grid" style="grid-template-columns: 1fr;">
+            <div><span>Charges</span><span id="metricCount">0</span></div>
+            <div><span>Total charge</span><span id="metricQ">0 nC</span></div>
+            <div><span>Potential energy U</span><span id="metricU">0</span></div>
+            <div><span>Dipole moment |p|</span><span id="metricP">—</span></div>
+            <div><span>Field at origin</span><span id="metricE0">—</span></div>
+          </div>
+          <div style="font-size:0.75rem; color:#4f6f86; margin-top:0.5rem;">
+            U = k Σ qᵢqⱼ/rᵢⱼ. A stable configuration has negative U. Dipole moment shown only when net charge ≈ 0.
+          </div>
+        </div>
+
+        <div class="sim-panel" style="margin-top: 1rem;">
+          <h3><i class="fas fa-file-export"></i> Export</h3>
+          <button class="sim-btn" id="openExport" style="width: 100%; justify-content: center;">
+            <i class="fas fa-download"></i> Save / copy experiment data
+          </button>
+          <div style="font-size:0.75rem; color:#4f6f86; margin-top:0.5rem;">
+            Generates a text report with all charges, positions, the current probe reading, and system metrics.
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="sim-footer">
+    All-Science Sims — Physics · <a href="../index.html">Back to catalog</a>
+  </footer>
+
+  <!-- Export dialog -->
+  <div class="export-overlay" id="exportOverlay">
+    <div class="export-dialog">
+      <div class="export-header">
+        <h3><i class="fas fa-file-alt"></i> Experiment data</h3>
+        <button class="export-close" id="exportClose" aria-label="Close">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="export-body">
+        <textarea id="exportText" spellcheck="false" readonly></textarea>
+      </div>
+      <div class="export-footer">
+        <span class="copy-feedback" id="copyFeedback">
+          <i class="fas fa-check-circle"></i> Copied!
+        </span>
+        <button class="sim-btn secondary" id="copyBtn">
+          <i class="fas fa-copy"></i> Copy to clipboard
+        </button>
+        <button class="sim-btn" id="downloadBtn">
+          <i class="fas fa-download"></i> Download .txt
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ---- Physics constants ----
+      const K = 1;
+      const W = 780, H = 520;
+      const METERS_PER_PX = 0.02;
+      const GRID_M = 0.5;
+
+      const canvas = document.getElementById('c');
+      const ctx = canvas.getContext('2d');
+
+      // ---- State ----
+      let charges = [];
+      let selected = null;
+      let dragging = null;
+      let mode = 'vectors';           // 'vectors' | 'lines' | 'equipotential'
+      let interactionMode = 'place';  // 'place' | 'probe'
+      let probe = null;               // {x, y} — sticky once placed
+      let hoverPos = null;            // preview position when in probe mode
+      let testCharge = null;
+      let testInterval = null;
+
+      // ---- Presets ----
+      const PRESETS = {
+        dipole: [
+          { x: W / 2 - 100, y: H / 2, q: +5 },
+          { x: W / 2 + 100, y: H / 2, q: -5 },
+        ],
+        quadrupole: [
+          { x: W / 2 - 100, y: H / 2 - 100, q: +5 },
+          { x: W / 2 + 100, y: H / 2 - 100, q: -5 },
+          { x: W / 2 - 100, y: H / 2 + 100, q: -5 },
+          { x: W / 2 + 100, y: H / 2 + 100, q: +5 },
+        ],
+        same: [
+          { x: W / 2 - 100, y: H / 2, q: +5 },
+          { x: W / 2 + 100, y: H / 2, q: +5 },
+        ],
+        reset: [
+          { x: W / 2 - 100, y: H / 2, q: +5 },
+          { x: W / 2 + 100, y: H / 2, q: -5 },
+        ],
+      };
+
+      function loadPreset(name) {
+        charges = PRESETS[name].map(c => ({ ...c }));
+        selected = null;
+        stopTestCharge();
+        draw();
+        updateInspector();
+        updateMetrics();
+      }
+
+      // ---- Physics ----
+      function fieldFromCharge(charge, px, py) {
+        const dx = px - charge.x;
+        const dy = py - charge.y;
+        const r2 = dx * dx + dy * dy;
+        const r = Math.sqrt(r2);
+        if (r < 1) return { ex: 0, ey: 0, r: 1 };
+        const mag = K * charge.q * 1000 / (r2 * METERS_PER_PX * METERS_PER_PX);
+        return { ex: mag * dx / r, ey: mag * dy / r, r };
+      }
+
+      function fieldAt(px, py) {
+        let ex = 0, ey = 0;
+        charges.forEach(c => {
+          const f = fieldFromCharge(c, px, py);
+          ex += f.ex;
+          ey += f.ey;
+        });
+        return { ex, ey };
+      }
+
+      function potentialAt(px, py) {
+        let V = 0;
+        charges.forEach(c => {
+          const dx = px - c.x, dy = py - c.y;
+          const r = Math.sqrt(dx * dx + dy * dy);
+          if (r < 1) return;
+          V += K * c.q * 1000 / (r * METERS_PER_PX);
+        });
+        return V;
+      }
+
+      // ---- Draw ----
+      function draw() {
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = '#f4f8fb';
+        ctx.fillRect(0, 0, W, H);
+
+        // Grid
+        const gridPx = GRID_M / METERS_PER_PX;
+        ctx.strokeStyle = 'rgba(120,150,175,0.12)';
+        ctx.lineWidth = 1;
+        for (let x = 0; x < W; x += gridPx) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+        }
+        for (let y = 0; y < H; y += gridPx) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+        }
+
+        // Axis labels
+        ctx.fillStyle = 'rgba(80,110,135,0.55)';
+        ctx.font = '10px sans-serif';
+        ctx.textAlign = 'left';
+        for (let m = 0; m <= 16; m += 2) {
+          const px = m / METERS_PER_PX;
+          if (px > W - 4) break;
+          ctx.fillText(m + 'm', px + 2, H - 4);
+        }
+
+        if (mode === 'vectors') drawVectors();
+        else if (mode === 'lines') drawLines();
+        else if (mode === 'equipotential') drawEquipotentials();
+
+        // Test charge trail
+        if (testCharge && testCharge.trail.length > 1) {
+          ctx.strokeStyle = 'rgba(243,156,18,0.85)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          testCharge.trail.forEach((p, i) => {
+            if (i === 0) ctx.moveTo(p.x, p.y);
+            else ctx.lineTo(p.x, p.y);
+          });
+          ctx.stroke();
+        }
+
+        // Charges
+        charges.forEach(c => {
+          const isSel = c === selected;
+          ctx.beginPath();
+          ctx.arc(c.x, c.y, 14, 0, Math.PI * 2);
+          const grad = ctx.createRadialGradient(c.x - 4, c.y - 4, 2, c.x, c.y, 16);
+          if (c.q > 0) {
+            grad.addColorStop(0, '#ff8a80');
+            grad.addColorStop(1, '#c0392b');
+          } else {
+            grad.addColorStop(0, '#7ec9f5');
+            grad.addColorStop(1, '#2471a3');
+          }
+          ctx.fillStyle = grad;
+          ctx.fill();
+          ctx.strokeStyle = isSel ? '#f5b342' : 'white';
+          ctx.lineWidth = isSel ? 3.5 : 2.5;
+          ctx.stroke();
+          ctx.fillStyle = 'white';
+          ctx.font = 'bold 16px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(c.q > 0 ? '+' : '−', c.x, c.y + 1);
+          ctx.fillStyle = 'rgba(11,43,63,0.85)';
+          ctx.font = 'bold 10px sans-serif';
+          ctx.fillText(Math.abs(c.q).toFixed(1), c.x, c.y + 26);
+        });
+
+        // Test charge
+        if (testCharge) {
+          ctx.beginPath();
+          ctx.arc(testCharge.x, testCharge.y, 7, 0, Math.PI * 2);
+          ctx.fillStyle = '#f39c12';
+          ctx.fill();
+          ctx.strokeStyle = 'white';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+
+        // Probe — sticky, always drawn if placed
+        if (probe) {
+          drawProbeMarker(probe.x, probe.y, true);
+        } else if (interactionMode === 'probe' && hoverPos) {
+          // Preview ghost while hovering in probe mode
+          drawProbeMarker(hoverPos.x, hoverPos.y, false);
+        }
+      }
+
+      function drawProbeMarker(x, y, solid) {
+        ctx.globalAlpha = solid ? 1 : 0.45;
+        ctx.beginPath();
+        ctx.arc(x, y, 6, 0, Math.PI * 2);
+        ctx.fillStyle = '#27ae60';
+        ctx.fill();
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(x, y, 11, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(39,174,96,0.5)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        const { ex, ey } = fieldAt(x, y);
+        const mag = Math.sqrt(ex * ex + ey * ey);
+        if (mag > 0.001) {
+          const scale = 28;
+          const ux = ex / mag, uy = ey / mag;
+          ctx.strokeStyle = '#27ae60';
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(x + ux * scale, y + uy * scale);
+          ctx.stroke();
+          const ax = x + ux * scale, ay = y + uy * scale;
+          ctx.beginPath();
+          ctx.moveTo(ax, ay);
+          ctx.lineTo(ax - ux * 8 - uy * 4, ay - uy * 8 + ux * 4);
+          ctx.lineTo(ax - ux * 8 + uy * 4, ay - uy * 8 - ux * 4);
+          ctx.closePath();
+          ctx.fillStyle = '#27ae60';
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      function drawVectors() {
+        const step = 22;
+        for (let x = step / 2; x < W; x += step) {
+          for (let y = step / 2; y < H; y += step) {
+            let skip = false;
+            for (const c of charges) {
+              if (Math.hypot(x - c.x, y - c.y) < 22) { skip = true; break; }
+            }
+            if (skip) continue;
+            const { ex, ey } = fieldAt(x, y);
+            const mag = Math.sqrt(ex * ex + ey * ey);
+            if (mag < 0.05) continue;
+            const len = Math.min(12, 4 + Math.log(1 + mag) * 2);
+            const ux = ex / mag, uy = ey / mag;
+            const alpha = Math.min(0.85, 0.18 + mag * 0.015);
+            ctx.strokeStyle = `rgba(60,120,170,${alpha})`;
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + ux * len, y + uy * len);
+            ctx.stroke();
+            const ax = x + ux * len, ay = y + uy * len;
+            ctx.beginPath();
+            ctx.moveTo(ax, ay);
+            ctx.lineTo(ax - ux * 4 - uy * 2.5, ay - uy * 4 + ux * 2.5);
+            ctx.lineTo(ax - ux * 4 + uy * 2.5, ay - uy * 4 - ux * 2.5);
+            ctx.closePath();
+            ctx.fillStyle = `rgba(60,120,170,${alpha})`;
+            ctx.fill();
+          }
+        }
+      }
+
+      function drawLines() {
+        ctx.strokeStyle = 'rgba(60,120,170,0.55)';
+        ctx.lineWidth = 1.2;
+        charges.forEach(c => {
+          if (c.q <= 0) return;
+          const n = Math.round(8 + Math.abs(c.q) * 2);
+          for (let i = 0; i < n; i++) {
+            const angle = (i / n) * Math.PI * 2 + 0.13;
+            let x = c.x + Math.cos(angle) * 14;
+            let y = c.y + Math.sin(angle) * 14;
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            for (let s = 0; s < 500; s++) {
+              const { ex, ey } = fieldAt(x, y);
+              const mag = Math.sqrt(ex * ex + ey * ey);
+              if (mag < 0.01) break;
+              x += (ex / mag) * 3;
+              y += (ey / mag) * 3;
+              ctx.lineTo(x, y);
+              if (x < -50 || x > W + 50 || y < -50 || y > H + 50) break;
+              let hit = false;
+              for (const cc of charges) {
+                if (cc !== c && cc.q < 0 && Math.hypot(x - cc.x, y - cc.y) < 12) {
+                  hit = true; break;
+                }
+              }
+              if (hit) break;
+            }
+            ctx.stroke();
+          }
+        });
+      }
+
+      function drawEquipotentials() {
+        const stride = 4;
+        const cols = Math.ceil(W / stride);
+        const rows = Math.ceil(H / stride);
+        const V = new Float32Array(cols * rows);
+        let minV = Infinity, maxV = -Infinity;
+
+        for (let j = 0; j < rows; j++) {
+          for (let i = 0; i < cols; i++) {
+            const v = potentialAt(i * stride, j * stride);
+            V[j * cols + i] = v;
+            if (v < minV) minV = v;
+            if (v > maxV) maxV = v;
+          }
+        }
+
+        const absMax = Math.max(Math.abs(minV), Math.abs(maxV));
+        if (absMax < 0.001) return;
+
+        const levels = [];
+        for (let k = 1; k <= 10; k++) {
+          const t = k / 11;
+          const L = absMax * Math.pow(t, 0.7);
+          levels.push(L);
+          levels.push(-L);
+        }
+
+        ctx.fillStyle = 'rgba(44,122,160,0.75)';
+        const tol = absMax * 0.004;
+        for (let j = 0; j < rows; j++) {
+          for (let i = 0; i < cols; i++) {
+            const v = V[j * cols + i];
+            for (const L of levels) {
+              if (Math.abs(v - L) < tol) {
+                ctx.fillRect(i * stride, j * stride, 2.5, 2.5);
+                break;
+              }
+            }
+          }
+        }
+
+        const washStride = 12;
+        for (let y = 0; y < H; y += washStride) {
+          for (let x = 0; x < W; x += washStride) {
+            const v = potentialAt(x, y);
+            const norm = Math.max(-1, Math.min(1, v / (absMax * 0.6)));
+            if (Math.abs(norm) < 0.02) continue;
+            const alpha = Math.min(0.22, Math.abs(norm) * 0.28);
+            ctx.fillStyle = norm > 0
+              ? `rgba(231,76,60,${alpha})`
+              : `rgba(52,152,219,${alpha})`;
+            ctx.fillRect(x, y, washStride, washStride);
+          }
+        }
+      }
+
+      // ---- Probe readout ----
+      function updateProbeReadout() {
+        const hint = document.getElementById('probeHint');
+        if (!probe) {
+          document.getElementById('probeX').textContent = '—';
+          document.getElementById('probeY').textContent = '—';
+          document.getElementById('probeE').textContent = '—';
+          document.getElementById('probeDir').textContent = '—';
+          document.getElementById('probeV').textContent = '—';
+          document.getElementById('probeNear').textContent = '—';
+          hint.innerHTML = interactionMode === 'probe'
+            ? 'Click on the canvas to place the probe.'
+            : 'Switch to <strong>Probe</strong> mode and click on the canvas to place a probe.';
+          return;
+        }
+        const mx = probe.x * METERS_PER_PX;
+        const my = (H - probe.y) * METERS_PER_PX;
+        const { ex, ey } = fieldAt(probe.x, probe.y);
+        const mag = Math.sqrt(ex * ex + ey * ey);
+        const angle = Math.atan2(-ey, ex) * 180 / Math.PI;
+        const V = potentialAt(probe.x, probe.y);
+
+        // Nearest charge
+        let nearest = null, nearestDist = Infinity;
+        charges.forEach(c => {
+          const d = Math.hypot(c.x - probe.x, c.y - probe.y);
+          if (d < nearestDist) { nearestDist = d; nearest = c; }
+        });
+
+        document.getElementById('probeX').textContent = mx.toFixed(2) + ' m';
+        document.getElementById('probeY').textContent = my.toFixed(2) + ' m';
+        document.getElementById('probeE').textContent = mag.toFixed(2);
+        document.getElementById('probeDir').textContent = angle.toFixed(1) + '°';
+        document.getElementById('probeV').textContent = V.toFixed(2);
+        if (nearest) {
+          const d = nearestDist * METERS_PER_PX;
+          document.getElementById('probeNear').textContent =
+            `${nearest.q > 0 ? '+' : ''}${nearest.q.toFixed(1)} nC @ ${d.toFixed(2)} m`;
+        } else {
+          document.getElementById('probeNear').textContent = '—';
+        }
+        hint.innerHTML = 'Probe locked. Click elsewhere to move it.';
+      }
+
+      // ---- Inspector ----
+      function updateInspector() {
+        const info = document.getElementById('chargeInfo');
+        const controls = document.getElementById('chargeControls');
+        if (!selected) {
+          info.innerHTML = '<span class="muted">Click a charge (in Place mode) to select it.</span>';
+          controls.style.display = 'none';
+          return;
+        }
+        const mx = selected.x * METERS_PER_PX;
+        const my = (H - selected.y) * METERS_PER_PX;
+        info.innerHTML = `
+          <strong>q = ${selected.q > 0 ? '+' : ''}${selected.q.toFixed(1)} nC</strong><br>
+          Position: (${mx.toFixed(2)}, ${my.toFixed(2)}) m<br>
+          <span class="muted" style="font-size:0.78rem;">Drag to move · adjust magnitude below</span>
+        `;
+        controls.style.display = 'block';
+        document.getElementById('chargeMag').value = selected.q;
+        document.getElementById('chargeMagVal').textContent =
+          (selected.q > 0 ? '+' : '') + selected.q.toFixed(1) + ' nC';
+      }
+
+      // ---- Metrics ----
+      function updateMetrics() {
+        const count = charges.length;
+        const totalQ = charges.reduce((s, c) => s + c.q, 0);
+
+        let U = 0;
+        for (let i = 0; i < charges.length; i++) {
+          for (let j = i + 1; j < charges.length; j++) {
+            const a = charges[i], b = charges[j];
+            const r = Math.hypot(a.x - b.x, a.y - b.y) * METERS_PER_PX;
+            if (r > 0.05) U += K * (a.q * b.q) * 1000 / r;
+          }
+        }
+
+        let px = 0, py = 0;
+        charges.forEach(c => {
+          px += c.q * c.x * METERS_PER_PX;
+          py += c.q * (H - c.y) * METERS_PER_PX;
+        });
+        const p = Math.hypot(px, py);
+
+        const { ex, ey } = fieldAt(W / 2, H / 2);
+        const E0 = Math.hypot(ex, ey);
+
+        document.getElementById('metricCount').textContent = count;
+        document.getElementById('metricQ').textContent =
+          (totalQ > 0 ? '+' : '') + totalQ.toFixed(1) + ' nC';
+        document.getElementById('metricU').textContent = U.toFixed(2);
+        document.getElementById('metricP').textContent =
+          Math.abs(totalQ) < 0.5 ? p.toFixed(2) + ' nC·m' : '— (net charge ≠ 0)';
+        document.getElementById('metricE0').textContent = E0.toFixed(2);
+      }
+
+      // ---- Test charge ----
+      function launchTestCharge() {
+        stopTestCharge();
+        const startX = probe ? probe.x : 80;
+        const startY = probe ? probe.y : H / 2;
+        testCharge = { x: startX, y: startY, vx: 0, vy: 0, trail: [{ x: startX, y: startY }] };
+
+        const dt = 0.03;
+        const mass = 1;
+        const chargeVal = 1;
+        const stepsPerFrame = 2;
+        const damping = 0.997;
+        const speedScale = 0.25;   // << slower than before
+        let frames = 0;
+        const maxFrames = 1200;
+
+        testInterval = setInterval(() => {
+          if (!testCharge) return;
+          for (let s = 0; s < stepsPerFrame; s++) {
+            const { ex, ey } = fieldAt(testCharge.x, testCharge.y);
+            const ax = chargeVal * ex / mass;
+            const ay = chargeVal * ey / mass;
+            testCharge.vx = (testCharge.vx + ax * dt) * damping;
+            testCharge.vy = (testCharge.vy + ay * dt) * damping;
+            const sp = Math.hypot(testCharge.vx, testCharge.vy);
+            const maxSpeed = 12;
+            if (sp > maxSpeed) {
+              testCharge.vx *= maxSpeed / sp;
+              testCharge.vy *= maxSpeed / sp;
+            }
+            testCharge.x += testCharge.vx * dt * 60 * speedScale;
+            testCharge.y += testCharge.vy * dt * 60 * speedScale;
+
+            if (testCharge.x < -20 || testCharge.x > W + 20 ||
+                testCharge.y < -20 || testCharge.y > H + 20) {
+              stopTestCharge();
+              return;
+            }
+            // Absorbed on contact with ANY charge
+            for (const c of charges) {
+              if (Math.hypot(testCharge.x - c.x, testCharge.y - c.y) < 14) {
+                stopTestCharge();
+                return;
+              }
+            }
+          }
+          testCharge.trail.push({ x: testCharge.x, y: testCharge.y });
+          if (testCharge.trail.length > 500) testCharge.trail.shift();
+          frames++;
+          if (frames > maxFrames) stopTestCharge();
+          draw();
+        }, 30);
+      }
+
+      function stopTestCharge() {
+        if (testInterval) { clearInterval(testInterval); testInterval = null; }
+        testCharge = null;
+        draw();
+      }
+
+      // ---- Pointer handling ----
+      function getPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+          x: (clientX - rect.left) * scaleX,
+          y: (clientY - rect.top) * scaleY,
+        };
+      }
+
+      function hitCharge(px, py) {
+        for (const c of charges) {
+          if (Math.hypot(px - c.x, py - c.y) < 18) return c;
+        }
+        return null;
+      }
+
+      function onDown(e) {
+        e.preventDefault();
+        const { x, y } = getPos(e);
+
+        if (interactionMode === 'probe') {
+          // Drop the probe where the user clicks
+          probe = { x, y };
+          updateProbeReadout();
+          draw();
+          return;
+        }
+
+        // Place mode: select / drag / add
+        const hit = hitCharge(x, y);
+        if (hit) {
+          selected = hit;
+          dragging = hit;
+          updateInspector();
+          draw();
+          return;
+        }
+
+        const lastQ = charges.length ? charges[charges.length - 1].q : -1;
+        const q = lastQ > 0 ? -5 : +5;
+        const newCharge = { x, y, q };
+        charges.push(newCharge);
+        selected = newCharge;
+        updateInspector();
+        updateMetrics();
+        updateProbeReadout();
+        draw();
+      }
+
+      function onMove(e) {
+        const { x, y } = getPos(e);
+
+        if (interactionMode === 'probe') {
+          hoverPos = { x, y };
+          // Do not move the sticky probe — only preview.
+          draw();
+          return;
+        }
+
+        if (dragging) {
+          e.preventDefault();
+          dragging.x = Math.max(15, Math.min(W - 15, x));
+          dragging.y = Math.max(15, Math.min(H - 15, y));
+          updateInspector();
+          updateMetrics();
+          updateProbeReadout();
+          draw();
+          return;
+        }
+      }
+
+      function onUp() { dragging = null; }
+
+      function onLeave() {
+        if (interactionMode === 'probe') {
+          hoverPos = null;
+          draw();
+        }
+      }
+
+      // ---- Interaction mode switching ----
+      document.querySelectorAll('#modeSwitch button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('#modeSwitch button').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          interactionMode = btn.dataset.action;
+          canvas.classList.toggle('mode-place', interactionMode === 'place');
+          canvas.classList.toggle('mode-probe', interactionMode === 'probe');
+          if (interactionMode !== 'probe') hoverPos = null;
+          updateProbeReadout();
+          draw();
+        });
+      });
+
+      // ---- Visualization mode toggle ----
+      document.querySelectorAll('.sim-toggles .sim-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.sim-toggles .sim-toggle').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          mode = btn.dataset.mode;
+          draw();
+        });
+      });
+
+      // ---- Tools ----
+      document.getElementById('launchTestCharge').addEventListener('click', launchTestCharge);
+      document.getElementById('clearTestCharge').addEventListener('click', stopTestCharge);
+
+      document.getElementById('chargeMag').addEventListener('input', (e) => {
+        if (!selected) return;
+        const v = parseFloat(e.target.value);
+        selected.q = v;
+        document.getElementById('chargeMagVal').textContent =
+          (v > 0 ? '+' : '') + v.toFixed(1) + ' nC';
+        updateInspector();
+        updateMetrics();
+        updateProbeReadout();
+        draw();
+      });
+
+      document.getElementById('deleteCharge').addEventListener('click', () => {
+        if (!selected) return;
+        charges = charges.filter(c => c !== selected);
+        selected = null;
+        updateInspector();
+        updateMetrics();
+        updateProbeReadout();
+        draw();
+      });
+
+      document.getElementById('presetDipole').addEventListener('click', () => loadPreset('dipole'));
+      document.getElementById('presetQuadrupole').addEventListener('click', () => loadPreset('quadrupole'));
+      document.getElementById('presetSame').addEventListener('click', () => loadPreset('same'));
+      document.getElementById('presetReset').addEventListener('click', () => loadPreset('reset'));
+
+      // ---- Pointer events ----
+      canvas.addEventListener('mousedown', onDown);
+      canvas.addEventListener('mousemove', onMove);
+      canvas.addEventListener('mouseleave', onLeave);
+      window.addEventListener('mouseup', onUp);
+      canvas.addEventListener('touchstart', onDown, { passive: false });
+      canvas.addEventListener('touchmove', onMove, { passive: false });
+      canvas.addEventListener('touchend', onUp);
+
+      // ---- Export ----
+      const exportOverlay = document.getElementById('exportOverlay');
+      const exportText = document.getElementById('exportText');
+
+      function buildReport() {
+        const lines = [];
+        const now = new Date();
+        lines.push('Electric Field & Charges — Experiment Report');
+        lines.push('='.repeat(50));
+        lines.push('Generated: ' + now.toLocaleString());
+        lines.push('Canvas: ' + W + ' × ' + H + ' px  (1 px = ' + METERS_PER_PX + ' m)');
+        lines.push('Visualization mode: ' + mode);
+        lines.push('Interaction mode: ' + interactionMode);
+        lines.push('');
+        lines.push('CHARGES (' + charges.length + ')');
+        lines.push('-'.repeat(50));
+        if (charges.length === 0) {
+          lines.push('  (no charges)');
+        } else {
+          charges.forEach((c, i) => {
+            const mx = c.x * METERS_PER_PX;
+            const my = (H - c.y) * METERS_PER_PX;
+            lines.push(
+              `  #${i + 1}  q = ${c.q > 0 ? '+' : ''}${c.q.toFixed(1)} nC  ` +
+              `at (x = ${mx.toFixed(2)} m, y = ${my.toFixed(2)} m)`
+            );
+          });
+        }
+        lines.push('');
+        lines.push('SYSTEM METRICS');
+        lines.push('-'.repeat(50));
+        const totalQ = charges.reduce((s, c) => s + c.q, 0);
+        let U = 0;
+        for (let i = 0; i < charges.length; i++) {
+          for (let j = i + 1; j < charges.length; j++) {
+            const a = charges[i], b = charges[j];
+            const r = Math.hypot(a.x - b.x, a.y - b.y) * METERS_PER_PX;
+            if (r > 0.05) U += K * (a.q * b.q) * 1000 / r;
+          }
+        }
+        let px = 0, py = 0;
+        charges.forEach(c => {
+          px += c.q * c.x * METERS_PER_PX;
+          py += c.q * (H - c.y) * METERS_PER_PX;
+        });
+        const p = Math.hypot(px, py);
+        const { ex: ex0, ey: ey0 } = fieldAt(W / 2, H / 2);
+        const E0 = Math.hypot(ex0, ey0);
+
+        lines.push('  Total charge:      ' + (totalQ > 0 ? '+' : '') + totalQ.toFixed(2) + ' nC');
+        lines.push('  Potential energy U: ' + U.toFixed(3) + '  (' + (U < 0 ? 'bound' : 'unbound') + ')');
+        lines.push('  Dipole moment |p|: ' + (Math.abs(totalQ) < 0.5 ? p.toFixed(3) + ' nC·m' : 'n/a (net charge ≠ 0)'));
+        lines.push('  Field at origin:   ' + E0.toFixed(3));
+        lines.push('');
+
+        lines.push('PROBE MEASUREMENT');
+        lines.push('-'.repeat(50));
+        if (!probe) {
+          lines.push('  (no probe placed)');
+        } else {
+          const mx = probe.x * METERS_PER_PX;
+          const my = (H - probe.y) * METERS_PER_PX;
+          const { ex, ey } = fieldAt(probe.x, probe.y);
+          const mag = Math.sqrt(ex * ex + ey * ey);
+          const angle = Math.atan2(-ey, ex) * 180 / Math.PI;
+          const V = potentialAt(probe.x, probe.y);
+
+          let nearest = null, nearestDist = Infinity;
+          charges.forEach(c => {
+            const d = Math.hypot(c.x - probe.x, c.y - probe.y);
+            if (d < nearestDist) { nearestDist = d; nearest = c; }
+          });
+
+          lines.push(`  Position:         (x = ${mx.toFixed(3)} m, y = ${my.toFixed(3)} m)`);
+          lines.push(`  |E|:              ${mag.toFixed(4)}`);
+          lines.push(`  Direction of E:   ${angle.toFixed(2)}° (from +x axis)`);
+          lines.push(`  E vector:         (Ex = ${ex.toFixed(4)}, Ey = ${ey.toFixed(4)})`);
+          lines.push(`  Potential V:      ${V.toFixed(4)}`);
+          if (nearest) {
+            lines.push(
+              `  Nearest charge:   #${charges.indexOf(nearest) + 1} ` +
+              `(${nearest.q > 0 ? '+' : ''}${nearest.q.toFixed(1)} nC) ` +
+              `at distance ${(nearestDist * METERS_PER_PX).toFixed(3)} m`
+            );
+          }
+
+          // Distance table to every charge
+          lines.push('');
+          lines.push('  Distance to each charge:');
+          charges.forEach((c, i) => {
+            const dpx = Math.hypot(c.x - probe.x, c.y - probe.y);
+            const d = dpx * METERS_PER_PX;
+            const single = fieldFromCharge(c, probe.x, probe.y);
+            const singleV = d > 0.001 ? (K * c.q * 1000 / (dpx * METERS_PER_PX)) : 0;
+            lines.push(
+              `    #${i + 1}: ${d.toFixed(3)} m   ` +
+              `|E_i| = ${Math.hypot(single.ex, single.ey).toFixed(3)}   ` +
+              `V_i = ${singleV.toFixed(3)}`
+            );
+          });
+        }
+
+        lines.push('');
+        lines.push('END OF REPORT');
+        return lines.join('\n');
+      }
+
+      document.getElementById('openExport').addEventListener('click', () => {
+        exportText.value = buildReport();
+        exportOverlay.classList.add('active');
+        document.getElementById('copyFeedback').classList.remove('show');
+      });
+
+      document.getElementById('exportClose').addEventListener('click', () => {
+        exportOverlay.classList.remove('active');
+      });
+      exportOverlay.addEventListener('click', (e) => {
+        if (e.target === exportOverlay) exportOverlay.classList.remove('active');
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && exportOverlay.classList.contains('active')) {
+          exportOverlay.classList.remove('active');
+        }
+      });
+
+      document.getElementById('copyBtn').addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(exportText.value);
+        } catch (err) {
+          exportText.select();
+          document.execCommand('copy');
+        }
+        const fb = document.getElementById('copyFeedback');
+        fb.classList.add('show');
+        setTimeout(() => fb.classList.remove('show'), 1800);
+      });
+
+      document.getElementById('downloadBtn').addEventListener('click', () => {
+        const blob = new Blob([exportText.value], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+        a.href = url;
+        a.download = `electric-field-report-${ts}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      });
+
+      // ---- Boot ----
+      loadPreset('reset');
+    })();
+  </script>
+</body>
+</html>
