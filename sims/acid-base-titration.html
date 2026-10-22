@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acid-Base Titration — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+    body { background: #f8fafc; color: #0b2b3f; min-height: 100vh; display: flex; flex-direction: column; line-height: 1.5; }
+
+    .sim-header {
+      background: linear-gradient(135deg, #0b2b3f 0%, #1b4a6b 100%);
+      color: white; padding: 1rem 0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .sim-header .container {
+      max-width: 1180px; margin: 0 auto; padding: 0 1.5rem;
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 1rem; flex-wrap: wrap;
+    }
+    .sim-header h1 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.3px; }
+    .sim-tag {
+      font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;
+      font-weight: 600; color: #bfe0f5; display: block; margin-bottom: 0.15rem;
+    }
+    .back-link {
+      color: white; background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 0.5rem 1.1rem; border-radius: 30px;
+      font-size: 0.85rem; font-weight: 500; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      transition: all 0.15s ease;
+    }
+    .back-link:hover { background: rgba(255,255,255,0.28); border-color: rgba(255,255,255,0.55); }
+
+    .sim-main {
+      flex: 1; max-width: 1180px; margin: 0 auto;
+      padding: 2rem 1.5rem 3rem; width: 100%;
+    }
+    .sim-intro { color: #4f6f86; font-size: 0.95rem; margin-bottom: 1.5rem; max-width: 85ch; }
+
+    .sim-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 1.25rem;
+      align-items: start;
+    }
+    @media (max-width: 1000px) {
+      .sim-layout { grid-template-columns: 1fr; }
+    }
+
+    .sim-panel {
+      background: white; border-radius: 18px; padding: 1.25rem;
+      border: 1px solid #e2edf5;
+      box-shadow: 0 8px 18px -6px rgba(0,20,30,0.08);
+    }
+    .sim-panel h3 {
+      font-size: 0.85rem; font-weight: 600; color: #1b4a6b;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      margin-bottom: 0.75rem;
+    }
+
+    .sim-panel canvas {
+      display: block; max-width: 100%;
+      border-radius: 12px; background: #fbfdff;
+      border: 1px solid #dbe8f2; touch-action: none; margin: 0 auto;
+    }
+
+    .sim-toggles { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem; }
+    .sim-toggle {
+      background: white; border: 1px solid #cfdde9; color: #1b4a6b;
+      padding: 0.4rem 0.85rem; border-radius: 30px;
+      font-size: 0.78rem; font-weight: 500; cursor: pointer;
+      transition: all 0.12s ease; font-family: inherit;
+    }
+    .sim-toggle.active { background: #2c7aa0; border-color: #2c7aa0; color: white; }
+    .sim-toggle:hover:not(.active) { background: #eef4fa; }
+
+    .sim-btn {
+      background: #2c7aa0; color: white; border: none;
+      padding: 0.5rem 1.1rem; border-radius: 30px;
+      font-weight: 500; font-size: 0.85rem; cursor: pointer;
+      transition: background 0.15s ease;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      font-family: inherit;
+    }
+    .sim-btn:hover { background: #1b5a7a; }
+    .sim-btn.secondary { background: #e4f0f9; color: #1b4a6b; }
+    .sim-btn.secondary:hover { background: #cfe4f4; }
+    .sim-btn-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem; }
+
+    .sim-control-group {
+      display: flex; flex-direction: column; gap: 0.35rem;
+      margin-bottom: 0.9rem;
+    }
+    .sim-control-group label {
+      font-size: 0.72rem; font-weight: 600; color: #1b4a6b;
+      text-transform: uppercase; letter-spacing: 0.03em;
+      display: flex; justify-content: space-between;
+    }
+    .sim-control-group label span.range-value {
+      color: #2c7aa0; text-transform: none; letter-spacing: 0;
+      font-variant-numeric: tabular-nums;
+    }
+    .sim-control-group input[type="range"] { width: 100%; accent-color: #2c7aa0; }
+
+    .sim-readout {
+      margin-top: 1rem; padding: 0.85rem 1rem;
+      background: #f4f9ff; border-radius: 12px;
+      border: 1px solid #cde0ef;
+      font-size: 0.85rem; color: #1e5a7a; line-height: 1.6;
+    }
+    .sim-readout strong { color: #0b2b3f; }
+    .sim-readout .value {
+      font-variant-numeric: tabular-nums;
+      font-weight: 600; color: #2c7aa0;
+    }
+
+    .readout-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.4rem 1rem;
+    }
+    .readout-grid div {
+      display: flex; justify-content: space-between;
+      font-size: 0.82rem;
+    }
+    .readout-grid span:first-child { color: #4f6f86; }
+    .readout-grid span:last-child { font-weight: 600; font-variant-numeric: tabular-nums; color: #0b2b3f; }
+
+    .indicator-preview {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      vertical-align: middle;
+      margin-right: 0.4rem;
+      border: 1px solid rgba(0,0,0,0.15);
+    }
+
+    /* Data table */
+    .data-table-wrap {
+      max-height: 260px;
+      overflow-y: auto;
+      border-radius: 10px;
+      border: 1px solid #e2edf5;
+      margin-top: 0.5rem;
+    }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+    }
+    .data-table th, .data-table td {
+      padding: 0.35rem 0.5rem;
+      text-align: center;
+      border-bottom: 1px solid #eaf1f7;
+    }
+    .data-table th {
+      background: #e4f0f9;
+      color: #1b4a6b;
+      font-weight: 600;
+      position: sticky; top: 0;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr.current td { background: #fff8e0; font-weight: 600; }
+    .data-table tr.equivalence td { background: #e4f9ec; }
+
+    /* Export modal */
+    .export-overlay {
+      position: fixed; inset: 0;
+      background: rgba(8,30,45,0.7);
+      backdrop-filter: blur(3px);
+      display: none;
+      align-items: center; justify-content: center;
+      padding: 1.5rem;
+      z-index: 50;
+    }
+    .export-overlay.active { display: flex; }
+    .export-dialog {
+      background: white;
+      border-radius: 16px;
+      max-width: 640px; width: 100%;
+      max-height: 90vh;
+      display: flex; flex-direction: column;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4);
+      overflow: hidden;
+    }
+    .export-header {
+      padding: 1rem 1.25rem;
+      background: linear-gradient(135deg, #0b2b3f 0%, #1b4a6b 100%);
+      color: white;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .export-header h3 { font-size: 1rem; font-weight: 600; }
+    .export-close {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white; width: 32px; height: 32px;
+      border-radius: 50%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s ease;
+    }
+    .export-close:hover { background: rgba(255,255,255,0.3); transform: rotate(90deg); }
+    .export-body {
+      padding: 1.25rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .export-body textarea {
+      width: 100%;
+      min-height: 340px;
+      padding: 0.85rem;
+      border-radius: 10px;
+      border: 1px solid #cfdde9;
+      font-family: 'Courier New', monospace;
+      font-size: 0.78rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: #0b2b3f;
+      background: #f8fbfe;
+    }
+    .export-footer {
+      padding: 1rem 1.25rem;
+      border-top: 1px solid #eaf1f7;
+      display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: flex-end;
+    }
+    .copy-feedback {
+      color: #27ae60; font-size: 0.85rem; font-weight: 500;
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      align-self: center; margin-right: auto;
+      opacity: 0; transition: opacity 0.2s;
+    }
+    .copy-feedback.show { opacity: 1; }
+
+    .sim-footer {
+      text-align: center; font-size: 0.8rem; color: #6f8da3;
+      padding: 1.5rem; border-top: 1px solid #d9e6f0;
+    }
+    .sim-footer a { color: #2c7aa0; text-decoration: none; }
+    .sim-footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <header class="sim-header">
+    <div class="container">
+      <div>
+        <span class="sim-tag">Chemistry · Lab</span>
+        <h1>Acid-Base Titration — Full Lab</h1>
+      </div>
+      <a class="back-link" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <p class="sim-intro">
+      Titrate an acid with a base — or a base with an acid. Choose analyte and titrant type,
+      adjust concentrations and volume, and drip titrant in with the burette. The pH curve is
+      computed from proper equilibrium chemistry (Henderson-Hasselbalch + charge balance).
+      Pick an indicator to see when it flips. Every 1 mL of the current run is logged to the
+      data table, and <em>Export data</em> saves a full report.
+    </p>
+
+    <div class="sim-layout">
+      <div class="sim-panel">
+        <canvas id="c" width="780" height="400"></canvas>
+
+        <div class="sim-readout" style="margin-top: 1rem;">
+          <div class="readout-grid">
+            <div><span>pH</span><span id="roPH">—</span></div>
+            <div><span>Titrant added</span><span id="roVol">0.00 mL</span></div>
+            <div><span>Analyte</span><span id="roAnalyte">—</span></div>
+            <div><span>Titrant</span><span id="roTitrant">—</span></div>
+            <div><span>Equivalence at</span><span id="roEq">—</span></div>
+            <div><span>Region</span><span id="roRegion">—</span></div>
+          </div>
+          <div style="margin-top: 0.5rem;">
+            <span class="indicator-preview" id="indicatorSwatch"></span>
+            <span id="indicatorName">—</span>
+          </div>
+        </div>
+
+        <div class="sim-btn-row">
+          <button class="sim-btn" id="addTitrant">
+            <i class="fas fa-tint"></i> Add titrant (+1 mL)
+          </button>
+          <button class="sim-btn secondary" id="addTitrantFast">
+            <i class="fas fa-forward"></i> +5 mL
+          </button>
+          <button class="sim-btn secondary" id="resetRun">
+            <i class="fas fa-rotate-left"></i> Reset run
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <div class="sim-panel">
+          <h3><i class="fas fa-flask"></i> Titration setup</h3>
+
+          <div class="sim-control-group">
+            <label>Analyte</label>
+            <select id="analyteType" style="padding:0.5rem 0.7rem;border-radius:8px;border:1px solid #cfdde9;font-size:0.9rem;font-family:inherit;">
+              <option value="strong-acid">Strong acid (HCl)</option>
+              <option value="weak-acid">Weak acid (CH₃COOH)</option>
+              <option value="strong-base">Strong base (NaOH)</option>
+              <option value="weak-base">Weak base (NH₃)</option>
+            </select>
+          </div>
+
+          <div class="sim-control-group">
+            <label>Titrant</label>
+            <select id="titrantType" style="padding:0.5rem 0.7rem;border-radius:8px;border:1px solid #cfdde9;font-size:0.9rem;font-family:inherit;">
+              <option value="strong-base">Strong base (NaOH)</option>
+              <option value="strong-acid">Strong acid (HCl)</option>
+            </select>
+          </div>
+
+          <div class="sim-control-group">
+            <label>Analyte concentration <span class="range-value" id="analyteConcVal">0.100 M</span></label>
+            <input type="range" id="analyteConc" min="0.01" max="1" step="0.01" value="0.1">
+          </div>
+
+          <div class="sim-control-group">
+            <label>Analyte volume <span class="range-value" id="analyteVolVal">25.0 mL</span></label>
+            <input type="range" id="analyteVol" min="10" max="50" step="1" value="25">
+          </div>
+
+          <div class="sim-control-group">
+            <label>Titrant concentration <span class="range-value" id="titrantConcVal">0.100 M</span></label>
+            <input type="range" id="titrantConc" min="0.01" max="1" step="0.01" value="0.1">
+          </div>
+
+          <div class="sim-control-group" id="pkaGroup">
+            <label>pKa of weak acid <span class="range-value" id="pkaVal">4.76</span></label>
+            <input type="range" id="pka" min="2" max="8" step="0.01" value="4.76">
+          </div>
+
+          <div class="sim-control-group" id="pkbGroup" style="display:none;">
+            <label>pKb of weak base <span class="range-value" id="pkbVal">4.75</span></label>
+            <input type="range" id="pkb" min="2" max="8" step="0.01" value="4.75">
+          </div>
+        </div>
+
+        <div class="sim-panel" style="margin-top: 1rem;">
+          <h3><i class="fas fa-palette"></i> Indicator</h3>
+          <div class="sim-toggles" id="indicatorToggles">
+            <button class="sim-toggle active" data-indicator="methyl-orange">Methyl orange</button>
+            <button class="sim-toggle" data-indicator="bromothymol">Bromothymol blue</button>
+            <button class="sim-toggle" data-indicator="phenolphthalein">Phenolphthalein</button>
+            <button class="sim-toggle" data-indicator="universal">Universal</button>
+          </div>
+          <div style="font-size:0.78rem; color:#4f6f86;" id="indicatorRange">Transition: pH 3.1 – 4.4</div>
+        </div>
+
+        <div class="sim-panel" style="margin-top: 1rem;">
+          <h3><i class="fas fa-table"></i> Data log</h3>
+          <div class="data-table-wrap">
+            <table class="data-table" id="dataTable">
+              <thead>
+                <tr><th>mL added</th><th>pH</th></tr>
+              </thead>
+              <tbody id="dataTableBody">
+                <tr class="current"><td>0.00</td><td>—</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="font-size:0.75rem; color:#4f6f86; margin-top:0.5rem;">
+            One row per integer mL. Current row highlighted; equivalence row in green.
+          </div>
+        </div>
+
+        <div class="sim-panel" style="margin-top: 1rem;">
+          <h3><i class="fas fa-file-export"></i> Export</h3>
+          <button class="sim-btn" id="openExport" style="width: 100%; justify-content: center;">
+            <i class="fas fa-download"></i> Save / copy experiment data
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="sim-footer">
+    All-Science Sims — Chemistry · <a href="../index.html">Back to catalog</a>
+  </footer>
+
+  <div class="export-overlay" id="exportOverlay">
+    <div class="export-dialog">
+      <div class="export-header">
+        <h3><i class="fas fa-file-alt"></i> Experiment data</h3>
+        <button class="export-close" id="exportClose" aria-label="Close">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="export-body">
+        <textarea id="exportText" spellcheck="false" readonly></textarea>
+      </div>
+      <div class="export-footer">
+        <span class="copy-feedback" id="copyFeedback">
+          <i class="fas fa-check-circle"></i> Copied!
+        </span>
+        <button class="sim-btn secondary" id="copyBtn">
+          <i class="fas fa-copy"></i> Copy to clipboard
+        </button>
+        <button class="sim-btn" id="downloadBtn">
+          <i class="fas fa-download"></i> Download .txt
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ---- Canvas ----
+      const W = 780, H = 400;
+      const canvas = document.getElementById('c');
+      const ctx = canvas.getContext('2d');
+      const PAD = { l: 50, r: 20, t: 30, b: 45 };
+
+      // ---- Constants ----
+      const KW = 1e-14;
+
+      // ---- State ----
+      const state = {
+        analyteType: 'strong-acid',
+        titrantType: 'strong-base',
+        analyteConc: 0.1,
+        analyteVol: 25,
+        titrantConc: 0.1,
+        pKa: 4.76,
+        pKb: 4.75,
+        added: 0,                    // mL of titrant added
+        indicator: 'methyl-orange',
+        maxVolume: 60,               // mL axis max
+        dropletAnim: [],             // {x, y, vy, life} for visual drips
+        lastDropAt: 0,
+      };
+
+      // ---- Indicators ----
+      const INDICATORS = {
+        'methyl-orange': {
+          name: 'Methyl orange',
+          low: 3.1, high: 4.4,
+          lowColor: '#e74c3c', highColor: '#f5b041',
+          note: 'Red in acid, yellow in base',
+        },
+        'bromothymol': {
+          name: 'Bromothymol blue',
+          low: 6.0, high: 7.6,
+          lowColor: '#f7dc6f', highColor: '#2874a6',
+          note: 'Yellow in acid, blue in base',
+        },
+        'phenolphthalein': {
+          name: 'Phenolphthalein',
+          low: 8.2, high: 10.0,
+          lowColor: '#ecf0f1', highColor: '#e91e63',
+          note: 'Colourless in acid, pink in base',
+        },
+        'universal': {
+          name: 'Universal',
+          low: 0, high: 14,
+          lowColor: '#e74c3c', highColor: '#4a235a',
+          note: 'Rainbow across the whole pH range',
+        },
+      };
+
+      // ---- Chemistry ----
+      // Compute pH for the current titration state at a given added volume v (mL).
+      // Returns { pH, region }.
+      function computeState(v) {
+        const Ca = state.analyteConc;
+        const Va = state.analyteVol;
+        const Ct = state.titrantConc;
+
+        const nAnalyte = Ca * Va;                 // mmol
+        const nTitrant = Ct * v;                  // mmol
+        const totalVol = Va + v;                  // mL
+
+        const isAcidAnalyte = state.analyteType === 'strong-acid' || state.analyteType === 'weak-acid';
+
+        // Equivalence volume (mL) — for acid/base 1:1 this is n_analyte / Ct
+        const veq = nAnalyte / Ct;
+
+        let pH, region;
+
+        if (isAcidAnalyte) {
+          // Adding base to acid
+          const nAcidLeft = nAnalyte - nTitrant;
+          const nBaseAdded = nTitrant;
+
+          if (state.analyteType === 'strong-acid') {
+            if (v === 0) {
+              pH = -Math.log10(Ca);
+              region = 'initial';
+            } else if (nAcidLeft > 1e-9) {
+              const concH = nAcidLeft / totalVol;
+              pH = -Math.log10(concH);
+              region = 'excess acid';
+            } else if (Math.abs(nAcidLeft) < 1e-9) {
+              pH = 7.0;
+              region = 'equivalence';
+            } else {
+              const concOH = -nAcidLeft / totalVol;
+              const pOH = -Math.log10(concOH);
+              pH = 14 - pOH;
+              region = 'excess base';
+            }
+          } else {
+            // Weak acid (Henderson-Hasselbalch in buffer region)
+            const Ka = Math.pow(10, -state.pKa);
+            if (v === 0) {
+              // Weak acid only: solve [H+]² + Ka[H+] - Ka*Ca = 0
+              const H = (-Ka + Math.sqrt(Ka * Ka + 4 * Ka * Ca)) / 2;
+              pH = -Math.log10(H);
+              region = 'initial';
+            } else if (nAcidLeft > 1e-9) {
+              // Buffer region
+              const ratio = nBaseAdded / nAcidLeft;
+              pH = state.pKa + Math.log10(ratio);
+              region = 'buffer (H-H)';
+            } else if (Math.abs(nAcidLeft) < 1e-9) {
+              // Equivalence: salt of weak acid is basic
+              const saltConc = nAnalyte / totalVol;
+              const Kb = KW / Ka;
+              const OH = Math.sqrt(Kb * saltConc);
+              pH = 14 - (-Math.log10(OH));
+              region = 'equivalence (salt of weak acid)';
+            } else {
+              const concOH = -nAcidLeft / totalVol;
+              const pOH = -Math.log10(concOH);
+              pH = 14 - pOH;
+              region = 'excess base';
+            }
+          }
+        } else {
+          // Base analyte, acid titrant
+          const nBaseLeft = nAnalyte - nTitrant;
+          const nAcidAdded = nTitrant;
+
+          if (state.analyteType === 'strong-base') {
+            if (v === 0) {
+              const pOH = -Math.log10(Ca);
+              pH = 14 - pOH;
+              region = 'initial';
+            } else if (nBaseLeft > 1e-9) {
+              const concOH = nBaseLeft / totalVol;
+              pH = 14 - (-Math.log10(concOH));
+              region = 'excess base';
+            } else if (Math.abs(nBaseLeft) < 1e-9) {
+              pH = 7.0;
+              region = 'equivalence';
+            } else {
+              const concH = -nBaseLeft / totalVol;
+              pH = -Math.log10(concH);
+              region = 'excess acid';
+            }
+          } else {
+            // Weak base
+            const Kb = Math.pow(10, -state.pKb);
+            const Ka_conj = KW / Kb;                // pKa of conjugate acid
+            if (v === 0) {
+              const OH = (-Kb + Math.sqrt(Kb * Kb + 4 * Kb * Ca)) / 2;
+              pH = 14 - (-Math.log10(OH));
+              region = 'initial';
+            } else if (nBaseLeft > 1e-9) {
+              const ratio = nAcidAdded / nBaseLeft;
+              const pOH = state.pKb + Math.log10(ratio);
+              pH = 14 - pOH;
+              region = 'buffer (H-H)';
+            } else if (Math.abs(nBaseLeft) < 1e-9) {
+              const saltConc = nAnalyte / totalVol;
+              const H = Math.sqrt(Ka_conj * saltConc);
+              pH = -Math.log10(H);
+              region = 'equivalence (salt of weak base)';
+            } else {
+              const concH = -nBaseLeft / totalVol;
+              pH = -Math.log10(concH);
+              region = 'excess acid';
+            }
+          }
+        }
+
+        // Clamp for safety (very tiny concentrations)
+        if (!isFinite(pH)) pH = 7;
+        pH = Math.max(0, Math.min(14, pH));
+
+        return { pH, region, veq };
+      }
+
+      function currentState() {
+        return computeState(state.added);
+      }
+
+      // ---- Indicator colour for a given pH ----
+      function indicatorColor(indicatorId, pH) {
+        const ind = INDICATORS[indicatorId];
+        if (indicatorId === 'universal') {
+          // Simple rainbow
+          if (pH < 3) return '#e74c3c';
+          if (pH < 5) return '#e67e22';
+          if (pH < 6.5) return '#f1c40f';
+          if (pH < 7.5) return '#27ae60';
+          if (pH < 9) return '#2980b9';
+          if (pH < 11) return '#8e44ad';
+          return '#4a235a';
+        }
+        if (pH <= ind.low) return ind.lowColor;
+        if (pH >= ind.high) return ind.highColor;
+        // Interpolate
+        const t = (pH - ind.low) / (ind.high - ind.low);
+        return lerpColor(ind.lowColor, ind.highColor, t);
+      }
+
+      function lerpColor(a, b, t) {
+        const ca = hexToRgb(a), cb = hexToRgb(b);
+        const r = Math.round(ca.r + (cb.r - ca.r) * t);
+        const g = Math.round(ca.g + (cb.g - ca.g) * t);
+        const bl = Math.round(ca.b + (cb.b - ca.b) * t);
+        return `rgb(${r},${g},${bl})`;
+      }
+      function hexToRgb(hex) {
+        const h = hex.replace('#', '');
+        return {
+          r: parseInt(h.slice(0, 2), 16),
+          g: parseInt(h.slice(2, 4), 16),
+          b: parseInt(h.slice(4, 6), 16),
+        };
+      }
+
+      // ---- Draw ----
+      function draw() {
+        const gw = W - PAD.l - PAD.r;
+        const gh = H - PAD.t - PAD.b;
+        const maxV = state.maxVolume;
+
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = '#fbfdff';
+        ctx.fillRect(0, 0, W, H);
+
+        // ---- Burette (top-left) ----
+        drawBurette();
+
+        // ---- Chart area (right of burette) ----
+        const chartL = PAD.l + 70;
+        const chartR = W - PAD.r;
+        const chartT = PAD.t;
+        const chartB = H - PAD.b;
+        const cw = chartR - chartL;
+        const ch = chartB - chartT;
+
+        // Grid
+        ctx.strokeStyle = '#e4eef7';
+        ctx.lineWidth = 1;
+        for (let p = 0; p <= 14; p += 2) {
+          const y = chartT + (1 - p / 14) * ch;
+          ctx.beginPath(); ctx.moveTo(chartL, y); ctx.lineTo(chartR, y); ctx.stroke();
+        }
+        for (let v = 0; v <= maxV; v += 10) {
+          const x = chartL + (v / maxV) * cw;
+          ctx.beginPath(); ctx.moveTo(x, chartT); ctx.lineTo(x, chartB); ctx.stroke();
+        }
+
+        // Axes
+        ctx.strokeStyle = '#9db8cc';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(chartL, chartT);
+        ctx.lineTo(chartL, chartB);
+        ctx.lineTo(chartR, chartB);
+        ctx.stroke();
+
+        // Y labels
+        ctx.fillStyle = '#3a5b70';
+        ctx.font = '11px sans-serif';
+        ctx.textAlign = 'right';
+        for (let p = 0; p <= 14; p += 2) {
+          const y = chartT + (1 - p / 14) * ch;
+          ctx.fillText(p.toString(), chartL - 6, y + 4);
+        }
+        // X labels
+        ctx.textAlign = 'center';
+        for (let v = 0; v <= maxV; v += 10) {
+          const x = chartL + (v / maxV) * cw;
+          ctx.fillText(v.toString(), x, chartB + 16);
+        }
+        // Axis titles
+        ctx.save();
+        ctx.translate(14, chartT + ch / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillStyle = '#1b4a6b';
+        ctx.font = '600 11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('pH', 0, 0);
+        ctx.restore();
+        ctx.fillStyle = '#1b4a6b';
+        ctx.font = '600 11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Volume of titrant (mL)', chartL + cw / 2, H - 6);
+
+        // ---- Equivalence marker ----
+        const eq = computeState(0).veq;
+        if (eq > 0 && eq <= maxV) {
+          const eqx = chartL + (eq / maxV) * cw;
+          ctx.strokeStyle = 'rgba(39,174,96,0.5)';
+          ctx.setLineDash([4, 4]);
+          ctx.beginPath();
+          ctx.moveTo(eqx, chartT);
+          ctx.lineTo(eqx, chartB);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = 'rgba(39,174,96,0.9)';
+          ctx.font = '600 10px sans-serif';
+          ctx.textAlign = 'left';
+          ctx.fillText('eq. ' + eq.toFixed(1) + ' mL', eqx + 4, chartT + 12);
+        }
+
+        // ---- Buffer region highlight (only for weak analyte) ----
+        if ((state.analyteType === 'weak-acid' || state.analyteType === 'weak-base') && eq > 0) {
+          // Buffer region: from ~10% to ~90% of equivalence
+          const bufStart = eq * 0.1;
+          const bufEnd = eq * 0.9;
+          const bx1 = chartL + (bufStart / maxV) * cw;
+          const bx2 = chartL + (bufEnd / maxV) * cw;
+          ctx.fillStyle = 'rgba(44,122,160,0.06)';
+          ctx.fillRect(bx1, chartT, bx2 - bx1, ch);
+          ctx.fillStyle = 'rgba(44,122,160,0.7)';
+          ctx.font = '600 9px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('buffer region', (bx1 + bx2) / 2, chartT + 12);
+        }
+
+        // ---- Curve ----
+        ctx.strokeStyle = '#2c7aa0';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        const steps = 300;
+        for (let i = 0; i <= steps; i++) {
+          const v = (i / steps) * maxV;
+          const { pH } = computeState(v);
+          const x = chartL + (v / maxV) * cw;
+          const y = chartT + (1 - pH / 14) * ch;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        // ---- Current marker ----
+        const cur = currentState();
+        const cx = chartL + (state.added / maxV) * cw;
+        const cy = chartT + (1 - cur.pH / 14) * ch;
+        // indicator colour halo
+        const indColor = indicatorColor(state.indicator, cur.pH);
+        ctx.beginPath();
+        ctx.arc(cx, cy, 10, 0, Math.PI * 2);
+        ctx.fillStyle = indColor;
+        ctx.globalAlpha = 0.35;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+        ctx.fillStyle = '#e74c3c';
+        ctx.fill();
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // ---- Droplets ----
+        state.dropletAnim.forEach(d => {
+          ctx.beginPath();
+          ctx.arc(d.x, d.y, 3, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(44,122,160,${d.life})`;
+          ctx.fill();
+        });
+      }
+
+      function drawBurette() {
+        const bx = 30;
+        const by = 40;
+        const bw = 28;
+        const bh = 220;
+
+        // Burette body
+        ctx.fillStyle = '#e8f1f8';
+        ctx.strokeStyle = '#b0c8da';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.roundRect(bx, by, bw, bh, 6);
+        ctx.fill();
+        ctx.stroke();
+
+        // Fill level based on added
+        const pct = Math.min(1, state.added / state.maxVolume);
+        const fillH = (1 - pct) * (bh - 8);
+        ctx.fillStyle = 'rgba(44,122,160,0.65)';
+        ctx.beginPath();
+        ctx.roundRect(bx + 3, by + 4, bw - 6, fillH, 4);
+        ctx.fill();
+
+        // Tick marks
+        ctx.strokeStyle = '#7f9db3';
+        ctx.lineWidth = 1;
+        ctx.fillStyle = '#3a5b70';
+        ctx.font = '9px sans-serif';
+        ctx.textAlign = 'left';
+        for (let i = 0; i <= 5; i++) {
+          const ty = by + 4 + (i / 5) * (bh - 8);
+          ctx.beginPath();
+          ctx.moveTo(bx + bw, ty);
+          ctx.lineTo(bx + bw + 6, ty);
+          ctx.stroke();
+          const vol = Math.round(i / 5 * state.maxVolume);
+          ctx.fillText(vol.toString(), bx + bw + 9, ty + 3);
+        }
+
+        // Nozzle
+        ctx.fillStyle = '#b0c8da';
+        ctx.beginPath();
+        ctx.moveTo(bx + bw / 2 - 4, by + bh);
+        ctx.lineTo(bx + bw / 2 + 4, by + bh);
+        ctx.lineTo(bx + bw / 2 + 2, by + bh + 12);
+        ctx.lineTo(bx + bw / 2 - 2, by + bh + 12);
+        ctx.closePath();
+        ctx.fill();
+
+        // Label
+        ctx.fillStyle = '#1b4a6b';
+        ctx.font = '600 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('BURETTE', bx + bw / 2, by - 6);
+
+        // Current volume label
+        ctx.fillStyle = 'rgba(44,122,160,0.95)';
+        ctx.font = '700 11px sans-serif';
+        ctx.fillText(state.added.toFixed(1) + ' mL', bx + bw / 2, by + bh + 32);
+      }
+
+      // ---- Readout ----
+      function updateReadout() {
+        const cur = currentState();
+        const eq = computeState(0).veq;
+
+        document.getElementById('roPH').textContent = cur.pH.toFixed(2);
+        document.getElementById('roVol').textContent = state.added.toFixed(2) + ' mL';
+
+        const analyteLabel = {
+          'strong-acid': 'Strong acid (HCl)',
+          'weak-acid': 'Weak acid (CH₃COOH)',
+          'strong-base': 'Strong base (NaOH)',
+          'weak-base': 'Weak base (NH₃)',
+        }[state.analyteType];
+        const titrantLabel = {
+          'strong-acid': 'Strong acid (HCl)',
+          'strong-base': 'Strong base (NaOH)',
+        }[state.titrantType];
+
+        document.getElementById('roAnalyte').textContent = analyteLabel;
+        document.getElementById('roTitrant').textContent = titrantLabel;
+        document.getElementById('roEq').textContent = eq.toFixed(2) + ' mL';
+        document.getElementById('roRegion').textContent = cur.region;
+
+        const ind = INDICATORS[state.indicator];
+        document.getElementById('indicatorSwatch').style.background =
+          indicatorColor(state.indicator, cur.pH);
+        document.getElementById('indicatorName').textContent =
+          `${ind.name} — ${ind.note}`;
+      }
+
+      // ---- Data table ----
+      function rebuildDataTable() {
+        const body = document.getElementById('dataTableBody');
+        body.innerHTML = '';
+        const eq = computeState(0).veq;
+        const maxRows = Math.floor(state.added);
+
+        for (let v = 0; v <= maxRows; v++) {
+          const { pH } = computeState(v);
+          const tr = document.createElement('tr');
+          if (v === Math.floor(state.added)) tr.classList.add('current');
+          if (Math.abs(v - eq) < 0.5) tr.classList.add('equivalence');
+          tr.innerHTML = `<td>${v}</td><td>${pH.toFixed(2)}</td>`;
+          body.appendChild(tr);
+        }
+        // If added is fractional, add the current exact row
+        if (state.added !== Math.floor(state.added)) {
+          const cur = currentState();
+          const tr = document.createElement('tr');
+          tr.classList.add('current');
+          tr.innerHTML = `<td>${state.added.toFixed(2)}</td><td>${cur.pH.toFixed(2)}</td>`;
+          body.appendChild(tr);
+        }
+        // Auto-scroll to bottom
+        const wrap = document.querySelector('.data-table-wrap');
+        if (wrap) wrap.scrollTop = wrap.scrollHeight;
+      }
+
+      // ---- Droplet animation ----
+      function spawnDroplets(count) {
+        const now = performance.now();
+        if (now - state.lastDropAt < 100) return;   // throttle
+        state.lastDropAt = now;
+        for (let i = 0; i < count; i++) {
+          state.dropletAnim.push({
+            x: 44 + (Math.random() - 0.5) * 10,
+            y: 260 + 12,
+            vy: 0.6 + Math.random() * 0.4,
+            life: 1,
+          });
+        }
+      }
+
+      let animFrame = null;
+      function tickDroplets() {
+        if (state.dropletAnim.length === 0) {
+          if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+          return;
+        }
+        state.dropletAnim.forEach(d => {
+          d.y += d.vy;
+          d.life -= 0.025;
+        });
+        state.dropletAnim = state.dropletAnim.filter(d => d.life > 0 && d.y < H - PAD.b);
+        draw();
+        animFrame = requestAnimationFrame(tickDroplets);
+      }
+      function ensureDropletLoop() {
+        if (!animFrame) animFrame = requestAnimationFrame(tickDroplets);
+      }
+
+      // ---- Actions ----
+      function addTitrant(amount) {
+        const old = state.added;
+        state.added = Math.min(state.maxVolume, state.added + amount);
+        if (state.added === old) return;
+        spawnDroplets(Math.round(amount * 4));
+        ensureDropletLoop();
+        draw();
+        updateReadout();
+        rebuildDataTable();
+      }
+
+      function resetRun() {
+        state.added = 0;
+        state.dropletAnim = [];
+        draw();
+        updateReadout();
+        rebuildDataTable();
+      }
+
+      // ---- Setup controls ----
+      function bindSelect(id, key) {
+        document.getElementById(id).addEventListener('change', (e) => {
+          state[key] = e.target.value;
+          updatePKAControls();
+          // If changing analyte type changes direction, reset run
+          resetRun();
+        });
+      }
+      bindSelect('analyteType', 'analyteType');
+      bindSelect('titrantType', 'titrantType');
+
+      function bindRange(id, key, formatter, onChange) {
+        const input = document.getElementById(id);
+        const valEl = document.getElementById(id + 'Val');
+        input.addEventListener('input', () => {
+          state[key] = parseFloat(input.value);
+          valEl.textContent = formatter(state[key]);
+          if (onChange) onChange();
+          updateReadout();
+          draw();
+        });
+      }
+      bindRange('analyteConc', 'analyteConc', v => v.toFixed(3) + ' M', resetRun);
+      bindRange('analyteVol', 'analyteVol', v => v.toFixed(1) + ' mL', resetRun);
+      bindRange('titrantConc', 'titrantConc', v => v.toFixed(3) + ' M', resetRun);
+      bindRange('pka', 'pKa', v => v.toFixed(2), () => { resetRun(); });
+      bindRange('pkb', 'pKb', v => v.toFixed(2), () => { resetRun(); });
+
+      function updatePKAControls() {
+        document.getElementById('pkaGroup').style.display =
+          state.analyteType === 'weak-acid' ? '' : 'none';
+        document.getElementById('pkbGroup').style.display =
+          state.analyteType === 'weak-base' ? '' : 'none';
+      }
+
+      // ---- Indicator toggles ----
+      document.querySelectorAll('#indicatorToggles .sim-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('#indicatorToggles .sim-toggle').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          state.indicator = btn.dataset.indicator;
+          const ind = INDICATORS[state.indicator];
+          document.getElementById('indicatorRange').textContent =
+            state.indicator === 'universal'
+              ? 'Transition: full pH range 0 – 14'
+              : `Transition: pH ${ind.low} – ${ind.high}`;
+          updateReadout();
+          draw();
+        });
+      });
+
+      // ---- Buttons ----
+      document.getElementById('addTitrant').addEventListener('click', () => addTitrant(1));
+      document.getElementById('addTitrantFast').addEventListener('click', () => addTitrant(5));
+      document.getElementById('resetRun').addEventListener('click', resetRun);
+
+      // ---- Export ----
+      const exportOverlay = document.getElementById('exportOverlay');
+      const exportText = document.getElementById('exportText');
+
+      function buildReport() {
+        const lines = [];
+        const now = new Date();
+        const eq = computeState(0).veq;
+        const cur = currentState();
+
+        lines.push('Acid-Base Titration — Experiment Report');
+        lines.push('='.repeat(50));
+        lines.push('Generated: ' + now.toLocaleString());
+        lines.push('');
+        lines.push('EXPERIMENT SETUP');
+        lines.push('-'.repeat(50));
+        const analyteLabel = {
+          'strong-acid': 'Strong acid (HCl)',
+          'weak-acid': `Weak acid (CH3COOH, pKa=${state.pKa.toFixed(2)})`,
+          'strong-base': 'Strong base (NaOH)',
+          'weak-base': `Weak base (NH3, pKb=${state.pKb.toFixed(2)})`,
+        }[state.analyteType];
+        const titrantLabel = {
+          'strong-acid': 'Strong acid (HCl)',
+          'strong-base': 'Strong base (NaOH)',
+        }[state.titrantType];
+        lines.push('  Analyte:        ' + analyteLabel);
+        lines.push('  Concentration:  ' + state.analyteConc.toFixed(3) + ' M');
+        lines.push('  Volume:         ' + state.analyteVol.toFixed(1) + ' mL');
+        lines.push('  Titrant:        ' + titrantLabel);
+        lines.push('  Concentration:  ' + state.titrantConc.toFixed(3) + ' M');
+        lines.push('');
+
+        lines.push('RESULTS');
+        lines.push('-'.repeat(50));
+        lines.push('  Equivalence volume:   ' + eq.toFixed(2) + ' mL');
+        lines.push('  Titrant added so far: ' + state.added.toFixed(2) + ' mL');
+        lines.push('  Current pH:           ' + cur.pH.toFixed(3));
+        lines.push('  Current region:       ' + cur.region);
+        lines.push('');
+
+        lines.push('INDICATOR');
+        lines.push('-'.repeat(50));
+        const ind = INDICATORS[state.indicator];
+        lines.push('  ' + ind.name + ' (' + ind.note + ')');
+        if (state.indicator !== 'universal') {
+          lines.push('  Transition range:  pH ' + ind.low + ' – ' + ind.high);
+        }
+        lines.push('');
+
+        lines.push('DATA POINTS');
+        lines.push('-'.repeat(50));
+        lines.push('  mL added    pH');
+        const maxRow = Math.floor(state.added);
+        for (let v = 0; v <= maxRow; v++) {
+          const { pH } = computeState(v);
+          lines.push(`  ${String(v).padStart(6)}    ${pH.toFixed(3)}`);
+        }
+        if (state.added !== Math.floor(state.added)) {
+          const c = currentState();
+          lines.push(`  ${state.added.toFixed(2).padStart(6)}    ${c.pH.toFixed(3)}`);
+        }
+        lines.push('');
+
+        lines.push('END OF REPORT');
+        return lines.join('\n');
+      }
+
+      document.getElementById('openExport').addEventListener('click', () => {
+        exportText.value = buildReport();
+        exportOverlay.classList.add('active');
+        document.getElementById('copyFeedback').classList.remove('show');
+      });
+
+      document.getElementById('exportClose').addEventListener('click', () => {
+        exportOverlay.classList.remove('active');
+      });
+      exportOverlay.addEventListener('click', (e) => {
+        if (e.target === exportOverlay) exportOverlay.classList.remove('active');
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && exportOverlay.classList.contains('active')) {
+          exportOverlay.classList.remove('active');
+        }
+      });
+
+      document.getElementById('copyBtn').addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(exportText.value);
+        } catch (err) {
+          exportText.select();
+          document.execCommand('copy');
+        }
+        const fb = document.getElementById('copyFeedback');
+        fb.classList.add('show');
+        setTimeout(() => fb.classList.remove('show'), 1800);
+      });
+
+      document.getElementById('downloadBtn').addEventListener('click', () => {
+        const blob = new Blob([exportText.value], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+        a.href = url;
+        a.download = `titration-report-${ts}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      });
+
+      // ---- Boot ----
+      updatePKAControls();
+      draw();
+      updateReadout();
+      rebuildDataTable();
+    })();
+  </script>
+</body>
+</html>
