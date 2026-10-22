@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DNA Transcription & Translation — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+    body { background: #f8fafc; color: #0b2b3f; min-height: 100vh; display: flex; flex-direction: column; line-height: 1.5; }
+
+    .sim-header {
+      background: linear-gradient(135deg, #0b2b3f 0%, #1b4a6b 100%);
+      color: white; padding: 1rem 0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .sim-header .container {
+      max-width: 1180px; margin: 0 auto; padding: 0 1.5rem;
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 1rem; flex-wrap: wrap;
+    }
+    .sim-header h1 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.3px; }
+    .sim-tag {
+      font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;
+      font-weight: 600; color: #bfe0f5; display: block; margin-bottom: 0.15rem;
+    }
+    .back-link {
+      color: white; background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 0.5rem 1.1rem; border-radius: 30px;
+      font-size: 0.85rem; font-weight: 500; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      transition: all 0.15s ease;
+    }
+    .back-link:hover { background: rgba(255,255,255,0.28); border-color: rgba(255,255,255,0.55); }
+
+    .sim-main {
+      flex: 1; max-width: 1180px; margin: 0 auto;
+      padding: 2rem 1.5rem 3rem; width: 100%;
+    }
+    .sim-intro { color: #4f6f86; font-size: 0.95rem; margin-bottom: 1.5rem; max-width: 85ch; }
+
+    .sim-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 1.25rem;
+      align-items: start;
+    }
+    @media (max-width: 1000px) {
+      .sim-layout { grid-template-columns: 1fr; }
+    }
+
+    .sim-panel {
+      background: white; border-radius: 18px; padding: 1.25rem;
+      border: 1px solid #e2edf5;
+      box-shadow: 0 8px 18px -6px rgba(0,20,30,0.08);
+      margin-bottom: 1rem;
+    }
+    .sim-panel h3 {
+      font-size: 0.85rem; font-weight: 600; color: #1b4a6b;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      margin-bottom: 0.75rem;
+    }
+
+    .sim-btn {
+      background: #2c7aa0; color: white; border: none;
+      padding: 0.5rem 1.1rem; border-radius: 30px;
+      font-weight: 500; font-size: 0.85rem; cursor: pointer;
+      transition: background 0.15s ease;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      font-family: inherit;
+    }
+    .sim-btn:hover { background: #1b5a7a; }
+    .sim-btn.secondary { background: #e4f0f9; color: #1b4a6b; }
+    .sim-btn.secondary:hover { background: #cfe4f4; }
+    .sim-btn-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem; }
+
+    .sim-toggles { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem; }
+    .sim-toggle {
+      background: white; border: 1px solid #cfdde9; color: #1b4a6b;
+      padding: 0.4rem 0.85rem; border-radius: 30px;
+      font-size: 0.78rem; font-weight: 500; cursor: pointer;
+      transition: all 0.12s ease; font-family: inherit;
+    }
+    .sim-toggle.active { background: #2c7aa0; border-color: #2c7aa0; color: white; }
+    .sim-toggle:hover:not(.active) { background: #eef4fa; }
+
+    .sim-control-group {
+      display: flex; flex-direction: column; gap: 0.35rem;
+      margin-bottom: 0.9rem;
+    }
+    .sim-control-group label {
+      font-size: 0.72rem; font-weight: 600; color: #1b4a6b;
+      text-transform: uppercase; letter-spacing: 0.03em;
+      display: flex; justify-content: space-between;
+    }
+    .sim-control-group label span.range-value {
+      color: #2c7aa0; text-transform: none; letter-spacing: 0;
+      font-variant-numeric: tabular-nums;
+    }
+    .sim-control-group input[type="range"] { width: 100%; accent-color: #2c7aa0; }
+
+    .sim-readout {
+      padding: 0.85rem 1rem;
+      background: #f4f9ff; border-radius: 12px;
+      border: 1px solid #cde0ef;
+      font-size: 0.85rem; color: #1e5a7a; line-height: 1.6;
+    }
+    .sim-readout strong { color: #0b2b3f; }
+    .sim-readout .value {
+      font-variant-numeric: tabular-nums;
+      font-weight: 600; color: #2c7aa0;
+    }
+
+    .readout-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.4rem 1rem;
+    }
+    .readout-grid div {
+      display: flex; justify-content: space-between;
+      font-size: 0.82rem;
+    }
+    .readout-grid span:first-child { color: #4f6f86; }
+    .readout-grid span:last-child { font-weight: 600; font-variant-numeric: tabular-nums; color: #0b2b3f; }
+
+    /* DNA strand display */
+    .strand-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      font-family: 'Courier New', monospace;
+      font-size: 0.95rem;
+      flex-wrap: wrap;
+    }
+    .strand-label {
+      font-family: system-ui, sans-serif;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #4f6f86;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      min-width: 120px;
+    }
+    .strand-bases {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1px;
+      line-height: 1;
+    }
+    .base {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 22px;
+      border-radius: 3px;
+      font-weight: 700;
+      font-size: 0.78rem;
+      transition: all 0.12s ease;
+    }
+    .base.A { background: #ffe0e0; color: #c0392b; }
+    .base.T { background: #e0f0ff; color: #2980b9; }
+    .base.G { background: #e0ffe0; color: #27ae60; }
+    .base.C { background: #fff4d6; color: #d68910; }
+    .base.U { background: #f0e0ff; color: #8e44ad; }
+    .base.dim { opacity: 0.35; }
+    .base.highlight {
+      box-shadow: 0 0 0 2px #2c7aa0;
+      transform: scale(1.1);
+      z-index: 1;
+    }
+    .base.codon-box {
+      outline: 2px solid #2c7aa0;
+      outline-offset: 1px;
+    }
+    .base.pos-marker {
+      position: relative;
+    }
+    .base.pos-marker::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-top: 5px solid #e74c3c;
+    }
+
+    /* Codon translation display */
+    .codon-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-top: 0.5rem;
+    }
+    .codon-chip {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0.35rem 0.5rem;
+      border-radius: 8px;
+      background: #eef4fa;
+      border: 1px solid #cfdde9;
+      font-size: 0.75rem;
+      min-width: 60px;
+      transition: all 0.15s ease;
+    }
+    .codon-chip.filled {
+      background: #e4f0f9;
+      border-color: #2c7aa0;
+    }
+    .codon-chip.current {
+      background: #fff8e0;
+      border-color: #f5b342;
+      box-shadow: 0 0 0 2px rgba(245,179,66,0.35);
+    }
+    .codon-chip .codon-seq {
+      font-family: 'Courier New', monospace;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: #0b2b3f;
+    }
+    .codon-chip .aa-name {
+      font-size: 0.68rem;
+      color: #2c7aa0;
+      font-weight: 600;
+      margin-top: 0.1rem;
+    }
+    .codon-chip.stop .aa-name {
+      color: #c0392b;
+    }
+    .codon-chip.start .aa-name {
+      color: #27ae60;
+    }
+
+    /* Protein chain display */
+    .protein-chain {
+      font-family: 'Courier New', monospace;
+      font-size: 1rem;
+      letter-spacing: 0.1em;
+      padding: 0.75rem 1rem;
+      background: #f4f9ff;
+      border-radius: 10px;
+      border: 1px solid #cde0ef;
+      min-height: 46px;
+      word-break: break-all;
+      line-height: 1.6;
+    }
+    .protein-chain .aa {
+      display: inline-block;
+      padding: 0.15rem 0.4rem;
+      margin: 0.1rem;
+      border-radius: 4px;
+      background: #2c7aa0;
+      color: white;
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+    .protein-chain .empty {
+      color: #8aa5ba;
+      font-style: italic;
+    }
+
+    /* Codon table */
+    .codon-table-wrap {
+      max-height: 220px;
+      overflow-y: auto;
+      border-radius: 10px;
+      border: 1px solid #e2edf5;
+    }
+    .codon-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.72rem;
+      font-family: 'Courier New', monospace;
+    }
+    .codon-table th {
+      background: #e4f0f9;
+      color: #1b4a6b;
+      font-weight: 600;
+      padding: 0.3rem;
+      position: sticky; top: 0;
+      font-family: system-ui, sans-serif;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .codon-table td {
+      padding: 0.25rem 0.4rem;
+      text-align: center;
+      border-bottom: 1px solid #eaf1f7;
+    }
+    .codon-table tr.highlight td {
+      background: #fff8e0;
+      font-weight: 700;
+    }
+    .codon-table tr.start-row td.aa-col { color: #27ae60; font-weight: 700; }
+    .codon-table tr.stop-row td.aa-col { color: #c0392b; font-weight: 700; }
+
+    /* Export modal */
+    .export-overlay {
+      position: fixed; inset: 0;
+      background: rgba(8,30,45,0.7);
+      backdrop-filter: blur(3px);
+      display: none;
+      align-items: center; justify-content: center;
+      padding: 1.5rem;
+      z-index: 50;
+    }
+    .export-overlay.active { display: flex; }
+    .export-dialog {
+      background: white;
+      border-radius: 16px;
+      max-width: 640px; width: 100%;
+      max-height: 90vh;
+      display: flex; flex-direction: column;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4);
+      overflow: hidden;
+    }
+    .export-header {
+      padding: 1rem 1.25rem;
+      background: linear-gradient(135deg, #0b2b3f 0%, #1b4a6b 100%);
+      color: white;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .export-header h3 { font-size: 1rem; font-weight: 600; }
+    .export-close {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white; width: 32px; height: 32px;
+      border-radius: 50%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s ease;
+    }
+    .export-close:hover { background: rgba(255,255,255,0.3); transform: rotate(90deg); }
+    .export-body {
+      padding: 1.25rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .export-body textarea {
+      width: 100%;
+      min-height: 340px;
+      padding: 0.85rem;
+      border-radius: 10px;
+      border: 1px solid #cfdde9;
+      font-family: 'Courier New', monospace;
+      font-size: 0.78rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: #0b2b3f;
+      background: #f8fbfe;
+    }
+    .export-footer {
+      padding: 1rem 1.25rem;
+      border-top: 1px solid #eaf1f7;
+      display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: flex-end;
+    }
+    .copy-feedback {
+      color: #27ae60; font-size: 0.85rem; font-weight: 500;
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      align-self: center; margin-right: auto;
+      opacity: 0; transition: opacity 0.2s;
+    }
+    .copy-feedback.show { opacity: 1; }
+
+    .sim-footer {
+      text-align: center; font-size: 0.8rem; color: #6f8da3;
+      padding: 1.5rem; border-top: 1px solid #d9e6f0;
+    }
+    .sim-footer a { color: #2c7aa0; text-decoration: none; }
+    .sim-footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <header class="sim-header">
+    <div class="container">
+      <div>
+        <span class="sim-tag">Biology · Molecular Genetics</span>
+        <h1>DNA Transcription &amp; Translation — Full Lab</h1>
+      </div>
+      <a class="back-link" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <p class="sim-intro">
+      Enter a DNA coding strand and watch transcription build the mRNA base-by-base, then
+      translation read each codon into an amino acid. The template strand (the one RNA
+      polymerase actually reads) is shown below the coding strand so you can see why the
+      mRNA matches the coding strand except with U replacing T. Use the step buttons to
+      advance RNA polymerase, or jump by codon. Try the preset sequences to see an open
+      reading frame, a missing start codon, and a sequence with an early stop.
+    </p>
+
+    <div class="sim-layout">
+      <div>
+        <!-- Strands -->
+        <div class="sim-panel">
+          <h3><i class="fas fa-dna"></i> DNA &amp; RNA strands</h3>
+
+          <div class="strand-row">
+            <span class="strand-label">Coding (5'→3')</span>
+            <div class="strand-bases" id="codingStrand"></div>
+          </div>
+          <div class="strand-row">
+            <span class="strand-label">Template (3'→5')</span>
+            <div class="strand-bases" id="templateStrand"></div>
+          </div>
+          <div class="strand-row" style="margin-top: 0.75rem;">
+            <span class="strand-label">mRNA (5'→3')</span>
+            <div class="strand-bases" id="mrnaStrand"></div>
+          </div>
+          <div class="strand-row" style="margin-top: 0.5rem;">
+            <span class="strand-label">Reading frame</span>
+            <div class="strand-bases" id="frameMarkers" style="font-size:0.7rem;"></div>
+          </div>
+
+          <div class="sim-readout" style="margin-top: 1rem;">
+            <div class="readout-grid">
+              <div><span>Length</span><span id="roLength">—</span></div>
+              <div><span>Polymerase at</span><span id="roPos">0</span></div>
+              <div><span>Codons read</span><span id="roCodons">0</span></div>
+              <div><span>Protein length</span><span id="roProteinLen">0 aa</span></div>
+            </div>
+          </div>
+
+          <div class="sim-btn-row">
+            <button class="sim-btn" id="stepBase">
+              <i class="fas fa-arrow-right"></i> Step base
+            </button>
+            <button class="sim-btn secondary" id="stepCodon">
+              <i class="fas fa-forward"></i> Step codon
+            </button>
+            <button class="sim-btn secondary" id="finishAll">
+              <i class="fas fa-fast-forward"></i> Finish all
+            </button>
+            <button class="sim-btn secondary" id="resetPos">
+              <i class="fas fa-rotate-left"></i> Reset
+            </button>
+          </div>
+        </div>
+
+        <!-- Protein & codons -->
+        <div class="sim-panel">
+          <h3><i class="fas fa-flask"></i> Translation</h3>
+          <div style="font-size:0.78rem; color:#4f6f86; margin-bottom:0.5rem;">
+            Codons in order — filled chips are already translated, the highlighted one is
+            being read by the ribosome now:
+          </div>
+          <div class="codon-list" id="codonList"></div>
+
+          <div style="font-size:0.78rem; color:#4f6f86; margin:0.75rem 0 0.4rem;">
+            Polypeptide chain (one-letter amino acid codes):
+          </div>
+          <div class="protein-chain" id="proteinChain">
+            <span class="empty">(no amino acids yet)</span>
+          </div>
+        </div>
+
+        <!-- Codon table -->
+        <div class="sim-panel">
+          <h3><i class="fas fa-table"></i> Codon reference table</h3>
+          <div class="codon-table-wrap">
+            <table class="codon-table" id="codonTable">
+              <thead>
+                <tr><th>Codon</th><th>3-letter</th><th>1-letter</th></tr>
+              </thead>
+              <tbody id="codonTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <!-- DNA input -->
+        <div class="sim-panel">
+          <h3><i class="fas fa-edit"></i> DNA sequence</h3>
+          <div class="sim-control-group">
+            <label>Template strand (5'→3' — the strand RNA polymerase reads)</label>
+            <textarea id="dnaInput" rows="4" spellcheck="false"
+              style="padding:0.6rem 0.75rem;border-radius:8px;border:1px solid #cfdde9;font-family:'Courier New',monospace;font-size:0.85rem;letter-spacing:0.08em;resize:vertical;width:100%;">TACGCTAGCTAGCCGATCGATCGCAT</textarea>
+          </div>
+          <div style="font-size:0.72rem; color:#4f6f86; margin-top:-0.4rem;">
+            Only A, T, G, C accepted. This is the template (antisense) strand —
+            the mRNA will be its complement with U in place of T.
+          </div>
+
+          <div class="sim-btn-row">
+            <button class="sim-btn secondary" id="presetORF">
+              <i class="fas fa-check-circle"></i> Full ORF
+            </button>
+            <button class="sim-btn secondary" id="presetNoStart">
+              <i class="fas fa-ban"></i> No AUG
+            </button>
+            <button class="sim-btn secondary" id="presetEarlyStop">
+              <i class="fas fa-stop-circle"></i> Early stop
+            </button>
+          </div>
+
+          <div class="sim-control-group" style="margin-top:1rem;">
+            <label>Reading frame <span class="range-value" id="frameVal">0</span></label>
+            <input type="range" id="frameSlider" min="0" max="2" step="1" value="0">
+            <div style="font-size:0.72rem; color:#4f6f86;">
+              Frame 0 starts at base 1, frame 1 at base 2, frame 2 at base 3. Changing the
+              frame shifts all codons — try it to see why the reading frame matters.
+            </div>
+          </div>
+        </div>
+
+        <!-- Export -->
+        <div class="sim-panel">
+          <h3><i class="fas fa-file-export"></i> Export</h3>
+          <button class="sim-btn" id="openExport" style="width: 100%; justify-content: center;">
+            <i class="fas fa-download"></i> Save / copy experiment data
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="sim-footer">
+    All-Science Sims — Biology · <a href="../index.html">Back to catalog</a>
+  </footer>
+
+  <div class="export-overlay" id="exportOverlay">
+    <div class="export-dialog">
+      <div class="export-header">
+        <h3><i class="fas fa-file-alt"></i> Experiment data</h3>
+        <button class="export-close" id="exportClose" aria-label="Close">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="export-body">
+        <textarea id="exportText" spellcheck="false" readonly></textarea>
+      </div>
+      <div class="export-footer">
+        <span class="copy-feedback" id="copyFeedback">
+          <i class="fas fa-check-circle"></i> Copied!
+        </span>
+        <button class="sim-btn secondary" id="copyBtn">
+          <i class="fas fa-copy"></i> Copy to clipboard
+        </button>
+        <button class="sim-btn" id="downloadBtn">
+          <i class="fas fa-download"></i> Download .txt
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ---- Codon table (mRNA → amino acid) ----
+      const CODON_TABLE = {
+        UUU: ['Phe', 'F'], UUC: ['Phe', 'F'], UUA: ['Leu', 'L'], UUG: ['Leu', 'L'],
+        CUU: ['Leu', 'L'], CUC: ['Leu', 'L'], CUA: ['Leu', 'L'], CUG: ['Leu', 'L'],
+        AUU: ['Ile', 'I'], AUC: ['Ile', 'I'], AUA: ['Ile', 'I'], AUG: ['Met', 'M'],
+        GUU: ['Val', 'V'], GUC: ['Val', 'V'], GUA: ['Val', 'V'], GUG: ['Val', 'V'],
+        UCU: ['Ser', 'S'], UCC: ['Ser', 'S'], UCA: ['Ser', 'S'], UCG: ['Ser', 'S'],
+        CCU: ['Pro', 'P'], CCC: ['Pro', 'P'], CCA: ['Pro', 'P'], CCG: ['Pro', 'P'],
+        ACU: ['Thr', 'T'], ACC: ['Thr', 'T'], ACA: ['Thr', 'T'], ACG: ['Thr', 'T'],
+        GCU: ['Ala', 'A'], GCC: ['Ala', 'A'], GCA: ['Ala', 'A'], GCG: ['Ala', 'A'],
+        UAU: ['Tyr', 'Y'], UAC: ['Tyr', 'Y'], UAA: ['Stop', '*'], UAG: ['Stop', '*'],
+        CAU: ['His', 'H'], CAC: ['His', 'H'], CAA: ['Gln', 'Q'], CAG: ['Gln', 'Q'],
+        AAU: ['Asn', 'N'], AAC: ['Asn', 'N'], AAA: ['Lys', 'K'], AAG: ['Lys', 'K'],
+        GAU: ['Asp', 'D'], GAC: ['Asp', 'D'], GAA: ['Glu', 'E'], GAG: ['Glu', 'E'],
+        UGU: ['Cys', 'C'], UGC: ['Cys', 'C'], UGA: ['Stop', '*'], UGG: ['Trp', 'W'],
+        CGU: ['Arg', 'R'], CGC: ['Arg', 'R'], CGA: ['Arg', 'R'], CGG: ['Arg', 'R'],
+        AGU: ['Ser', 'S'], AGC: ['Ser', 'S'], AGA: ['Arg', 'R'], AGG: ['Arg', 'R'],
+        GGU: ['Gly', 'G'], GGC: ['Gly', 'G'], GGA: ['Gly', 'G'], GGG: ['Gly', 'G'],
+      };
+
+      // ---- Presets (template strand, 5'→3') ----
+      const PRESETS = {
+        // Template that translates to Met-Pro-Arg-... with a clear start and stop
+        orf: 'TACGGGTACTTTCGCGATCGTAA',
+        // No AUG in any frame
+        noStart: 'CGCTAGCTAGCTAGCTAGCTAGCTA',
+        // Has AUG then an early stop
+        earlyStop: 'TACCGATAGTTTGGGCCCTAA',
+      };
+
+      // ---- State ----
+      const state = {
+        template: 'TACGCTAGCTAGCCGATCGATCGCAT',  // 5'→3' template
+        coding: '',                              // computed complement
+        mrna: '',                                // computed from template
+        position: 0,                             // how many bases of mRNA have been transcribed
+        frame: 0,                                // 0, 1, or 2
+      };
+
+      // ---- Helpers ----
+      function complement(base) {
+        return { A: 'T', T: 'A', G: 'C', C: 'G' }[base] || '';
+      }
+      function rnaComplement(base) {
+        return { A: 'U', T: 'A', G: 'C', C: 'G' }[base] || '';
+      }
+      function cleanSequence(s) {
+        return s.toUpperCase().replace(/[^ATGC]/g, '');
+      }
+      function sanitizeForTemplate(s) {
+        // Keep only ATGC
+        return cleanSequence(s);
+      }
+
+      // ---- Compute derived strands ----
+      function recomputeStrands() {
+        state.coding = state.template.split('').map(complement).join('');
+        state.mrna = state.template.split('').map(rnaComplement).join('');
+        // Clamp position
+        if (state.position > state.template.length) {
+          state.position = state.template.length;
+        }
+      }
+
+      // ---- Reading frame helpers ----
+      function getFrameOffset() {
+        // Frame 0 starts at mRNA index 0, frame 1 at 1, frame 2 at 2
+        return state.frame;
+      }
+
+      // Group the current transcribed mRNA into codons according to frame
+      function getTranscribedCodons() {
+        const offset = getFrameOffset();
+        const transcribed = state.mrna.slice(0, state.position);
+        // Align to frame: first codon starts at `offset` within the full mRNA
+        const codons = [];
+        let i = offset;
+        while (i + 3 <= transcribed.length) {
+          const codon = transcribed.slice(i, i + 3);
+          codons.push({ codon, startIdx: i, endIdx: i + 3 });
+          i += 3;
+        }
+        // Partial codon at the end (not yet translated) — only if transcription
+        // has reached the middle of it
+        let partial = null;
+        if (i < transcribed.length) {
+          partial = { codon: transcribed.slice(i), startIdx: i, endIdx: transcribed.length };
+        }
+        return { codons, partial, offset };
+      }
+
+      // Full translation (all complete codons, stop handling)
+      function translateFull() {
+        const { codons } = getTranscribedCodons();
+        const aa = [];
+        let stopReached = false;
+        codons.forEach(({ codon }) => {
+          const entry = CODON_TABLE[codon];
+          if (!entry) {
+            aa.push({ name: '?', one: '?', codon });
+            return;
+          }
+          const [name, one] = entry;
+          aa.push({ name, one, codon });
+          if (name === 'Stop') stopReached = true;
+        });
+        return { aa, stopReached };
+      }
+
+      // ---- Rendering ----
+      function renderStrands() {
+        const codingEl = document.getElementById('codingStrand');
+        const templateEl = document.getElementById('templateStrand');
+        const mrnaEl = document.getElementById('mrnaStrand');
+        const frameEl = document.getElementById('frameMarkers');
+
+        codingEl.innerHTML = '';
+        templateEl.innerHTML = '';
+        mrnaEl.innerHTML = '';
+        frameEl.innerHTML = '';
+
+        const len = state.template.length;
+        const frameOffset = getFrameOffset();
+
+        for (let i = 0; i < len; i++) {
+          // Coding strand
+          const cBase = state.coding[i];
+          const cSpan = document.createElement('span');
+          cSpan.className = `base ${cBase}`;
+          cSpan.textContent = cBase;
+          if (i >= state.position) cSpan.classList.add('dim');
+          if (i === state.position) {
+            cSpan.classList.add('highlight');
+            cSpan.classList.add('pos-marker');
+          }
+          codingEl.appendChild(cSpan);
+
+          // Template strand
+          const tBase = state.template[i];
+          const tSpan = document.createElement('span');
+          tSpan.className = `base ${tBase}`;
+          tSpan.textContent = tBase;
+          if (i >= state.position) tSpan.classList.add('dim');
+          if (i === state.position) tSpan.classList.add('highlight');
+          templateEl.appendChild(tSpan);
+
+          // mRNA strand
+          const mBase = state.mrna[i];
+          const mSpan = document.createElement('span');
+          mSpan.className = `base ${mBase}`;
+          mSpan.textContent = mBase;
+          if (i >= state.position) mSpan.classList.add('dim');
+          // Highlight current codon boundaries
+          const inCodon = ((i - frameOffset) % 3 === 0 || (i - frameOffset) % 3 === 1 || (i - frameOffset) % 3 === 2)
+            && i >= frameOffset && (i - frameOffset) < state.position;
+          if (inCodon) {
+            const codonStart = frameOffset + Math.floor((i - frameOffset) / 3) * 3;
+            if (i >= codonStart && i < codonStart + 3) mSpan.classList.add('codon-box');
+          }
+          if (i === state.position) mSpan.classList.add('highlight');
+          mrnaEl.appendChild(mSpan);
+
+          // Frame marker row
+          const fSpan = document.createElement('span');
+          fSpan.className = 'base';
+          fSpan.style.width = '18px';
+          fSpan.style.height = '14px';
+          fSpan.style.background = 'transparent';
+          if ((i - frameOffset) >= 0 && (i - frameOffset) % 3 === 0) {
+            fSpan.textContent = '↓';
+            fSpan.style.color = '#2c7aa0';
+            fSpan.style.fontWeight = '700';
+            fSpan.style.fontSize = '0.7rem';
+          }
+          frameEl.appendChild(fSpan);
+        }
+      }
+
+      function renderCodons() {
+        const list = document.getElementById('codonList');
+        list.innerHTML = '';
+
+        const offset = getFrameOffset();
+        const transcribed = state.mrna.slice(0, state.position);
+
+        // Iterate all full codons that have been transcribed
+        const fullCodonCount = Math.floor(Math.max(0, transcribed.length - offset) / 3);
+        const lastCodonIdx = fullCodonCount - 1;
+
+        for (let c = 0; c <= lastCodonIdx; c++) {
+          const startIdx = offset + c * 3;
+          const codon = transcribed.slice(startIdx, startIdx + 3);
+          const entry = CODON_TABLE[codon] || ['?', '?'];
+          const [name, one] = entry;
+
+          const chip = document.createElement('div');
+          chip.className = 'codon-chip filled';
+          if (name === 'Stop') chip.classList.add('stop');
+          if (codon === 'AUG') chip.classList.add('start');
+          if (c === lastCodonIdx) chip.classList.add('current');
+          chip.innerHTML = `
+            <div class="codon-seq">${codon}</div>
+            <div class="aa-name">${name}</div>
+          `;
+          list.appendChild(chip);
+        }
+
+        // Partial codon preview (bases not yet a full codon)
+        const leftoverStart = offset + fullCodonCount * 3;
+        const leftover = transcribed.slice(leftoverStart);
+        if (leftover.length > 0) {
+          const chip = document.createElement('div');
+          chip.className = 'codon-chip current';
+          chip.innerHTML = `
+            <div class="codon-seq">${leftover}…</div>
+            <div class="aa-name">reading…</div>
+          `;
+          list.appendChild(chip);
+        }
+
+        if (lastCodonIdx < 0 && leftover.length === 0) {
+          const empty = document.createElement('div');
+          empty.style.color = '#8aa5ba';
+          empty.style.fontStyle = 'italic';
+          empty.style.fontSize = '0.82rem';
+          empty.textContent = '(advance transcription to start reading codons)';
+          list.appendChild(empty);
+        }
+      }
+
+      function renderProtein() {
+        const chain = document.getElementById('proteinChain');
+        const { aa } = translateFull();
+        if (aa.length === 0) {
+          chain.innerHTML = '<span class="empty">(no amino acids yet)</span>';
+          return;
+        }
+        chain.innerHTML = '';
+        let stopped = false;
+        aa.forEach(item => {
+          if (stopped) return;
+          const span = document.createElement('span');
+          span.className = 'aa';
+          span.textContent = item.one;
+          span.title = `${item.codon} → ${item.name}`;
+          chain.appendChild(span);
+          if (item.name === 'Stop') stopped = true;
+        });
+        if (stopped) {
+          const note = document.createElement('span');
+          note.style.color = '#c0392b';
+          note.style.fontSize = '0.8rem';
+          note.style.marginLeft = '0.5rem';
+          note.style.fontStyle = 'italic';
+          note.textContent = '(stop codon reached — translation terminates)';
+          chain.appendChild(note);
+        }
+      }
+
+      function renderReadout() {
+        const { codons } = getTranscribedCodons();
+        const { aa, stopReached } = translateFull();
+        const proteinLen = aa.filter(x => x.name !== 'Stop').length;
+
+        document.getElementById('roLength').textContent = state.template.length + ' bp';
+        document.getElementById('roPos').textContent = state.position + ' / ' + state.template.length;
+        document.getElementById('roCodons').textContent = codons.length;
+        document.getElementById('roProteinLen').textContent =
+          proteinLen + (stopReached ? ' (stopped)' : '');
+      }
+
+      function renderCodonTable() {
+        const body = document.getElementById('codonTableBody');
+        body.innerHTML = '';
+        const { codons } = getTranscribedCodons();
+        const currentCodon = codons.length > 0 ? codons[codons.length - 1].codon : null;
+
+        const sorted = Object.keys(CODON_TABLE).sort();
+        sorted.forEach(codon => {
+          const [name, one] = CODON_TABLE[codon];
+          const tr = document.createElement('tr');
+          if (codon === currentCodon) tr.classList.add('highlight');
+          if (name === 'Stop') tr.classList.add('stop-row');
+          if (codon === 'AUG') tr.classList.add('start-row');
+          tr.innerHTML = `
+            <td>${codon}</td>
+            <td>${name}</td>
+            <td class="aa-col">${one}</td>
+          `;
+          body.appendChild(tr);
+        });
+      }
+
+      function renderAll() {
+        renderStrands();
+        renderCodons();
+        renderProtein();
+        renderReadout();
+        renderCodonTable();
+      }
+
+      // ---- Actions ----
+      function stepBase() {
+        if (state.position >= state.template.length) return;
+        state.position = Math.min(state.template.length, state.position + 1);
+        renderAll();
+      }
+
+      function stepCodon() {
+        if (state.position >= state.template.length) return;
+        // Advance until we have moved past at least 3 bases or hit the end
+        const start = state.position;
+        const target = Math.min(state.template.length, start + 3);
+        state.position = target;
+        renderAll();
+      }
+
+      function finishAll() {
+        state.position = state.template.length;
+        renderAll();
+      }
+
+      function resetPos() {
+        state.position = 0;
+        renderAll();
+      }
+
+      // ---- Sequence input ----
+      function setSequence(templateStrand) {
+        state.template = sanitizeForTemplate(templateStrand);
+        state.position = 0;
+        document.getElementById('dnaInput').value = state.template;
+        recomputeStrands();
+        renderAll();
+      }
+
+      document.getElementById('dnaInput').addEventListener('input', (e) => {
+        const cleaned = sanitizeForTemplate(e.target.value);
+        e.target.value = cleaned;
+        state.template = cleaned;
+        state.position = 0;
+        recomputeStrands();
+        renderAll();
+      });
+
+      // ---- Presets ----
+      document.getElementById('presetORF').addEventListener('click', () => {
+        setSequence(PRESETS.orf);
+        state.frame = 0;
+        document.getElementById('frameSlider').value = 0;
+        document.getElementById('frameVal').textContent = '0';
+        renderAll();
+      });
+      document.getElementById('presetNoStart').addEventListener('click', () => {
+        setSequence(PRESETS.noStart);
+        state.frame = 0;
+        document.getElementById('frameSlider').value = 0;
+        document.getElementById('frameVal').textContent = '0';
+        renderAll();
+      });
+      document.getElementById('presetEarlyStop').addEventListener('click', () => {
+        setSequence(PRESETS.earlyStop);
+        state.frame = 0;
+        document.getElementById('frameSlider').value = 0;
+        document.getElementById('frameVal').textContent = '0';
+        renderAll();
+      });
+
+      // ---- Frame slider ----
+      document.getElementById('frameSlider').addEventListener('input', (e) => {
+        state.frame = parseInt(e.target.value, 10);
+        document.getElementById('frameVal').textContent = state.frame;
+        renderAll();
+      });
+
+      // ---- Step buttons ----
+      document.getElementById('stepBase').addEventListener('click', stepBase);
+      document.getElementById('stepCodon').addEventListener('click', stepCodon);
+      document.getElementById('finishAll').addEventListener('click', finishAll);
+      document.getElementById('resetPos').addEventListener('click', resetPos);
+
+      // ---- Export ----
+      const exportOverlay = document.getElementById('exportOverlay');
+      const exportText = document.getElementById('exportText');
+
+      function buildReport() {
+        const lines = [];
+        const now = new Date();
+        const { codons } = getTranscribedCodons();
+        const { aa, stopReached } = translateFull();
+        const proteinLen = aa.filter(x => x.name !== 'Stop').length;
+
+        lines.push('DNA Transcription & Translation — Experiment Report');
+        lines.push('='.repeat(55));
+        lines.push('Generated: ' + now.toLocaleString());
+        lines.push('');
+        lines.push('SEQUENCE');
+        lines.push('-'.repeat(55));
+        lines.push('  Coding (5\'→3\'):   ' + state.coding);
+        lines.push('  Template (3\'→5\'): ' + state.template);
+        lines.push('  mRNA (5\'→3\'):     ' + state.mrna);
+        lines.push('  Length:            ' + state.template.length + ' bp');
+        lines.push('');
+        lines.push('TRANSCRIPTION PROGRESS');
+        lines.push('-'.repeat(55));
+        lines.push('  Polymerase position: ' + state.position + ' / ' + state.template.length);
+        lines.push('  Reading frame:       ' + state.frame);
+        lines.push('  Complete codons:     ' + codons.length);
+        lines.push('');
+        lines.push('TRANSLATION');
+        lines.push('-'.repeat(55));
+        if (aa.length === 0) {
+          lines.push('  (no codons translated yet)');
+        } else {
+          lines.push('  Codon → amino acid:');
+          aa.forEach((item, i) => {
+            const flag = item.name === 'Stop' ? ' (STOP)' : '';
+            lines.push(`    ${String(i + 1).padStart(3)}. ${item.codon}  →  ${item.name} (${item.one})${flag}`);
+          });
+          lines.push('');
+          lines.push('  Polypeptide length: ' + proteinLen + ' aa');
+          lines.push('  Translation ' + (stopReached ? 'terminated at stop codon.' : 'still in progress (no stop reached).'));
+        }
+        lines.push('');
+        lines.push('NOTES');
+        lines.push('-'.repeat(55));
+        if (!state.mrna.includes('AUG') && state.position === state.template.length) {
+          lines.push('  No start codon (AUG) in the mRNA. Ribosomes would not initiate');
+          lines.push('  translation efficiently from this transcript.');
+        }
+        if (stopReached) {
+          lines.push('  A stop codon was reached; translation terminated.');
+        }
+        lines.push('');
+        lines.push('END OF REPORT');
+        return lines.join('\n');
+      }
+
+      document.getElementById('openExport').addEventListener('click', () => {
+        exportText.value = buildReport();
+        exportOverlay.classList.add('active');
+        document.getElementById('copyFeedback').classList.remove('show');
+      });
+
+      document.getElementById('exportClose').addEventListener('click', () => {
+        exportOverlay.classList.remove('active');
+      });
+      exportOverlay.addEventListener('click', (e) => {
+        if (e.target === exportOverlay) exportOverlay.classList.remove('active');
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && exportOverlay.classList.contains('active')) {
+          exportOverlay.classList.remove('active');
+        }
+      });
+
+      document.getElementById('copyBtn').addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(exportText.value);
+        } catch (err) {
+          exportText.select();
+          document.execCommand('copy');
+        }
+        const fb = document.getElementById('copyFeedback');
+        fb.classList.add('show');
+        setTimeout(() => fb.classList.remove('show'), 1800);
+      });
+
+      document.getElementById('downloadBtn').addEventListener('click', () => {
+        const blob = new Blob([exportText.value], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+        a.href = url;
+        a.download = `dna-report-${ts}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      });
+
+      // ---- Boot ----
+      recomputeStrands();
+      renderAll();
+    })();
+  </script>
+</body>
+</html>
