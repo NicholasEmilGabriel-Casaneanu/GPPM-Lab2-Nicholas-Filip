@@ -1,0 +1,1821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cell Evolution Lab — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+    body { background: #f8fafc; color: #0b2b3f; min-height: 100vh; display: flex; flex-direction: column; line-height: 1.5; }
+
+    .sim-header {
+      background: linear-gradient(135deg, #0b2b3f 0%, #1b4a6b 100%);
+      color: white; padding: 1rem 0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .sim-header .container {
+      max-width: 1280px; margin: 0 auto; padding: 0 1.5rem;
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 1rem; flex-wrap: wrap;
+    }
+    .sim-header h1 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.3px; }
+    .sim-tag {
+      font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;
+      font-weight: 600; color: #bfe0f5; display: block; margin-bottom: 0.15rem;
+    }
+    .back-link {
+      color: white; background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 0.5rem 1.1rem; border-radius: 30px;
+      font-size: 0.85rem; font-weight: 500; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      transition: all 0.15s ease;
+    }
+    .back-link:hover { background: rgba(255,255,255,0.28); border-color: rgba(255,255,255,0.55); }
+
+    .sim-main {
+      flex: 1; max-width: 1280px; margin: 0 auto;
+      padding: 1.25rem 1.5rem 2rem; width: 100%;
+    }
+    .sim-intro { color: #4f6f86; font-size: 0.9rem; margin-bottom: 1rem; max-width: 90ch; }
+
+    .game-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 1rem;
+      align-items: start;
+    }
+    @media (max-width: 1050px) {
+      .game-layout { grid-template-columns: 1fr; }
+    }
+
+    .game-stage {
+      position: relative;
+      background: white;
+      border-radius: 18px;
+      border: 1px solid #e2edf5;
+      box-shadow: 0 8px 18px -6px rgba(0,20,30,0.08);
+      overflow: hidden;
+    }
+    .game-stage canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: #06141f;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    /* HUD overlay */
+    .hud {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      pointer-events: none;
+      color: white;
+      font-size: 0.75rem;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    }
+    .hud-block {
+      background: rgba(8, 30, 45, 0.6);
+      backdrop-filter: blur(4px);
+      padding: 0.5rem 0.75rem;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.15);
+      min-width: 130px;
+    }
+    .hud-block .label {
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #a5c8e0;
+      display: block;
+    }
+    .hud-block .big {
+      font-size: 1rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+    .hud-bar {
+      width: 100%;
+      height: 5px;
+      border-radius: 3px;
+      background: rgba(255,255,255,0.2);
+      overflow: hidden;
+      margin-top: 0.3rem;
+    }
+    .hud-bar-fill {
+      height: 100%;
+      background: #4ade80;
+      transition: width 0.1s linear;
+      border-radius: 3px;
+    }
+
+    /* Species population bars (right side of HUD) */
+    .species-bars {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      pointer-events: none;
+      font-size: 0.68rem;
+      color: white;
+    }
+    .species-bar {
+      background: rgba(8, 30, 45, 0.6);
+      backdrop-filter: blur(4px);
+      padding: 0.3rem 0.55rem;
+      border-radius: 6px;
+      border-left: 3px solid;
+      min-width: 140px;
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    /* Stage banner */
+    .stage-banner {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.9);
+      opacity: 0;
+      background: rgba(8, 30, 45, 0.94);
+      color: white;
+      padding: 1.4rem 2rem;
+      border-radius: 16px;
+      text-align: center;
+      border: 2px solid #f5b342;
+      box-shadow: 0 0 50px rgba(245, 179, 66, 0.4);
+      pointer-events: none;
+      transition: opacity 0.3s, transform 0.3s;
+      max-width: 90%;
+      z-index: 5;
+    }
+    .stage-banner.show {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    .stage-banner h3 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 0.4rem;
+      color: #f5b342;
+    }
+    .stage-banner p {
+      font-size: 0.9rem;
+      opacity: 0.92;
+      line-height: 1.5;
+    }
+
+    /* Overlay modals (stage transition, gene choice) */
+    .modal-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(4, 16, 26, 0.9);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      z-index: 10;
+      overflow-y: auto;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-dialog {
+      background: white;
+      border-radius: 16px;
+      padding: 1.3rem;
+      max-width: 640px;
+      width: 100%;
+      max-height: 90%;
+      overflow-y: auto;
+    }
+    .modal-dialog h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+      color: #0b2b3f;
+    }
+    .modal-dialog p {
+      font-size: 0.82rem;
+      color: #4f6f86;
+      margin-bottom: 0.9rem;
+    }
+    .gene-choices {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 0.55rem;
+    }
+    .gene-choice {
+      background: #f4f9ff;
+      border: 2px solid #cde0ef;
+      border-radius: 10px;
+      padding: 0.75rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .gene-choice:hover {
+      border-color: #2c7aa0;
+      background: #e4f0f9;
+      transform: translateY(-1px);
+    }
+    .gene-choice .gene-name {
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: #0b2b3f;
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+    .gene-choice .gene-code {
+      font-family: 'Courier New', monospace;
+      font-size: 0.72rem;
+      color: #2c7aa0;
+      font-weight: 600;
+      display: block;
+      margin-bottom: 0.3rem;
+    }
+    .gene-choice .gene-desc {
+      font-size: 0.72rem;
+      color: #4f6f86;
+      line-height: 1.35;
+    }
+
+    /* Stage recap table */
+    .recap-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+      margin-top: 0.5rem;
+    }
+    .recap-table th, .recap-table td {
+      padding: 0.4rem 0.5rem;
+      border-bottom: 1px solid #eaf1f7;
+      text-align: left;
+    }
+    .recap-table th {
+      background: #e4f0f9;
+      color: #1b4a6b;
+      font-weight: 600;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+    }
+    .recap-table .extinct {
+      color: #b03a2e;
+      font-style: italic;
+    }
+    .recap-table .gene-tag {
+      font-family: 'Courier New', monospace;
+      font-weight: 600;
+      font-size: 0.72rem;
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+      background: #eef4fa;
+      color: #1b4a6b;
+    }
+
+    /* Side panels */
+    .side-panel {
+      background: white;
+      border-radius: 18px;
+      padding: 0.9rem;
+      border: 1px solid #e2edf5;
+      box-shadow: 0 8px 18px -6px rgba(0,20,30,0.08);
+      margin-bottom: 0.7rem;
+    }
+    .side-panel h3 {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #1b4a6b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      padding: 0.2rem 0;
+    }
+    .stat-row span:first-child { color: #4f6f86; }
+    .stat-row span:last-child { font-weight: 700; color: #0b2b3f; font-variant-numeric: tabular-nums; }
+
+    .genome-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+    }
+    .gene-chip {
+      display: inline-block;
+      font-family: 'Courier New', monospace;
+      font-weight: 700;
+      font-size: 0.72rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 5px;
+      background: #e4f0f9;
+      color: #1b4a6b;
+      border: 1px solid #cde0ef;
+    }
+    .gene-chip.new {
+      background: #fff4d6;
+      border-color: #f5b342;
+      color: #7d6608;
+    }
+
+    .sim-btn {
+      background: #2c7aa0; color: white; border: none;
+      padding: 0.5rem 1rem; border-radius: 30px;
+      font-weight: 500; font-size: 0.82rem; cursor: pointer;
+      transition: background 0.15s ease;
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+      font-family: inherit;
+      width: 100%;
+      margin-bottom: 0.4rem;
+    }
+    .sim-btn:hover { background: #1b5a7a; }
+    .sim-btn.secondary { background: #e4f0f9; color: #1b4a6b; }
+    .sim-btn.secondary:hover { background: #cfe4f4; }
+
+    .key-hint {
+      font-size: 0.72rem;
+      color: #4f6f86;
+      line-height: 1.6;
+    }
+    .key-hint kbd {
+      background: #eef4fa;
+      border: 1px solid #cfdde9;
+      border-radius: 4px;
+      padding: 0.05rem 0.35rem;
+      font-family: 'Courier New', monospace;
+      font-size: 0.72rem;
+    }
+
+    .sim-footer {
+      text-align: center; font-size: 0.8rem; color: #6f8da3;
+      padding: 1.25rem; border-top: 1px solid #d9e6f0;
+      margin-top: 1rem;
+    }
+    .sim-footer a { color: #2c7aa0; text-decoration: none; }
+    .sim-footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <header class="sim-header">
+    <div class="container">
+      <div>
+        <span class="sim-tag">Biology · Population Genetics</span>
+        <h1>Cell Evolution Lab — Gene-Based Populations</h1>
+      </div>
+      <a class="back-link" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <p class="sim-intro">
+      A pond contains <strong>four competing cell species</strong>, each with a small genome.
+      Within a species, individuals are genetically similar but carry small variations — you
+      can tell them apart by their subtle colour shifts and behaviour. Feed by
+      <strong>phagocytosis</strong> (absorbing nutrients through the membrane), defend with
+      <strong>cell walls</strong> and <strong>toxins</strong>, and reproduce. When a stage ends,
+      the <strong>majority gene of each surviving species becomes the new base genome</strong>
+      for the next stage. If a species is wiped out, it's gone for good. You control the
+      highlighted cell of your chosen species.
+    </p>
+
+    <div class="game-layout">
+      <div>
+        <div class="game-stage">
+          <canvas id="gameCanvas" width="900" height="600"></canvas>
+
+          <!-- Top-left: stage + your cell status -->
+          <div class="hud">
+            <div class="hud-block">
+              <span class="label">Stage</span>
+              <span class="big" id="hudStage">1 · Pond Primer</span>
+              <div class="hud-bar" style="margin-top:0.4rem;width:120px;">
+                <div class="hud-bar-fill" id="hudStageFill" style="width:0%;"></div>
+              </div>
+              <div style="font-size:0.62rem;color:#a5c8e0;margin-top:0.2rem;" id="hudStageText">
+                0s / 45s
+              </div>
+            </div>
+            <div class="hud-block" style="text-align:right;">
+              <span class="label">Your cell</span>
+              <span class="big" id="hudSpecies">—</span>
+              <div class="hud-bar" style="margin-top:0.4rem;width:120px;margin-left:auto;">
+                <div class="hud-bar-fill" id="hudHealthFill" style="width:100%;background:#4ade80;"></div>
+              </div>
+              <div style="font-size:0.62rem;color:#a5c8e0;margin-top:0.2rem;">
+                ATP: <span id="hudATP">0</span> · Mass: <span id="hudMass">1.0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Species population bars -->
+          <div class="species-bars" id="speciesBars"></div>
+
+          <!-- Stage banner -->
+          <div class="stage-banner" id="stageBanner">
+            <h3 id="stageTitle">Stage Complete</h3>
+            <p id="stageDesc"></p>
+          </div>
+
+          <!-- Stage recap / gene selection modal -->
+          <div class="modal-overlay" id="modalOverlay">
+            <div class="modal-dialog" id="modalDialog"></div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="side-panel">
+          <h3><i class="fas fa-dna"></i> Your species genome</h3>
+          <div class="genome-list" id="yourGenome">
+            <span style="color:#8aa5ba;font-style:italic;font-size:0.78rem;">Empty genome</span>
+          </div>
+          <div class="stat-row" style="margin-top:0.5rem;"><span>Species</span><span id="statSpecies">—</span></div>
+          <div class="stat-row"><span>Stage reached</span><span id="statStageReached">1</span></div>
+        </div>
+
+        <div class="side-panel">
+          <h3><i class="fas fa-flask"></i> Cell physiology</h3>
+          <div class="stat-row"><span>Membrane</span><span id="statMembrane">Standard</span></div>
+          <div class="stat-row"><span>Nutrient uptake</span><span id="statUptake">1.0×</span></div>
+          <div class="stat-row"><span>Toxin output</span><span id="statToxin">0</span></div>
+          <div class="stat-row"><span>Wall strength</span><span id="statWall">0</span></div>
+          <div class="stat-row"><span>Motility</span><span id="statMotility">1.0×</span></div>
+          <div class="stat-row"><span>Division rate</span><span id="statDivision">1.0×</span></div>
+        </div>
+
+        <div class="side-panel">
+          <h3><i class="fas fa-chart-bar"></i> Population census</h3>
+          <div id="census"></div>
+        </div>
+
+        <div class="side-panel">
+          <h3><i class="fas fa-gamepad"></i> Controls</h3>
+          <div class="key-hint">
+            <kbd>WASD</kbd> / arrows / <kbd>mouse</kbd> to move<br>
+            <kbd>Space</kbd> to phagocytose (absorb)<br>
+            <kbd>P</kbd> to pause<br>
+            <kbd>R</kbd> to restart the run
+          </div>
+          <button class="sim-btn secondary" id="pauseBtn" style="margin-top:0.5rem;">
+            <i class="fas fa-pause"></i> Pause
+          </button>
+          <button class="sim-btn" id="restartBtn">
+            <i class="fas fa-rotate-left"></i> Restart whole run
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="sim-footer">
+    All-Science Sims — Biology · <a href="../index.html">Back to catalog</a>
+  </footer>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ============================================================
+      // CONSTANTS
+      // ============================================================
+      const W = 900, H = 600;
+      const canvas = document.getElementById('gameCanvas');
+      const ctx = canvas.getContext('2d');
+
+      // Gene catalog. Each gene carries a letter-code (like a real allele),
+      // a descriptive name, a category, and an effect object.
+      // Genes are additive — stacking two of the same gene stacks its effect.
+      const GENES = {
+        A: { code: 'A', name: 'Absorptive Membrane', cat: 'transport',
+             desc: 'Enhanced nutrient uptake through the membrane.', effect: { uptake: +0.4 } },
+        B: { code: 'B', name: 'Buoyancy Vacuole', cat: 'transport',
+             desc: 'Neutral buoyancy, more efficient movement.', effect: { motility: +0.2 } },
+        C: { code: 'C', name: 'Cellulose Wall', cat: 'defense',
+             desc: 'A stronger cell wall resists mechanical damage.', effect: { wall: +1 } },
+        D: { code: 'D', name: 'Defensive Toxin', cat: 'defense',
+             desc: 'Secretes toxins that damage nearby predators.', effect: { toxin: +1 } },
+        E: { code: 'E', name: 'Efficient Ribosomes', cat: 'growth',
+             desc: 'Faster protein synthesis; quicker division.', effect: { division: +0.3 } },
+        F: { code: 'F', name: 'Flagellar Motor', cat: 'motility',
+             desc: 'A rotating flagellum. Faster movement.', effect: { motility: +0.4 } },
+        G: { code: 'G', name: 'Gated Channels', cat: 'transport',
+             desc: 'Ion channels allow finer nutrient filtering.', effect: { uptake: +0.25, wall: +0.2 } },
+        H: { code: 'H', name: 'Hydrolytic Enzyme', cat: 'feeding',
+             desc: 'Breaks down tough cell walls of prey.', effect: { digest: +1 } },
+        I: { code: 'I', name: 'Immunity Receptor', cat: 'defense',
+             desc: 'Recognizes foreign cells; reduces toxin damage.', effect: { immunity: +1 } },
+        J: { code: 'J', name: 'Junction Proteins', cat: 'growth',
+             desc: 'Connect to neighbours for resource sharing.', effect: { division: +0.15, uptake: +0.15 } },
+      };
+
+      // Species definitions. Each species has a base genome at stage 1.
+      const SPECIES_DEF = [
+        {
+          id: 'alpha', name: 'Alpha', latin: 'Coccus viridis',
+          color: '#8affa0', hue: 120,
+          baseGenome: ['A', 'E'],           // absorptive + efficient ribosomes
+          baseBehavior: { aggressive: false, edible: true },
+        },
+        {
+          id: 'beta', name: 'Beta', latin: 'Bacillus fuscus',
+          color: '#f0e0a0', hue: 50,
+          baseGenome: ['B', 'F'],           // buoyant + flagellar
+          baseBehavior: { aggressive: false, edible: true },
+        },
+        {
+          id: 'gamma', name: 'Gamma', latin: 'Vibrio rubens',
+          color: '#ff6b6b', hue: 0,
+          baseGenome: ['C', 'D'],           // wall + toxin → predator
+          baseBehavior: { aggressive: true, edible: false },
+        },
+        {
+          id: 'delta', name: 'Delta', latin: 'Spirillum caeruleum',
+          color: '#a0c5ff', hue: 220,
+          baseGenome: ['H', 'I'],           // hydrolytic + immunity
+          baseBehavior: { aggressive: true, edible: false },
+        },
+      ];
+
+      // Stage configurations
+      const STAGES = [
+        { num: 1, name: 'Pond Primer',        duration: 45, targetPop: 8 },
+        { num: 2, name: 'Nutrient Gradient',  duration: 45, targetPop: 10 },
+        { num: 3, name: 'Competition',        duration: 50, targetPop: 12 },
+        { num: 4, name: 'Apex Selective',     duration: 55, targetPop: 14 },
+      ];
+
+      // ============================================================
+      // STATE
+      // ============================================================
+      const state = {
+        paused: false,
+        gameOver: false,
+        stageIndex: 0,
+        stageElapsed: 0,
+        species: [],          // array of species runtime objects
+        player: null,         // reference to a specific individual in a species
+        playerSpeciesId: null,
+        food: [],
+        particles: [],
+        mice: { x: W / 2, y: H / 2 },
+        keys: {},
+        lastTime: 0,
+        elapsed: 0,
+        spawnTimer: 0,
+        foodTimer: 0,
+        modalActive: false,
+        generationLog: [],    // for stage recap
+        totalFoodEaten: 0,
+      };
+
+      // ============================================================
+      // GENE MATH
+      // ============================================================
+      function genomeStats(genome) {
+        const base = { uptake: 1, motility: 1, wall: 0, toxin: 0,
+                       division: 1, digest: 0, immunity: 0 };
+        genome.forEach(geneCode => {
+          const g = GENES[geneCode];
+          if (!g) return;
+          Object.entries(g.effect).forEach(([k, v]) => {
+            base[k] += v;
+          });
+        });
+        return base;
+      }
+
+      function radiusFor(genome, mass) {
+        // Radius grows with mass; genome E (division) also nudges radius slightly
+        return 10 + Math.sqrt(mass) * 3.5;
+      }
+
+      function colorForSpecies(species, genome) {
+        // Base color from species, slightly shifted by dominant gene category
+        const cats = {};
+        genome.forEach(g => {
+          const cat = GENES[g]?.cat;
+          if (cat) cats[cat] = (cats[cat] || 0) + 1;
+        });
+        // Shift hue slightly based on category count
+        let hueShift = 0;
+        if (cats.defense) hueShift += 8;
+        if (cats.motility) hueShift -= 6;
+        if (cats.feeding) hueShift += 12;
+        const h = ((species.hue + hueShift) % 360 + 360) % 360;
+        return `hsl(${h}, 65%, 62%)`;
+      }
+
+      // ============================================================
+      // GENOME VARIATION
+      // ============================================================
+      // Given a base genome, produce a genetically similar but slightly
+      // varied genome for an individual:
+      //   - 70% chance to inherit base exactly
+      //   - 20% chance one gene mutates to a nearby random gene
+      //   - 10% chance a new gene is added
+      function varyGenome(baseGenome, stageNum) {
+        const genome = [...baseGenome];
+        const roll = Math.random();
+
+        if (roll < 0.70) {
+          // No change
+        } else if (roll < 0.90) {
+          // Mutate one gene
+          const codes = Object.keys(GENES);
+          if (genome.length > 0) {
+            const idx = Math.floor(Math.random() * genome.length);
+            let newGene = codes[Math.floor(Math.random() * codes.length)];
+            // Avoid duplicating the exact same gene code at the same slot
+            if (newGene === genome[idx]) {
+              newGene = codes[(codes.indexOf(newGene) + 1) % codes.length];
+            }
+            genome[idx] = newGene;
+          }
+        } else {
+          // Add a new gene (if under cap)
+          const cap = 3 + stageNum;   // grows with stage
+          if (genome.length < cap) {
+            const codes = Object.keys(GENES);
+            genome.push(codes[Math.floor(Math.random() * codes.length)]);
+          }
+        }
+        return genome;
+      }
+
+      // Majority gene of a species = the gene code that appears most often
+      // across the species' surviving genomes. Ties are resolved by
+      // frequency in genome order, then by alphabetical order.
+      function majorityGenome(species) {
+        if (species.individuals.length === 0) return species.baseGenome;
+        const counts = {};
+        species.individuals.forEach(ind => {
+          ind.genome.forEach(g => {
+            counts[g] = (counts[g] || 0) + 1;
+          });
+        });
+        // Count how many individuals carry each gene at all
+        const presence = {};
+        species.individuals.forEach(ind => {
+          new Set(ind.genome).forEach(g => {
+            presence[g] = (presence[g] || 0) + 1;
+          });
+        });
+        // Sort by presence (how many individuals), then by raw count
+        const sorted = Object.keys(presence).sort((a, b) => {
+          if (presence[b] !== presence[a]) return presence[b] - presence[a];
+          if (counts[b] !== counts[a]) return counts[b] - counts[a];
+          return a.localeCompare(b);
+        });
+        // Take the top N genes, where N = average genome length
+        const avgLen = species.individuals.reduce((s, i) => s + i.genome.length, 0) / species.individuals.length;
+        const keep = Math.max(1, Math.round(avgLen));
+        return sorted.slice(0, keep);
+      }
+
+      // ============================================================
+      // SPECIES & INDIVIDUALS
+      // ============================================================
+      function createSpecies(def, stageNum) {
+        return {
+          id: def.id,
+          name: def.name,
+          latin: def.latin,
+          color: def.color,
+          hue: def.hue,
+          behavior: { ...def.baseBehavior },
+          baseGenome: [...def.baseGenome],
+          individuals: [],
+          extinct: false,
+          populationHistory: [],
+        };
+      }
+
+      function createIndividual(species, stageNum, isPlayer = false) {
+        const genome = varyGenome(species.baseGenome, stageNum);
+        const stats = genomeStats(genome);
+        const radius = radiusFor(genome, 1);
+        // Random position, away from edges
+        let x, y;
+        if (isPlayer) {
+          x = W / 2;
+          y = H / 2;
+        } else {
+          x = 60 + Math.random() * (W - 120);
+          y = 60 + Math.random() * (H - 120);
+        }
+        return {
+          id: Math.random().toString(36).slice(2),
+          speciesId: species.id,
+          genome,
+          stats,
+          x, y,
+          vx: 0, vy: 0,
+          radius,
+          mass: 1,
+          health: 100,
+          maxHealth: 100,
+          facing: Math.random() * Math.PI * 2,
+          isPlayer,
+          foodEaten: 0,
+          wanderAngle: Math.random() * Math.PI * 2,
+          wanderTimer: 0,
+          biteCooldown: 0,
+          invulnTimer: 0,
+          color: colorForSpecies(species, genome),
+        };
+      }
+
+      function seedPopulation(species, targetPop, stageNum) {
+        species.individuals = [];
+        for (let i = 0; i < targetPop; i++) {
+          const ind = createIndividual(species, stageNum);
+          // Avoid spawning on top of each other
+          for (let tries = 0; tries < 20; tries++) {
+            const overlap = species.individuals.some(o =>
+              Math.hypot(o.x - ind.x, o.y - ind.y) < 40
+            );
+            if (!overlap) break;
+            ind.x = 60 + Math.random() * (W - 120);
+            ind.y = 60 + Math.random() * (H - 120);
+          }
+          species.individuals.push(ind);
+        }
+      }
+
+      // ============================================================
+      // WORLD INIT
+      // ============================================================
+      function initWorld() {
+        state.stageIndex = 0;
+        state.stageElapsed = 0;
+        state.food = [];
+        state.particles = [];
+        state.elapsed = 0;
+        state.gameOver = false;
+        state.paused = false;
+        state.modalActive = false;
+        state.generationLog = [];
+        state.totalFoodEaten = 0;
+
+        state.species = SPECIES_DEF.map(def => createSpecies(def, 1));
+        const stage = STAGES[0];
+        state.species.forEach(sp => {
+          seedPopulation(sp, stage.targetPop, 1);
+        });
+
+        // Player chooses a species at game start — default Alpha
+        state.playerSpeciesId = 'alpha';
+        pickPlayerCell();
+
+        // Fill food
+        for (let i = 0; i < 35; i++) spawnFood();
+
+        document.getElementById('modalOverlay').classList.remove('active');
+        updateCensus();
+        updateHUD();
+        updateSpeciesBars();
+      }
+
+      function pickPlayerCell() {
+        // Pick the first living individual of the player's species
+        const sp = state.species.find(s => s.id === state.playerSpeciesId && !s.extinct);
+        if (!sp || sp.individuals.length === 0) {
+          // Fall back to any living species
+          const living = state.species.filter(s => !s.extinct && s.individuals.length > 0);
+          if (living.length === 0) {
+            state.gameOver = true;
+            return;
+          }
+          state.playerSpeciesId = living[0].id;
+          state.player = living[0].individuals[0];
+        } else {
+          state.player = sp.individuals[0];
+        }
+        state.player.isPlayer = true;
+      }
+
+      function respawnPlayerIfDead() {
+        if (!state.player || state.player.health > 0) return;
+        // Player died — pick another individual from their species, or another species
+        const sp = state.species.find(s => s.id === state.playerSpeciesId && !s.extinct);
+        if (sp && sp.individuals.length > 0) {
+          state.player = sp.individuals[0];
+          state.player.isPlayer = true;
+        } else {
+          // Player's species is extinct — try another
+          const living = state.species.filter(s => !s.extinct && s.individuals.length > 0);
+          if (living.length > 0) {
+            state.playerSpeciesId = living[0].id;
+            state.player = living[0].individuals[0];
+            state.player.isPlayer = true;
+            showBanner('Species extinct!', 'You now control ' + living[0].name + '.');
+          } else {
+            state.gameOver = true;
+          }
+        }
+      }
+
+      // ============================================================
+      // FOOD
+      // ============================================================
+      function spawnFood() {
+        state.food.push({
+          x: 30 + Math.random() * (W - 60),
+          y: 30 + Math.random() * (H - 60),
+          radius: 4 + Math.random() * 2,
+          pulse: Math.random() * Math.PI * 2,
+          nutrients: 1,
+        });
+      }
+
+      // ============================================================
+      // INPUT
+      // ============================================================
+      canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        state.mice.x = (e.clientX - rect.left) * (W / rect.width);
+        state.mice.y = (e.clientY - rect.top) * (H / rect.height);
+      });
+      canvas.addEventListener('mousedown', () => phagocytose());
+      canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        state.mice.x = (e.touches[0].clientX - rect.left) * (W / rect.width);
+        state.mice.y = (e.touches[0].clientY - rect.top) * (H / rect.height);
+        phagocytose();
+      }, { passive: false });
+      canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        state.mice.x = (e.touches[0].clientX - rect.left) * (W / rect.width);
+        state.mice.y = (e.touches[0].clientY - rect.top) * (H / rect.height);
+      }, { passive: false });
+
+      window.addEventListener('keydown', (e) => {
+        state.keys[e.key.toLowerCase()] = true;
+        if (e.key === ' ') { e.preventDefault(); phagocytose(); }
+        if (e.key.toLowerCase() === 'p') togglePause();
+        if (e.key.toLowerCase() === 'r') restartRun();
+        if (['arrowup','arrowdown','arrowleft','arrowright'].includes(e.key.toLowerCase())) {
+          e.preventDefault();
+        }
+      });
+      window.addEventListener('keyup', (e) => {
+        state.keys[e.key.toLowerCase()] = false;
+      });
+
+      // ============================================================
+      // ACTIONS
+      // ============================================================
+      function phagocytose() {
+        const p = state.player;
+        if (!p || p.biteCooldown > 0 || state.paused || state.gameOver || state.modalActive) return;
+        p.biteCooldown = 0.3;
+
+        const reach = p.radius + 18;
+
+        // Absorb food
+        for (let i = state.food.length - 1; i >= 0; i--) {
+          const f = state.food[i];
+          if (Math.hypot(f.x - p.x, f.y - p.y) < reach) {
+            state.food.splice(i, 1);
+            const gain = 1 * p.stats.uptake;
+            p.mass += gain * 0.15;
+            p.foodEaten += gain;
+            p.health = Math.min(p.maxHealth, p.health + gain * 2);
+            state.totalFoodEaten += gain;
+            spawnParticles(f.x, f.y, '#8affa0', 6);
+            // Regenerate radius
+            p.radius = radiusFor(p.genome, p.mass);
+          }
+        }
+
+        // Attack adjacent cells with hydrolysis
+        state.species.forEach(sp => {
+          if (sp.id === p.speciesId) return;
+          if (sp.extinct) return;
+          for (let i = sp.individuals.length - 1; i >= 0; i--) {
+            const other = sp.individuals[i];
+            const dist = Math.hypot(other.x - p.x, other.y - p.y);
+            if (dist < reach + other.radius) {
+              // Predation requires digest capability + mass advantage
+              const canDigest = p.stats.digest >= 1;
+              const massAdv = p.mass > other.mass * 0.85;
+              if (canDigest && massAdv) {
+                const dmg = 15 * (1 + p.stats.digest * 0.5);
+                damageIndividual(other, dmg, p);
+                spawnParticles(other.x, other.y, '#ff6b6b', 5);
+              } else {
+                // Can't digest — bounce away
+                const ang = Math.atan2(p.y - other.y, p.x - other.x);
+                p.vx += Math.cos(ang) * 120;
+                p.vy += Math.sin(ang) * 120;
+              }
+            }
+          }
+        });
+      }
+
+      function damageIndividual(ind, amount, attacker) {
+        if (ind.invulnTimer > 0) return;
+        // Wall reduces damage
+        const wallFactor = 1 / (1 + ind.stats.wall * 0.5);
+        const immunityFactor = 1 / (1 + ind.stats.immunity * 0.4);
+        const reduced = amount * wallFactor * immunityFactor;
+        ind.health -= reduced;
+        ind.invulnTimer = 0.4;
+
+        // Toxin retaliation
+        if (attacker && ind.stats.toxin > 0) {
+          const toxDmg = 3 * ind.stats.toxin;
+          // Attacker's immunity protects against toxin
+          const attackerFactor = 1 / (1 + attacker.stats.immunity * 0.4);
+          attacker.health -= toxDmg * attackerFactor;
+          if (attacker.health < 0) attacker.health = 0;
+        }
+      }
+
+      function togglePause() {
+        if (state.gameOver) return;
+        state.paused = !state.paused;
+        document.getElementById('pauseBtn').innerHTML = state.paused
+          ? '<i class="fas fa-play"></i> Resume'
+          : '<i class="fas fa-pause"></i> Pause';
+      }
+      document.getElementById('pauseBtn').addEventListener('click', togglePause);
+      document.getElementById('restartBtn').addEventListener('click', restartRun);
+
+      function restartRun() {
+        initWorld();
+      }
+
+      // ============================================================
+      // UPDATE
+      // ============================================================
+      function update(dt) {
+        if (state.paused || state.gameOver || state.modalActive) return;
+
+        state.elapsed += dt;
+        state.stageElapsed += dt;
+
+        // Stage timer
+        const stage = STAGES[state.stageIndex];
+        if (state.stageElapsed >= stage.duration) {
+          advanceStage();
+          return;
+        }
+
+        const p = state.player;
+        if (p) {
+          p.invulnTimer = Math.max(0, p.invulnTimer - dt);
+          p.biteCooldown = Math.max(0, p.biteCooldown - dt);
+        }
+
+        // ---- Player movement ----
+        if (p) {
+          let mx = 0, my = 0;
+          if (state.keys['w'] || state.keys['arrowup']) my -= 1;
+          if (state.keys['s'] || state.keys['arrowdown']) my += 1;
+          if (state.keys['a'] || state.keys['arrowleft']) mx -= 1;
+          if (state.keys['d'] || state.keys['arrowright']) mx += 1;
+
+          if (mx === 0 && my === 0) {
+            const dx = state.mice.x - p.x;
+            const dy = state.mice.y - p.y;
+            const d = Math.hypot(dx, dy);
+            if (d > 8) { mx = dx / d; my = dy / d; }
+          } else {
+            const m = Math.hypot(mx, my);
+            if (m > 0) { mx /= m; my /= m; }
+          }
+
+          const speed = 130 * p.stats.motility;
+          p.vx += (mx * speed - p.vx) * Math.min(1, dt * 8);
+          p.vy += (my * speed - p.vy) * Math.min(1, dt * 8);
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+
+          // Bounds
+          if (p.x < p.radius) { p.x = p.radius; p.vx = 0; }
+          if (p.x > W - p.radius) { p.x = W - p.radius; p.vx = 0; }
+          if (p.y < p.radius) { p.y = p.radius; p.vy = 0; }
+          if (p.y > H - p.radius) { p.y = H - p.radius; p.vy = 0; }
+          if (mx !== 0 || my !== 0) p.facing = Math.atan2(my, mx);
+
+          // Passive toxin damage aura
+          if (p.stats.toxin > 0) {
+            state.species.forEach(sp => {
+              if (sp.id === p.speciesId) return;
+              sp.individuals.forEach(other => {
+                const d = Math.hypot(other.x - p.x, other.y - p.y);
+                if (d < p.radius + 25) {
+                  const toxDmg = p.stats.toxin * 2 * dt;
+                  other.health -= toxDmg;
+                }
+              });
+            });
+          }
+        }
+
+        // ---- Food absorption by all cells ----
+        state.food.forEach(f => { f.pulse += dt * 2; });
+
+        // ---- Update all species individuals ----
+        state.species.forEach(sp => {
+          if (sp.extinct) return;
+          sp.individuals.forEach(ind => {
+            ind.invulnTimer = Math.max(0, ind.invulnTimer - dt);
+            ind.biteCooldown = Math.max(0, ind.biteCooldown - dt);
+
+            // AI movement (skip player)
+            if (!ind.isPlayer) {
+              updateAIMovement(ind, dt);
+            }
+
+            // Absorb food
+            const reach = ind.radius + 4;
+            for (let i = state.food.length - 1; i >= 0; i--) {
+              const f = state.food[i];
+              if (Math.hypot(f.x - ind.x, f.y - ind.y) < reach) {
+                state.food.splice(i, 1);
+                const gain = 1 * ind.stats.uptake;
+                ind.mass += gain * 0.12;
+                ind.foodEaten += gain;
+                ind.health = Math.min(ind.maxHealth, ind.health + gain);
+                ind.radius = radiusFor(ind.genome, ind.mass);
+              }
+            }
+
+            // Toxin aura (passive)
+            if (ind.stats.toxin > 0) {
+              state.species.forEach(otherSp => {
+                if (otherSp.id === sp.id) return;
+                otherSp.individuals.forEach(other => {
+                  const d = Math.hypot(other.x - ind.x, other.y - ind.y);
+                  if (d < ind.radius + 20) {
+                    other.health -= ind.stats.toxin * 1.5 * dt;
+                  }
+                });
+              });
+            }
+
+            // Natural damage from starvation if no food eaten recently? Skip for simplicity
+          });
+        });
+
+        // ---- Remove dead individuals ----
+        state.species.forEach(sp => {
+          const before = sp.individuals.length;
+          sp.individuals = sp.individuals.filter(ind => ind.health > 0);
+          const after = sp.individuals.length;
+          if (after < before) {
+            // Death particles
+            if (before - after > 0) {
+              const last = sp.individuals[sp.individuals.length - 1];
+              // Just count deaths — no particle spam
+            }
+          }
+          if (sp.individuals.length === 0 && !sp.extinct) {
+            sp.extinct = true;
+            showBanner('Extinction!', sp.name + ' (' + sp.latin + ') has been wiped out.');
+          }
+        });
+
+        // Player death
+        respawnPlayerIfDead();
+
+        // ---- Spawning ----
+        state.spawnTimer -= dt;
+        state.foodTimer -= dt;
+
+        // Keep food plentiful
+        const targetFood = 30 + state.stageIndex * 5;
+        if (state.food.length < targetFood && state.foodTimer <= 0) {
+          spawnFood();
+          state.foodTimer = 0.3;
+        }
+
+        // Regenerate population up to species' target
+        state.species.forEach(sp => {
+          if (sp.extinct) return;
+          const stage = STAGES[state.stageIndex];
+          const target = stage.targetPop;
+          if (sp.individuals.length < target && state.spawnTimer <= 0 && Math.random() < 0.3) {
+            const newInd = createIndividual(sp, state.stageIndex + 1);
+            sp.individuals.push(newInd);
+          }
+        });
+        if (state.spawnTimer <= 0) state.spawnTimer = 0.8;
+
+        updateParticles(dt);
+      }
+
+      function updateAIMovement(ind, dt) {
+        // Behavior depends on species
+        const sp = state.species.find(s => s.id === ind.speciesId);
+        const player = state.player;
+
+        // Base wander
+        ind.wanderTimer -= dt;
+        if (ind.wanderTimer <= 0) {
+          ind.wanderAngle += (Math.random() - 0.5) * 1.8;
+          ind.wanderTimer = 0.8 + Math.random() * 1.2;
+        }
+        let mx = Math.cos(ind.wanderAngle);
+        let my = Math.sin(ind.wanderAngle);
+
+        // If aggressive species and player nearby, chase
+        if (sp.behavior.aggressive && player && !player.isPlayer === false) {
+          const d = Math.hypot(player.x - ind.x, player.y - ind.y);
+          if (d < 220) {
+            mx = (player.x - ind.x) / d;
+            my = (player.y - ind.y) / d;
+          }
+        } else if (!sp.behavior.aggressive && player) {
+          // Flee from bigger predators
+          const d = Math.hypot(player.x - ind.x, player.y - ind.y);
+          if (d < 100 && player.mass > ind.mass * 1.1) {
+            mx = -(player.x - ind.x) / d;
+            my = -(player.y - ind.y) / d;
+          }
+        }
+
+        // Also flee from other aggressive species
+        if (!sp.behavior.aggressive) {
+          for (const otherSp of state.species) {
+            if (otherSp.id === sp.id || !otherSp.behavior.aggressive) continue;
+            for (const other of otherSp.individuals) {
+              const d = Math.hypot(other.x - ind.x, other.y - ind.y);
+              if (d < 90) {
+                mx -= (other.x - ind.x) / d * 0.7;
+                my -= (other.y - ind.y) / d * 0.7;
+                break;
+              }
+            }
+          }
+        }
+
+        const speed = 100 * ind.stats.motility;
+        ind.vx += (mx * speed - ind.vx) * Math.min(1, dt * 4);
+        ind.vy += (my * speed - ind.vy) * Math.min(1, dt * 4);
+        ind.x += ind.vx * dt;
+        ind.y += ind.vy * dt;
+
+        // Bounds
+        if (ind.x < ind.radius) { ind.x = ind.radius; ind.vx = Math.abs(ind.vx); }
+        if (ind.x > W - ind.radius) { ind.x = W - ind.radius; ind.vx = -Math.abs(ind.vx); }
+        if (ind.y < ind.radius) { ind.y = ind.radius; ind.vy = Math.abs(ind.vy); }
+        if (ind.y > H - ind.radius) { ind.y = H - ind.radius; ind.vy = -Math.abs(ind.vy); }
+        if (Math.hypot(ind.vx, ind.vy) > 5) ind.facing = Math.atan2(ind.vy, ind.vx);
+
+        // Aggressive contact damage
+        if (sp.behavior.aggressive && player && !player.isPlayer === false) {
+          const d = Math.hypot(player.x - ind.x, player.y - ind.y);
+          if (d < ind.radius + player.radius) {
+            damageIndividual(player, 12 * dt * (1 + ind.stats.toxin * 0.5), ind);
+          }
+        }
+      }
+
+      // ============================================================
+      // STAGE TRANSITION
+      // ============================================================
+      function advanceStage() {
+        state.paused = true;
+
+        // Snapshot populations for the recap
+        const recap = state.species.map(sp => ({
+          id: sp.id,
+          name: sp.name,
+          latin: sp.latin,
+          alive: sp.individuals.length,
+          extinct: sp.extinct,
+          majority: sp.extinct ? null : majorityGenome(sp),
+          baseGenome: sp.baseGenome,
+        }));
+
+        // Is this the last stage?
+        const isLast = state.stageIndex >= STAGES.length - 1;
+
+        if (isLast) {
+          showFinalReport(recap);
+          return;
+        }
+
+        // Record log
+        state.generationLog.push({
+          stage: STAGES[state.stageIndex].num,
+          stageName: STAGES[state.stageIndex].name,
+          recap,
+        });
+
+        // Show modal: let player choose a gene to add to their species
+        const playerSp = state.species.find(s => s.id === state.playerSpeciesId && !s.extinct);
+        showStageModal(recap, playerSp);
+      }
+
+      function showStageModal(recap, playerSp) {
+        state.modalActive = true;
+        const overlay = document.getElementById('modalOverlay');
+        const dialog = document.getElementById('modalDialog');
+
+        let recapHTML = `
+          <h3>Stage ${STAGES[state.stageIndex].num} complete</h3>
+          <p>Populations after ${STAGES[state.stageIndex].name}:</p>
+          <table class="recap-table">
+            <thead>
+              <tr><th>Species</th><th>Alive</th><th>Status</th><th>Majority genome</th></tr>
+            </thead>
+            <tbody>
+        `;
+        recap.forEach(r => {
+          if (r.extinct) {
+            recapHTML += `
+              <tr class="extinct">
+                <td>${r.name}<br><small>${r.latin}</small></td>
+                <td>0</td>
+                <td>EXTINCT</td>
+                <td>—</td>
+              </tr>
+            `;
+          } else {
+            const genomeStr = r.majority.map(g => `<span class="gene-tag">${g}</span>`).join(' ');
+            recapHTML += `
+              <tr>
+                <td>${r.name}<br><small>${r.latin}</small></td>
+                <td>${r.alive}</td>
+                <td>Alive</td>
+                <td>${genomeStr}</td>
+              </tr>
+            `;
+          }
+        });
+        recapHTML += `</tbody></table>`;
+
+        if (playerSp) {
+          recapHTML += `
+            <p style="margin-top:1rem;font-weight:600;color:#0b2b3f;">
+              Your species (${playerSp.name}) can incorporate a new gene into its base genome for the next stage:
+            </p>
+            <div class="gene-choices" id="geneChoices"></div>
+          `;
+        } else {
+          recapHTML += `
+            <p style="margin-top:1rem;color:#b03a2e;">
+              Your species is extinct. You will continue as the surviving species with the largest population.
+            </p>
+            <div style="text-align:center;margin-top:1rem;">
+              <button class="sim-btn" id="continueBtn">Continue</button>
+            </div>
+          `;
+        }
+
+        dialog.innerHTML = recapHTML;
+
+        if (playerSp) {
+          // Show 4 random gene options (prefer genes not already in base genome)
+          const allGenes = Object.keys(GENES);
+          const available = allGenes.filter(g => !playerSp.baseGenome.includes(g));
+          const shuffled = available.sort(() => Math.random() - 0.5);
+          const picks = [];
+          for (let i = 0; i < 4 && i < shuffled.length; i++) picks.push(shuffled[i]);
+          // If not enough, add random genes
+          while (picks.length < 4) {
+            const g = allGenes[Math.floor(Math.random() * allGenes.length)];
+            if (!picks.includes(g)) picks.push(g);
+          }
+
+          const choicesDiv = document.getElementById('geneChoices');
+          picks.forEach(geneCode => {
+            const g = GENES[geneCode];
+            const card = document.createElement('div');
+            card.className = 'gene-choice';
+            card.innerHTML = `
+              <span class="gene-code">Gene ${g.code}</span>
+              <span class="gene-name">${g.name}</span>
+              <span class="gene-desc">${g.desc}</span>
+            `;
+            card.addEventListener('click', () => {
+              // Add this gene to the base genome for the next stage
+              playerSp.baseGenome.push(geneCode);
+              // Store as a new entry for the player to see
+              state.newPlayerGene = geneCode;
+              overlay.classList.remove('active');
+              state.modalActive = false;
+              beginNextStage();
+            });
+            choicesDiv.appendChild(card);
+          });
+        } else {
+          document.getElementById('continueBtn').addEventListener('click', () => {
+            overlay.classList.remove('active');
+            state.modalActive = false;
+            beginNextStage();
+          });
+        }
+
+        overlay.classList.add('active');
+      }
+
+      function beginNextStage() {
+        state.stageIndex++;
+        state.stageElapsed = 0;
+
+        const nextStageNum = STAGES[state.stageIndex].num;
+        const nextStageCfg = STAGES[state.stageIndex];
+
+        // Update each surviving species' base genome to its majority genome
+        state.species.forEach(sp => {
+          if (sp.extinct) return;
+          const majority = majorityGenome(sp);
+          if (majority && majority.length > 0) {
+            sp.baseGenome = majority;
+          }
+        });
+
+        // Reseed populations
+        state.species.forEach(sp => {
+          if (sp.extinct) return;
+          seedPopulation(sp, nextStageCfg.targetPop, nextStageNum);
+        });
+
+        // Reset player
+        const playerSp = state.species.find(s => s.id === state.playerSpeciesId && !sp_extinct(s));
+        if (playerSp) {
+          const sp = playerSp;
+          if (sp.individuals.length > 0) {
+            sp.individuals.forEach(i => i.isPlayer = false);
+            state.player = sp.individuals[0];
+            state.player.isPlayer = true;
+          } else {
+            // Fall back
+            const living = state.species.filter(s => !s.extinct && s.individuals.length > 0);
+            if (living.length > 0) {
+              state.playerSpeciesId = living[0].id;
+              state.player = living[0].individuals[0];
+              state.player.isPlayer = true;
+            } else {
+              state.gameOver = true;
+            }
+          }
+        }
+
+        // Clear food and refill
+        state.food = [];
+        for (let i = 0; i < 35; i++) spawnFood();
+        state.particles = [];
+
+        state.paused = false;
+
+        // Show the stage banner
+        showBanner(
+          `Stage ${nextStageCfg.num} · ${nextStageCfg.name}`,
+          `Populations reseeded. Majority genes have become the new base genomes.`,
+          3000
+        );
+
+        updateCensus();
+        updateHUD();
+        updateSpeciesBars();
+      }
+
+      function sp_extinct(sp) { return sp.extinct || sp.individuals.length === 0; }
+
+      function showFinalReport(recap) {
+        state.gameOver = true;
+        state.modalActive = true;
+        const overlay = document.getElementById('modalOverlay');
+        const dialog = document.getElementById('modalDialog');
+
+        let html = `
+          <h3>Run complete — final report</h3>
+          <p>All ${STAGES.length} stages have been played. Final populations:</p>
+          <table class="recap-table">
+            <thead>
+              <tr><th>Species</th><th>Alive</th><th>Status</th><th>Final majority genome</th></tr>
+            </thead>
+            <tbody>
+        `;
+        recap.forEach(r => {
+          if (r.extinct) {
+            html += `
+              <tr class="extinct">
+                <td>${r.name}<br><small>${r.latin}</small></td>
+                <td>0</td>
+                <td>EXTINCT</td>
+                <td>—</td>
+              </tr>
+            `;
+          } else {
+            const genomeStr = r.majority.map(g => `<span class="gene-tag">${g}</span>`).join(' ');
+            html += `
+              <tr>
+                <td>${r.name}<br><small>${r.latin}</small></td>
+                <td>${r.alive}</td>
+                <td>Alive</td>
+                <td>${genomeStr}</td>
+              </tr>
+            `;
+          }
+        });
+        html += `</tbody></table>`;
+
+        html += `
+          <p style="margin-top:1rem;color:#4f6f86;">
+            Generations: ${state.generationLog.length} · Total food absorbed: ${state.totalFoodEaten.toFixed(0)}
+          </p>
+          <div style="text-align:center;margin-top:1rem;">
+            <button class="sim-btn" id="finalRestartBtn">
+              <i class="fas fa-rotate-left"></i> Run again
+            </button>
+          </div>
+        `;
+
+        dialog.innerHTML = html;
+        document.getElementById('finalRestartBtn').addEventListener('click', () => {
+          overlay.classList.remove('active');
+          state.modalActive = false;
+          initWorld();
+        });
+        overlay.classList.add('active');
+      }
+
+      // ============================================================
+      // PARTICLES
+      // ============================================================
+      function spawnParticles(x, y, color, count) {
+        for (let i = 0; i < count; i++) {
+          const a = Math.random() * Math.PI * 2;
+          const s = 30 + Math.random() * 60;
+          state.particles.push({
+            x, y,
+            vx: Math.cos(a) * s,
+            vy: Math.sin(a) * s,
+            life: 1,
+            color,
+            size: 1.5 + Math.random() * 2,
+          });
+        }
+      }
+
+      function updateParticles(dt) {
+        state.particles.forEach(p => {
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+          p.vx *= 0.93;
+          p.vy *= 0.93;
+          p.life -= dt * 1.8;
+        });
+        state.particles = state.particles.filter(p => p.life > 0);
+      }
+
+      // ============================================================
+      // DRAW
+      // ============================================================
+      function draw() {
+        const bg = ctx.createRadialGradient(W / 2, H / 2, 60, W / 2, H / 2, W * 0.75);
+        bg.addColorStop(0, '#0d2a3f');
+        bg.addColorStop(1, '#040e17');
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, W, H);
+
+        // Background plankton
+        for (let i = 0; i < 50; i++) {
+          const x = (i * 137 + state.elapsed * 8) % W;
+          const y = (i * 73 + Math.sin(state.elapsed + i) * 15) % H;
+          ctx.fillStyle = `rgba(120,200,220,${0.08 + (i % 3) * 0.04})`;
+          ctx.beginPath();
+          ctx.arc(x, y, 1.2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Food
+        state.food.forEach(f => {
+          const pr = f.radius + Math.sin(f.pulse) * 1;
+          ctx.fillStyle = 'rgba(138, 255, 160, 0.15)';
+          ctx.beginPath();
+          ctx.arc(f.x, f.y, pr * 2.6, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#8affa0';
+          ctx.beginPath();
+          ctx.arc(f.x, f.y, pr, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        // Draw all species individuals
+        state.species.forEach(sp => {
+          if (sp.extinct) return;
+          sp.individuals.forEach(ind => {
+            if (ind.isPlayer) return; // Draw player separately
+            drawCell(ind, false);
+          });
+        });
+
+        // Draw player on top
+        if (state.player) drawCell(state.player, true);
+
+        // Particles
+        state.particles.forEach(pt => {
+          ctx.globalAlpha = Math.max(0, pt.life);
+          ctx.fillStyle = pt.color;
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, pt.size, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.globalAlpha = 1;
+
+        // Pause overlay
+        if (state.paused && !state.modalActive && !state.gameOver) {
+          ctx.fillStyle = 'rgba(4, 16, 26, 0.6)';
+          ctx.fillRect(0, 0, W, H);
+          ctx.fillStyle = 'white';
+          ctx.font = 'bold 28px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('PAUSED', W / 2, H / 2);
+        }
+
+        // Game over overlay (only for the game-over-early case, not final report)
+        if (state.gameOver && !state.modalActive) {
+          ctx.fillStyle = 'rgba(4, 16, 26, 0.7)';
+          ctx.fillRect(0, 0, W, H);
+          ctx.fillStyle = '#ff6b6b';
+          ctx.font = 'bold 26px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('All populations wiped out', W / 2, H / 2 - 10);
+          ctx.fillStyle = 'white';
+          ctx.font = '16px sans-serif';
+          ctx.fillText('Press R to restart the run', W / 2, H / 2 + 25);
+        }
+      }
+
+      function drawCell(ind, isPlayer) {
+        const sp = state.species.find(s => s.id === ind.speciesId);
+        const r = ind.radius;
+
+        // Glow
+        const grad = ctx.createRadialGradient(ind.x, ind.y, r * 0.4, ind.x, ind.y, r * 1.8);
+        grad.addColorStop(0, ind.color + 'aa');
+        grad.addColorStop(1, ind.color + '00');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(ind.x, ind.y, r * 1.8, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Body
+        ctx.beginPath();
+        ctx.arc(ind.x, ind.y, r, 0, Math.PI * 2);
+        ctx.fillStyle = ind.color;
+        ctx.fill();
+
+        // Outline
+        ctx.strokeStyle = isPlayer ? '#f5b342' : shadeColor(ind.color, -30);
+        ctx.lineWidth = isPlayer ? 3 : 1.5;
+        ctx.stroke();
+
+        // Nucleus hint
+        ctx.fillStyle = shadeColor(ind.color, -40);
+        ctx.globalAlpha = 0.5;
+        ctx.beginPath();
+        ctx.arc(ind.x + r * 0.15, ind.y - r * 0.15, r * 0.4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+
+        // Wall ring (if has wall gene)
+        if (ind.stats.wall > 0) {
+          ctx.strokeStyle = shadeColor(ind.color, -60);
+          ctx.lineWidth = 1 + ind.stats.wall * 0.7;
+          ctx.beginPath();
+          ctx.arc(ind.x, ind.y, r + 3, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        // Toxin aura
+        if (ind.stats.toxin > 0) {
+          ctx.strokeStyle = 'rgba(180, 80, 220, 0.3)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(ind.x, ind.y, r + 10 + Math.sin(state.elapsed * 4) * 2, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        // Flagellum (if motility gene present)
+        if (ind.stats.motility > 1.2) {
+          const tailAngle = ind.facing + Math.PI;
+          const sx = ind.x + Math.cos(tailAngle) * r;
+          const sy = ind.y + Math.sin(tailAngle) * r;
+          ctx.strokeStyle = ind.color;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(sx, sy);
+          for (let i = 1; i <= 4; i++) {
+            const t = i / 4;
+            const wobble = Math.sin(state.elapsed * 12 + i) * 3;
+            const px = sx + Math.cos(tailAngle) * t * 14;
+            const py = sy + Math.sin(tailAngle) * t * 14;
+            const nx = Math.cos(tailAngle + Math.PI / 2) * wobble;
+            const ny = Math.sin(tailAngle + Math.PI / 2) * wobble;
+            ctx.lineTo(px + nx, py + ny);
+          }
+          ctx.stroke();
+        }
+
+        // Eye for player
+        if (isPlayer) {
+          const ex = ind.x + Math.cos(ind.facing) * r * 0.35;
+          const ey = ind.y + Math.sin(ind.facing) * r * 0.35;
+          ctx.fillStyle = 'white';
+          ctx.beginPath();
+          ctx.arc(ex, ey, r * 0.25, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#0b2b3f';
+          ctx.beginPath();
+          ctx.arc(ex + Math.cos(ind.facing) * 2, ey + Math.sin(ind.facing) * 2, r * 0.13, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Health bar if damaged
+        if (ind.health < ind.maxHealth && !isPlayer) {
+          const barW = r * 1.8;
+          const barH = 3;
+          ctx.fillStyle = 'rgba(0,0,0,0.55)';
+          ctx.fillRect(ind.x - barW / 2, ind.y - r - 8, barW, barH);
+          const pct = ind.health / ind.maxHealth;
+          ctx.fillStyle = pct > 0.5 ? '#4ade80' : pct > 0.25 ? '#f5b342' : '#ff6b6b';
+          ctx.fillRect(ind.x - barW / 2, ind.y - r - 8, barW * pct, barH);
+        }
+
+        // Species tag (subtle, only in player)
+        if (isPlayer && sp) {
+          ctx.fillStyle = 'rgba(255,255,255,0.8)';
+          ctx.font = 'bold 9px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(sp.name, ind.x, ind.y + r + 14);
+        }
+      }
+
+      function shadeColor(hex, amt) {
+        // Handles hsl() strings too
+        if (hex.startsWith('hsl')) {
+          // Parse hsl(h, s%, l%)
+          const m = hex.match(/hsl\(([\d.-]+),\s*([\d.]+)%,\s*([\d.]+)%\)/);
+          if (m) {
+            const h = parseFloat(m[1]);
+            const s = parseFloat(m[2]);
+            const l = Math.max(0, Math.min(100, parseFloat(m[3]) + amt));
+            return `hsl(${h}, ${s}%, ${l}%)`;
+          }
+          return hex;
+        }
+        const h = hex.replace('#', '');
+        let r = parseInt(h.slice(0, 2), 16);
+        let g = parseInt(h.slice(2, 4), 16);
+        let b = parseInt(h.slice(4, 6), 16);
+        r = Math.max(0, Math.min(255, r + amt));
+        g = Math.max(0, Math.min(255, g + amt));
+        b = Math.max(0, Math.min(255, b + amt));
+        return `rgb(${r},${g},${b})`;
+      }
+
+      // ============================================================
+      // UI
+      // ============================================================
+      function updateHUD() {
+        const stage = STAGES[state.stageIndex];
+        document.getElementById('hudStage').textContent = `${stage.num} · ${stage.name}`;
+        const pct = Math.min(100, (state.stageElapsed / stage.duration) * 100);
+        document.getElementById('hudStageFill').style.width = pct + '%';
+        document.getElementById('hudStageText').textContent =
+          `${Math.floor(state.stageElapsed)}s / ${stage.duration}s`;
+
+        if (state.player) {
+          const sp = state.species.find(s => s.id === state.playerSpeciesId);
+          document.getElementById('hudSpecies').textContent = sp ? sp.name : '—';
+          const hpPct = Math.max(0, (state.player.health / state.player.maxHealth) * 100);
+          document.getElementById('hudHealthFill').style.width = hpPct + '%';
+          document.getElementById('hudHealthFill').style.background =
+            hpPct > 50 ? '#4ade80' : hpPct > 25 ? '#f5b342' : '#ff6b6b';
+          document.getElementById('hudATP').textContent = state.totalFoodEaten.toFixed(0);
+          document.getElementById('hudMass').textContent = state.player.mass.toFixed(1);
+        }
+      }
+
+      function updateSpeciesBars() {
+        const root = document.getElementById('speciesBars');
+        root.innerHTML = '';
+        state.species.forEach(sp => {
+          const bar = document.createElement('div');
+          bar.className = 'species-bar';
+          bar.style.borderLeftColor = sp.color;
+          const count = sp.individuals.length;
+          bar.innerHTML = `
+            <span>${sp.name}</span>
+            <span style="font-weight:700;">${sp.extinct ? '†' : count}</span>
+          `;
+          if (sp.extinct) bar.style.opacity = '0.45';
+          root.appendChild(bar);
+        });
+      }
+
+      function updateCensus() {
+        const root = document.getElementById('census');
+        root.innerHTML = '';
+        state.species.forEach(sp => {
+          const row = document.createElement('div');
+          row.className = 'stat-row';
+          row.innerHTML = `
+            <span>${sp.name}</span>
+            <span style="${sp.extinct ? 'color:#b03a2e;' : ''}">
+              ${sp.extinct ? 'extinct' : sp.individuals.length + ' alive'}
+            </span>
+          `;
+          root.appendChild(row);
+        });
+
+        // Update your species genome
+        const playerSp = state.species.find(s => s.id === state.playerSpeciesId);
+        const genomeEl = document.getElementById('yourGenome');
+        if (playerSp) {
+          genomeEl.innerHTML = '';
+          playerSp.baseGenome.forEach((g, i) => {
+            const isNew = state.newPlayerGene === g && i === playerSp.baseGenome.length - 1;
+            const chip = document.createElement('span');
+            chip.className = 'gene-chip' + (isNew ? ' new' : '');
+            chip.textContent = g;
+            chip.title = GENES[g] ? `${GENES[g].name}: ${GENES[g].desc}` : '';
+            genomeEl.appendChild(chip);
+          });
+          // Clear new-gene flag after render
+          state.newPlayerGene = null;
+        } else {
+          genomeEl.innerHTML = '<span style="color:#8aa5ba;font-style:italic;font-size:0.78rem;">Species extinct</span>';
+        }
+
+        // Update stats panel
+        if (state.player) {
+          const stats = state.player.stats;
+          document.getElementById('statMembrane').textContent =
+            stats.uptake > 1.5 ? 'Enhanced' : stats.uptake > 1.2 ? 'Improved' : 'Standard';
+          document.getElementById('statUptake').textContent = stats.uptake.toFixed(2) + '×';
+          document.getElementById('statToxin').textContent = stats.toxin.toFixed(1);
+          document.getElementById('statWall').textContent = stats.wall.toFixed(1);
+          document.getElementById('statMotility').textContent = stats.motility.toFixed(2) + '×';
+          document.getElementById('statDivision').textContent = stats.division.toFixed(2) + '×';
+          const sp = state.species.find(s => s.id === state.playerSpeciesId);
+          document.getElementById('statSpecies').textContent = sp ? sp.name : '—';
+          document.getElementById('statStageReached').textContent = STAGES[state.stageIndex].num;
+        }
+      }
+
+      function showBanner(title, desc, duration = 2200) {
+        const banner = document.getElementById('stageBanner');
+        document.getElementById('stageTitle').textContent = title;
+        document.getElementById('stageDesc').textContent = desc;
+        banner.classList.add('show');
+        setTimeout(() => banner.classList.remove('show'), duration);
+      }
+
+      // ============================================================
+      // LOOP
+      // ============================================================
+      function loop(now) {
+        const dt = Math.min(0.05, (now - state.lastTime) / 1000 || 0);
+        state.lastTime = now;
+
+        update(dt);
+        draw();
+        updateHUD();
+        updateSpeciesBars();
+        updateCensus();
+
+        requestAnimationFrame(loop);
+      }
+
+      // ============================================================
+      // BOOT
+      // ============================================================
+      initWorld();
+      requestAnimationFrame((t) => {
+        state.lastTime = t;
+        requestAnimationFrame(loop);
+      });
+
+    })();
+  </script>
+</body>
+</html>
