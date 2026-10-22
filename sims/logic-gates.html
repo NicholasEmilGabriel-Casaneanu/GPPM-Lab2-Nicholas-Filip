@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Logic Gates & Circuits — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+    body { background: #f8fafc; color: #0b2b3f; min-height: 100vh; display: flex; flex-direction: column; line-height: 1.5; }
+
+    .sim-header {
+      background: linear-gradient(135deg, #0b2b3f 0%, #1b4a6b 100%);
+      color: white; padding: 1rem 0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .sim-header .container {
+      max-width: 1180px; margin: 0 auto; padding: 0 1.5rem;
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 1rem; flex-wrap: wrap;
+    }
+    .sim-header h1 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.3px; }
+    .sim-tag {
+      font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;
+      font-weight: 600; color: #bfe0f5; display: block; margin-bottom: 0.15rem;
+    }
+    .back-link {
+      color: white; background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 0.5rem 1.1rem; border-radius: 30px;
+      font-size: 0.85rem; font-weight: 500; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      transition: all 0.15s ease;
+    }
+    .back-link:hover { background: rgba(255,255,255,0.28); border-color: rgba(255,255,255,0.55); }
+
+    .sim-main {
+      flex: 1; max-width: 1180px; margin: 0 auto;
+      padding: 2rem 1.5rem 3rem; width: 100%;
+    }
+    .sim-intro { color: #4f6f86; font-size: 0.95rem; margin-bottom: 1.5rem; max-width: 85ch; }
+
+    .sim-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 1.25rem;
+      align-items: start;
+    }
+    @media (max-width: 1000px) {
+      .sim-layout { grid-template-columns: 1fr; }
+    }
+
+    .sim-panel {
+      background: white; border-radius: 18px; padding: 1.25rem;
+      border: 1px solid #e2edf5;
+      box-shadow: 0 8px 18px -6px rgba(0,20,30,0.08);
+      margin-bottom: 1rem;
+    }
+    .sim-panel h3 {
+      font-size: 0.85rem; font-weight: 600; color: #1b4a6b;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      margin-bottom: 0.75rem;
+    }
+
+    .sim-panel canvas {
+      display: block; max-width: 100%;
+      border-radius: 12px; background: #f4f9ff;
+      border: 1px solid #dbe8f2; touch-action: none; margin: 0 auto;
+    }
+
+    .sim-btn {
+      background: #2c7aa0; color: white; border: none;
+      padding: 0.5rem 1.1rem; border-radius: 30px;
+      font-weight: 500; font-size: 0.85rem; cursor: pointer;
+      transition: background 0.15s ease;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      font-family: inherit;
+    }
+    .sim-btn:hover { background: #1b5a7a; }
+    .sim-btn.secondary { background: #e4f0f9; color: #1b4a6b; }
+    .sim-btn.secondary:hover { background: #cfe4f4; }
+    .sim-btn.danger { background: #fde2e1; color: #b03a2e; }
+    .sim-btn.danger:hover { background: #f8c9c6; }
+    .sim-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .sim-btn-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem; }
+
+    .sim-toggles { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem; }
+    .sim-toggle {
+      background: white; border: 1px solid #cfdde9; color: #1b4a6b;
+      padding: 0.4rem 0.85rem; border-radius: 30px;
+      font-size: 0.78rem; font-weight: 500; cursor: pointer;
+      transition: all 0.12s ease; font-family: inherit;
+    }
+    .sim-toggle.active { background: #2c7aa0; border-color: #2c7aa0; color: white; }
+    .sim-toggle:hover:not(.active) { background: #eef4fa; }
+
+    .sim-control-group {
+      display: flex; flex-direction: column; gap: 0.35rem;
+      margin-bottom: 0.9rem;
+    }
+    .sim-control-group label {
+      font-size: 0.72rem; font-weight: 600; color: #1b4a6b;
+      text-transform: uppercase; letter-spacing: 0.03em;
+    }
+    .sim-control-group select {
+      padding: 0.4rem 0.7rem;
+      border-radius: 8px;
+      border: 1px solid #cfdde9;
+      font-size: 0.85rem;
+      font-family: inherit;
+      color: #0b2b3f;
+    }
+
+    .sim-readout {
+      padding: 0.85rem 1rem;
+      background: #f4f9ff; border-radius: 12px;
+      border: 1px solid #cde0ef;
+      font-size: 0.85rem; color: #1e5a7a; line-height: 1.6;
+    }
+    .sim-readout strong { color: #0b2b3f; }
+    .sim-readout .value {
+      font-variant-numeric: tabular-nums;
+      font-weight: 600; color: #2c7aa0;
+    }
+
+    .readout-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.4rem 1rem;
+    }
+    .readout-grid div {
+      display: flex; justify-content: space-between;
+      font-size: 0.82rem;
+    }
+    .readout-grid span:first-child { color: #4f6f86; }
+    .readout-grid span:last-child {
+      font-weight: 600; font-variant-numeric: tabular-nums; color: #0b2b3f;
+    }
+
+    /* Circuit editor: one row per gate */
+    .gate-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem;
+      border-radius: 8px;
+      background: #f8fbfe;
+      margin-bottom: 0.5rem;
+      flex-wrap: wrap;
+      border: 1px solid #e2edf5;
+    }
+    .gate-row.active {
+      border-color: #2c7aa0;
+      background: #f0f7fd;
+    }
+    .gate-row .gate-num {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #2c7aa0;
+      width: 20px;
+    }
+    .gate-row select {
+      padding: 0.35rem 0.5rem;
+      border-radius: 6px;
+      border: 1px solid #cfdde9;
+      font-size: 0.78rem;
+      font-family: inherit;
+      color: #0b2b3f;
+      min-width: 68px;
+    }
+    .gate-row .gt-label {
+      font-size: 0.72rem;
+      color: #4f6f86;
+    }
+    .gate-row .remove-btn {
+      margin-left: auto;
+      background: none;
+      border: none;
+      color: #b03a2e;
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+    }
+    .gate-row .remove-btn:hover {
+      background: #fde2e1;
+    }
+
+    /* Truth table */
+    .data-table-wrap {
+      max-height: 260px;
+      overflow-y: auto;
+      border-radius: 10px;
+      border: 1px solid #e2edf5;
+    }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+    .data-table th, .data-table td {
+      padding: 0.4rem 0.5rem;
+      text-align: center;
+      border-bottom: 1px solid #eaf1f7;
+      font-variant-numeric: tabular-nums;
+    }
+    .data-table th {
+      background: #e4f0f9;
+      color: #1b4a6b;
+      font-weight: 600;
+      position: sticky; top: 0;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr.current td {
+      background: #fff8e0;
+      font-weight: 700;
+    }
+    .data-table td.out1 { color: #1e7a3a; font-weight: 700; }
+    .data-table td.out0 { color: #8aa5ba; }
+
+    /* Log */
+    .log-entry {
+      font-size: 0.75rem;
+      padding: 0.4rem 0.6rem;
+      border-left: 3px solid #2c7aa0;
+      background: #f8fbfe;
+      border-radius: 4px;
+      margin-bottom: 0.35rem;
+      font-family: 'Courier New', monospace;
+    }
+
+    /* Export modal */
+    .export-overlay {
+      position: fixed; inset: 0;
+      background: rgba(8,30,45,0.7);
+      backdrop-filter: blur(3px);
+      display: none;
+      align-items: center; justify-content: center;
+      padding: 1.5rem;
+      z-index: 50;
+    }
+    .export-overlay.active { display: flex; }
+    .export-dialog {
+      background: white;
+      border-radius: 16px;
+      max-width: 640px; width: 100%;
+      max-height: 90vh;
+      display: flex; flex-direction: column;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4);
+      overflow: hidden;
+    }
+    .export-header {
+      padding: 1rem 1.25rem;
+      background: linear-gradient(135deg, #0b2b3f 0%, #1b4a6b 100%);
+      color: white;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .export-header h3 { font-size: 1rem; font-weight: 600; }
+    .export-close {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white; width: 32px; height: 32px;
+      border-radius: 50%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s ease;
+    }
+    .export-close:hover { background: rgba(255,255,255,0.3); transform: rotate(90deg); }
+    .export-body {
+      padding: 1.25rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .export-body textarea {
+      width: 100%;
+      min-height: 340px;
+      padding: 0.85rem;
+      border-radius: 10px;
+      border: 1px solid #cfdde9;
+      font-family: 'Courier New', monospace;
+      font-size: 0.78rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: #0b2b3f;
+      background: #f8fbfe;
+    }
+    .export-footer {
+      padding: 1rem 1.25rem;
+      border-top: 1px solid #eaf1f7;
+      display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: flex-end;
+    }
+    .copy-feedback {
+      color: #27ae60; font-size: 0.85rem; font-weight: 500;
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      align-self: center; margin-right: auto;
+      opacity: 0; transition: opacity 0.2s;
+    }
+    .copy-feedback.show { opacity: 1; }
+
+    .sim-footer {
+      text-align: center; font-size: 0.8rem; color: #6f8da3;
+      padding: 1.5rem; border-top: 1px solid #d9e6f0;
+    }
+    .sim-footer a { color: #2c7aa0; text-decoration: none; }
+    .sim-footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <header class="sim-header">
+    <div class="container">
+      <div>
+        <span class="sim-tag">Computer Science · Digital Logic</span>
+        <h1>Logic Gates &amp; Circuits — Full Lab</h1>
+      </div>
+      <a class="back-link" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <p class="sim-intro">
+      Toggle inputs A, B, and C, then chain up to three gates to build a logic circuit.
+      Each gate can read from an input, the previous gate's output, or a constant. The
+      truth table on the right is computed live for all eight input combinations, and the
+      circuit canvas redraws as you edit. Use the presets to jump to classic circuits like
+      a half adder or an XOR built from NAND gates. Export the whole circuit and its truth
+      table when you're done.
+    </p>
+
+    <div class="sim-layout">
+      <div>
+        <div class="sim-panel">
+          <h3><i class="fas fa-microchip"></i> Circuit</h3>
+          <canvas id="c" width="760" height="320"></canvas>
+
+          <!-- Input toggles -->
+          <div class="sim-btn-row" style="margin-top: 1rem;">
+            <button class="sim-btn" id="toggleA">
+              <i class="fas fa-toggle-off"></i> A = 0
+            </button>
+            <button class="sim-btn" id="toggleB">
+              <i class="fas fa-toggle-off"></i> B = 0
+            </button>
+            <button class="sim-btn secondary" id="toggleC">
+              <i class="fas fa-toggle-off"></i> C = 0
+            </button>
+          </div>
+
+          <div class="sim-readout" style="margin-top: 1rem;">
+            <div class="readout-grid">
+              <div><span>Inputs</span><span id="roInputs">A=0 B=0 C=0</span></div>
+              <div><span>Output</span><span id="roOutput" style="color:#2c7aa0;font-weight:700;">—</span></div>
+            </div>
+            <div style="margin-top:0.4rem;font-size:0.78rem;color:#4f6f86;" id="roExpression">
+              y = —
+            </div>
+          </div>
+        </div>
+
+        <div class="sim-panel">
+          <h3><i class="fas fa-list-ol"></i> Truth table</h3>
+          <div class="data-table-wrap">
+            <table class="data-table" id="truthTable">
+              <thead id="truthHead"></thead>
+              <tbody id="truthBody"></tbody>
+            </table>
+          </div>
+          <div style="font-size:0.75rem; color:#4f6f86; margin-top:0.5rem;">
+            Current input combination highlighted.
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <!-- Gate editor -->
+        <div class="sim-panel">
+          <h3><i class="fas fa-tools"></i> Gate editor</h3>
+          <div id="gateList"></div>
+          <div class="sim-btn-row">
+            <button class="sim-btn" id="addGate">
+              <i class="fas fa-plus"></i> Add gate
+            </button>
+            <button class="sim-btn danger" id="clearGates">
+              <i class="fas fa-trash"></i> Clear all
+            </button>
+          </div>
+        </div>
+
+        <!-- Presets -->
+        <div class="sim-panel">
+          <h3><i class="fas fa-magic"></i> Presets</h3>
+          <div class="sim-btn-row" style="margin-top: 0;">
+            <button class="sim-btn secondary" data-preset="and">AND</button>
+            <button class="sim-btn secondary" data-preset="xor">XOR</button>
+            <button class="sim-btn secondary" data-preset="halfadder">Half adder</button>
+            <button class="sim-btn secondary" data-preset="xor-nand">XOR from NAND</button>
+            <button class="sim-btn secondary" data-preset="majority">Majority (A·B+B·C+A·C)</button>
+          </div>
+        </div>
+
+        <!-- Observation log -->
+        <div class="sim-panel">
+          <h3><i class="fas fa-book"></i> Observation log</h3>
+          <div id="logList" style="max-height: 180px; overflow-y: auto;">
+            <div style="color:#8aa5ba;font-style:italic;font-size:0.8rem;">
+              No observations yet.
+            </div>
+          </div>
+          <button class="sim-btn secondary" id="logCurrent" style="width: 100%; justify-content: center; margin-top: 0.5rem;">
+            <i class="fas fa-plus-circle"></i> Log current state
+          </button>
+        </div>
+
+        <!-- Export -->
+        <div class="sim-panel">
+          <h3><i class="fas fa-file-export"></i> Export</h3>
+          <button class="sim-btn" id="openExport" style="width: 100%; justify-content: center;">
+            <i class="fas fa-download"></i> Save / copy experiment data
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="sim-footer">
+    All-Science Sims — Computer Science · <a href="../index.html">Back to catalog</a>
+  </footer>
+
+  <div class="export-overlay" id="exportOverlay">
+    <div class="export-dialog">
+      <div class="export-header">
+        <h3><i class="fas fa-file-alt"></i> Experiment data</h3>
+        <button class="export-close" id="exportClose" aria-label="Close">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="export-body">
+        <textarea id="exportText" spellcheck="false" readonly></textarea>
+      </div>
+      <div class="export-footer">
+        <span class="copy-feedback" id="copyFeedback">
+          <i class="fas fa-check-circle"></i> Copied!
+        </span>
+        <button class="sim-btn secondary" id="copyBtn">
+          <i class="fas fa-copy"></i> Copy to clipboard
+        </button>
+        <button class="sim-btn" id="downloadBtn">
+          <i class="fas fa-download"></i> Download .txt
+        </button>
+      </div>
+    </div>
+  </div>
+
+    <script>
+    (function () {
+      'use strict';
+
+      const W = 900, H = 380;
+      const canvas = document.getElementById('c');
+      ctx_ = null;
+      const ctx = canvas.getContext('2d');
+
+      // ---- Layout constants (all in px) ----
+      const LAYOUT = {
+        // Column x-centers: input column, then each gate column
+        inputColX: 70,
+        gateColX: [260, 500, 740],
+        // Vertical positions of the three input nodes
+        inputRowY: { A: 90, B: 180, C: 270 },
+        // Gate row is vertically centered
+        gateRowY: 180,
+        gateW: 76,
+        gateH: 62,
+        // Bus lane: below the gate row, where feedback wires run
+        busBaseY: 340,
+        busTrackGap: 12,
+        // Horizontal channel gap between columns (for straight-ish wires)
+        channelGap: 8,
+      };
+
+      // ---- State ----
+      const state = {
+        inputs: { A: false, B: false, C: false },
+        gates: [
+          { type: 'AND', in1: 'A', in2: 'B' },
+        ],
+        log: [],
+      };
+
+      const GATE_TYPES = ['AND', 'OR', 'XOR', 'NAND', 'NOR', 'XNOR', 'NOT', 'BUF'];
+
+      // ---- Gate evaluation (unchanged) ----
+      function evalGate(type, a, b) {
+        switch (type) {
+          case 'AND':  return a && b;
+          case 'OR':   return a || b;
+          case 'XOR':  return a !== b;
+          case 'NAND': return !(a && b);
+          case 'NOR':  return !(a || b);
+          case 'XNOR': return a === b;
+          case 'NOT':  return !a;
+          case 'BUF':  return a;
+        }
+        return false;
+      }
+
+      function readSource(source, gateIndex, gateOutputs) {
+        if (source === '1') return true;
+        if (source === '0') return false;
+        if (source === 'A' || source === 'B' || source === 'C') {
+          return state.inputs[source];
+        }
+        if (source.startsWith('g')) {
+          const idx = parseInt(source.slice(1), 10) - 1;
+          if (idx >= 0 && idx < gateOutputs.length) return gateOutputs[idx];
+        }
+        return false;
+      }
+
+      function evaluateCircuit(inputs) {
+        const savedInputs = state.inputs;
+        state.inputs = inputs;
+        const gateOutputs = [];
+        state.gates.forEach((g, i) => {
+          const a = readSource(g.in1, i, gateOutputs);
+          const b = (g.type === 'NOT' || g.type === 'BUF')
+            ? false
+            : readSource(g.in2, i, gateOutputs);
+          gateOutputs.push(evalGate(g.type, a, b));
+        });
+        state.inputs = savedInputs;
+        const out = gateOutputs.length > 0 ? gateOutputs[gateOutputs.length - 1] : false;
+        return { gateOutputs, out };
+      }
+
+      function buildExpression() {
+        function expr(gIdx) {
+          const g = state.gates[gIdx];
+          const label = (s) => {
+            if (s === '1') return '1';
+            if (s === '0') return '0';
+            if (s.startsWith('g')) return expr(parseInt(s.slice(1), 10) - 1);
+            return s;
+          };
+          const a = label(g.in1);
+          if (g.type === 'NOT') return `NOT(${a})`;
+          if (g.type === 'BUF') return `BUF(${a})`;
+          const b = label(g.in2);
+          const op = {
+            AND: '·', OR: '+', XOR: '⊕', NAND: '↑', NOR: '↓', XNOR: '⊙',
+          }[g.type] || g.type;
+          return `(${a} ${op} ${b})`;
+        }
+        if (state.gates.length === 0) return '—';
+        return expr(state.gates.length - 1);
+      }
+
+      // ============================================================
+      // Draw — LAYERED, so wires never overlap each other or the gates
+      // ============================================================
+      function draw() {
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = '#f4f9ff';
+        ctx.fillRect(0, 0, W, H);
+
+        const { gateOutputs, out } = evaluateCircuit(state.inputs);
+
+        if (state.gates.length === 0) {
+          ctx.fillStyle = '#8aa5ba';
+          ctx.font = 'italic 14px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('Add a gate to start building a circuit.', W / 2, H / 2);
+          return;
+        }
+
+        // ---------------------------------------------------------
+        // 1. Compute gate positions
+        // ---------------------------------------------------------
+        const gatePos = state.gates.map((g, i) => ({
+          x: LAYOUT.gateColX[i],
+          y: LAYOUT.gateRowY,
+          w: LAYOUT.gateW,
+          h: LAYOUT.gateH,
+        }));
+
+        // ---------------------------------------------------------
+        // 2. Precompute all wire segments FIRST, in a structured way
+        //    so we can route them without overlap.
+        //
+        //    Each gate has up to 2 input wires. Every wire gets:
+        //    - a "source type" (input / const / gate-output)
+        //    - a horizontal channel y (unique per source so wires don't
+        //      cross horizontally)
+        //    - a vertical channel x (unique per wire, so verticals
+        //      don't overlap)
+        // ---------------------------------------------------------
+
+        // Assign a unique horizontal lane for each input source, so
+        // A, B, C, and constants 1/0 always sit on distinct y-levels
+        // between columns.
+        const inputLaneY = {
+          A: LAYOUT.inputRowY.A,
+          B: LAYOUT.inputRowY.B,
+          C: LAYOUT.inputRowY.C,
+          '1': LAYOUT.inputRowY.A,   // const 1 sits at A's y (only its x differs)
+          '0': LAYOUT.inputRowY.C,
+        };
+
+        // Assign a unique bus lane below the gates for feedback wires
+        // (gate → later gate). Numbered sequentially, so track 1, 2, 3...
+        let busTrackCounter = 0;
+        const busLaneForWire = (fromGateIdx) => {
+          const y = LAYOUT.busBaseY + (busTrackCounter++) * LAYOUT.busTrackGap;
+          return y;
+        };
+
+        // Build wire list
+        const wires = [];
+        state.gates.forEach((g, gateIdx) => {
+          const pos = gatePos[gateIdx];
+          const inputYs = g.type === 'NOT' || g.type === 'BUF'
+            ? [pos.y]
+            : [pos.y - 14, pos.y + 14];
+          const inputsToRoute = g.type === 'NOT' || g.type === 'BUF'
+            ? [g.in1]
+            : [g.in1, g.in2];
+
+          inputsToRoute.forEach((src, portIdx) => {
+            const targetX = pos.x - pos.w / 2;
+            const targetY = inputYs[portIdx];
+            const active = readSource(src, gateIdx, gateOutputs);
+
+            if (src === '1' || src === '0') {
+              // Constant — short stub from a small box just left of the gate
+              wires.push({
+                kind: 'const',
+                src,
+                active,
+                x1: targetX - 42, y1: targetY,
+                x2: targetX, y2: targetY,
+              });
+            } else if (src === 'A' || src === 'B' || src === 'C') {
+              // Direct input wire: from input node right edge, along its
+              // own lane, then into the gate input port.
+              const sx = LAYOUT.inputColX + 22;
+              const sy = inputLaneY[src];
+              wires.push({
+                kind: 'input',
+                src, active,
+                x1: sx, y1: sy,
+                x2: targetX, y2: targetY,
+                // Routing: horizontal to mid-channel, vertical, horizontal
+                laneY: sy,
+                gatePortY: targetY,
+                // give each wire a unique vertical x so verticals don't
+                // stack on top of each other
+                vertX: (sx + targetX) / 2 + (portIdx === 0 ? -6 : 6),
+              });
+            } else if (src.startsWith('g')) {
+              const fromIdx = parseInt(src.slice(1), 10) - 1;
+              if (fromIdx < 0 || fromIdx >= gatePos.length) return;
+              const fromPos = gatePos[fromIdx];
+              const fx = fromPos.x + fromPos.w / 2;
+              const fy = fromPos.y;
+              wires.push({
+                kind: 'feedback',
+                fromIdx, active,
+                x1: fx, y1: fy,
+                x2: targetX, y2: targetY,
+                busY: busLaneForWire(fromIdx),
+                // unique vertical channels at both ends
+                outVertX: fx + 18,
+                inVertX: targetX - 18,
+              });
+            }
+          });
+        });
+
+        // ---------------------------------------------------------
+        // 3. Draw all WIRES (bottom layer) before gates / nodes
+        // ---------------------------------------------------------
+        wires.forEach(w => drawWire(w));
+
+        // ---------------------------------------------------------
+        // 4. Draw INPUT NODES on top of wire ends
+        // ---------------------------------------------------------
+        const inputLabels = ['A', 'B', 'C'];
+        inputLabels.forEach((name) => {
+          const y = LAYOUT.inputRowY[name];
+          const active = state.inputs[name];
+          drawInputNode(LAYOUT.inputColX, y, name, active);
+        });
+
+        // ---------------------------------------------------------
+        // 5. Draw GATE BODIES (opaque white fill) on top of wires
+        // ---------------------------------------------------------
+        state.gates.forEach((g, i) => {
+          const pos = gatePos[i];
+          drawGateBody(pos.x, pos.y, g.type, gateOutputs[i]);
+        });
+
+        // ---------------------------------------------------------
+        // 6. Draw output wire + node from the last gate
+        // ---------------------------------------------------------
+        const lastPos = gatePos[gatePos.length - 1];
+        const outX = lastPos.x + lastPos.w / 2;
+        const outY = lastPos.y;
+        const outEndX = outX + 70;
+
+        ctx.strokeStyle = out ? '#27ae60' : '#b0c8da';
+        ctx.lineWidth = out ? 3 : 2;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(outX, outY);
+        ctx.lineTo(outEndX, outY);
+        ctx.stroke();
+        ctx.lineCap = 'butt';
+
+        // Output node
+        const nodeX = outEndX + 18;
+        ctx.beginPath();
+        ctx.arc(nodeX, outY, 18, 0, Math.PI * 2);
+        ctx.fillStyle = out ? '#d4f5d4' : '#ffffff';
+        ctx.fill();
+        ctx.strokeStyle = out ? '#27ae60' : '#b0c8da';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.fillStyle = out ? '#1e7a3a' : '#3a5b70';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('OUT', nodeX, outY + 1);
+        // Value hint
+        ctx.fillStyle = '#4f6f86';
+        ctx.font = '10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(out ? '1' : '0', nodeX, outY + 26);
+      }
+
+      // -----------------------------------------------------------
+      // Wire drawing — each kind has its own routing
+      // -----------------------------------------------------------
+      function drawWire(w) {
+        const color = w.active ? '#27ae60' : '#b0c8da';
+        const width = w.active ? 3 : 2;
+
+        ctx.strokeStyle = color;
+        ctx.lineWidth = width;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        if (w.kind === 'const') {
+          // Small box at the source end + straight wire to gate port
+          ctx.beginPath();
+          ctx.moveTo(w.x1, w.y1);
+          ctx.lineTo(w.x2, w.y2);
+          ctx.stroke();
+
+          // Source label box (drawn behind the wire end, so draw it now)
+          ctx.fillStyle = w.active ? '#d4f5d4' : '#ffffff';
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 1.5;
+          const boxW = 18, boxH = 18;
+          ctx.beginPath();
+          ctx.roundRect(w.x1 - boxW, w.y1 - boxH / 2, boxW, boxH, 4);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = w.active ? '#1e7a3a' : '#4f6f86';
+          ctx.font = 'bold 11px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(w.src, w.x1 - boxW / 2, w.y1 + 1);
+        } else if (w.kind === 'input') {
+          // Path: from input node, horizontal along laneY, vertical at
+          // unique vertX, horizontal into gate port
+          ctx.beginPath();
+          ctx.moveTo(w.x1, w.y1);
+          ctx.lineTo(w.vertX, w.laneY);
+          ctx.lineTo(w.vertX, w.gatePortY);
+          ctx.lineTo(w.x2, w.gatePortY);
+          ctx.stroke();
+
+          // Small junction dot at the corner (helps show the wire is continuous)
+          drawJunction(w.vertX, w.laneY, color);
+          drawJunction(w.vertX, w.gatePortY, color);
+
+          // Arrowhead at the gate port
+          drawArrowhead(w.x2, w.gatePortY, 'right', color);
+        } else if (w.kind === 'feedback') {
+          // Route below the gates in its own bus lane:
+          //   out of source (down) → bus lane (right) → up into gate port
+          ctx.beginPath();
+          ctx.moveTo(w.x1, w.y1);
+          ctx.lineTo(w.outVertX, w.y1);
+          ctx.lineTo(w.outVertX, w.busY);
+          ctx.lineTo(w.inVertX, w.busY);
+          ctx.lineTo(w.inVertX, w.gatePortY);
+          ctx.lineTo(w.x2, w.gatePortY);
+          ctx.stroke();
+
+          drawJunction(w.outVertX, w.y1, color);
+          drawJunction(w.outVertX, w.busY, color);
+          drawJunction(w.inVertX, w.busY, color);
+          drawJunction(w.inVertX, w.gatePortY, color);
+
+          drawArrowhead(w.x2, w.gatePortY, 'right', color);
+        }
+
+        ctx.lineCap = 'butt';
+        ctx.lineJoin = 'miter';
+      }
+
+      function drawJunction(x, y, color) {
+        ctx.beginPath();
+        ctx.arc(x, y, 3, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+      }
+
+      function drawArrowhead(x, y, dir, color) {
+        const size = 5;
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        if (dir === 'right') {
+          ctx.moveTo(x, y);
+          ctx.lineTo(x - size, y - size * 0.7);
+          ctx.lineTo(x - size, y + size * 0.7);
+        } else {
+          ctx.moveTo(x, y);
+          ctx.lineTo(x + size, y - size * 0.7);
+          ctx.lineTo(x + size, y + size * 0.7);
+        }
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // -----------------------------------------------------------
+      // Input node
+      // -----------------------------------------------------------
+      function drawInputNode(cx, cy, name, active) {
+        // Circle body
+        ctx.beginPath();
+        ctx.arc(cx, cy, 20, 0, Math.PI * 2);
+        ctx.fillStyle = active ? '#d4f5d4' : '#ffffff';
+        ctx.fill();
+        ctx.strokeStyle = active ? '#27ae60' : '#7f9db3';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Label
+        ctx.fillStyle = active ? '#1e7a3a' : '#3a5b70';
+        ctx.font = 'bold 15px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(name, cx, cy + 1);
+
+        // Value badge below
+        ctx.fillStyle = active ? '#1e7a3a' : '#8aa5ba';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.fillText(active ? '1' : '0', cx, cy + 34);
+      }
+
+      // -----------------------------------------------------------
+      // Gate body — opaque fill so wires never show through
+      // -----------------------------------------------------------
+      function drawGateBody(x, y, type, active) {
+        const w = LAYOUT.gateW, h = LAYOUT.gateH;
+        const left = x - w / 2;
+        const right = x + w / 2;
+        const top = y - h / 2;
+        const bottom = y + h / 2;
+        const fill = active ? '#d4f5d4' : '#ffffff';
+        const stroke = active ? '#27ae60' : '#7f9db3';
+        const isInverted = type === 'NAND' || type === 'NOR' || type === 'XNOR' || type === 'NOT';
+        const isExclusive = type === 'XOR' || type === 'XNOR';
+        const isBuffer = type === 'BUF' || type === 'NOT';
+
+        ctx.fillStyle = fill;
+        ctx.strokeStyle = stroke;
+        ctx.lineWidth = 2;
+
+        // --- Body ---
+        if (isBuffer) {
+          ctx.beginPath();
+          ctx.moveTo(left, top);
+          ctx.lineTo(right - (isInverted ? 10 : 0), y);
+          ctx.lineTo(left, bottom);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        } else if (type === 'AND' || type === 'NAND') {
+          ctx.beginPath();
+          ctx.moveTo(left, top);
+          ctx.lineTo(x - 4, top);
+          ctx.quadraticCurveTo(right + 8, y, x - 4, bottom);
+          ctx.lineTo(left, bottom);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        } else {
+          // OR-family: curved left, pointed right
+          ctx.beginPath();
+          ctx.moveTo(left, top);
+          ctx.quadraticCurveTo(x - 12, y, left, bottom);
+          ctx.quadraticCurveTo(x + 18, bottom - 4, right - (isInverted ? 10 : 0), y);
+          ctx.quadraticCurveTo(x + 18, top + 4, left, top);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        }
+
+        // --- XOR extra curve ---
+        if (isExclusive) {
+          ctx.beginPath();
+          ctx.moveTo(left - 7, top + 4);
+          ctx.quadraticCurveTo(x - 20, y, left - 7, bottom - 4);
+          ctx.stroke();
+        }
+
+        // --- Inversion bubble ---
+        if (isInverted) {
+          ctx.beginPath();
+          ctx.arc(right + 4, y, 6, 0, Math.PI * 2);
+          ctx.fillStyle = fill;
+          ctx.fill();
+          ctx.strokeStyle = stroke;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+
+        // --- Gate label BELOW (so it never sits on a wire) ---
+        ctx.fillStyle = '#3a5b70';
+        ctx.font = '600 11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(type, x, y + h / 2 + 18);
+      }
+
+      // ============================================================
+      // UI (unchanged from before)
+      // ============================================================
+
+      function renderGateList() {
+        const root = document.getElementById('gateList');
+        root.innerHTML = '';
+
+        if (state.gates.length === 0) {
+          const empty = document.createElement('div');
+          empty.style.color = '#8aa5ba';
+          empty.style.fontStyle = 'italic';
+          empty.style.fontSize = '0.82rem';
+          empty.style.padding = '0.5rem 0';
+          empty.textContent = 'No gates — add one below.';
+          root.appendChild(empty);
+        }
+
+        function sourceOptions(gateIndex) {
+          const opts = [
+            { value: 'A', label: 'A' },
+            { value: 'B', label: 'B' },
+            { value: 'C', label: 'C' },
+            { value: '1', label: '1' },
+            { value: '0', label: '0' },
+          ];
+          for (let i = 0; i < gateIndex; i++) {
+            opts.push({ value: 'g' + (i + 1), label: 'G' + (i + 1) });
+          }
+          return opts;
+        }
+
+        state.gates.forEach((g, i) => {
+          const row = document.createElement('div');
+          row.className = 'gate-row';
+
+          const num = document.createElement('span');
+          num.className = 'gate-num';
+          num.textContent = 'G' + (i + 1);
+          row.appendChild(num);
+
+          const typeSel = document.createElement('select');
+          GATE_TYPES.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t;
+            opt.textContent = t;
+            if (t === g.type) opt.selected = true;
+            typeSel.appendChild(opt);
+          });
+          typeSel.addEventListener('change', () => {
+            g.type = typeSel.value;
+            renderGateList();
+            render();
+          });
+          row.appendChild(typeSel);
+
+          const lbl1 = document.createElement('span');
+          lbl1.className = 'gt-label';
+          lbl1.textContent = 'in1';
+          row.appendChild(lbl1);
+          const sel1 = document.createElement('select');
+          sourceOptions(i).forEach(o => {
+            const opt = document.createElement('option');
+            opt.value = o.value;
+            opt.textContent = o.label;
+            if (o.value === g.in1) opt.selected = true;
+            sel1.appendChild(opt);
+          });
+          sel1.addEventListener('change', () => {
+            g.in1 = sel1.value;
+            render();
+          });
+          row.appendChild(sel1);
+
+          if (g.type !== 'NOT' && g.type !== 'BUF') {
+            const lbl2 = document.createElement('span');
+            lbl2.className = 'gt-label';
+            lbl2.textContent = 'in2';
+            row.appendChild(lbl2);
+            const sel2 = document.createElement('select');
+            sourceOptions(i).forEach(o => {
+              const opt = document.createElement('option');
+              opt.value = o.value;
+              opt.textContent = o.label;
+              if (o.value === g.in2) opt.selected = true;
+              sel2.appendChild(opt);
+            });
+            sel2.addEventListener('change', () => {
+              g.in2 = sel2.value;
+              render();
+            });
+            row.appendChild(sel2);
+          }
+
+          const rm = document.createElement('button');
+          rm.className = 'remove-btn';
+          rm.innerHTML = '<i class="fas fa-times"></i>';
+          rm.title = 'Remove gate';
+          rm.addEventListener('click', () => {
+            state.gates.splice(i, 1);
+            fixDanglingSources();
+            renderGateList();
+            render();
+          });
+          row.appendChild(rm);
+
+          root.appendChild(row);
+        });
+      }
+
+      function fixDanglingSources() {
+        state.gates.forEach(g => {
+          ['in1', 'in2'].forEach(k => {
+            if (g[k] && g[k].startsWith('g')) {
+              const idx = parseInt(g[k].slice(1), 10);
+              if (idx > state.gates.length) {
+                g[k] = 'A';
+              }
+            }
+          });
+        });
+      }
+
+      function updateToggleButtons() {
+        const a = state.inputs.A, b = state.inputs.B, c = state.inputs.C;
+        const setBtn = (id, name, val) => {
+          const btn = document.getElementById(id);
+          btn.innerHTML = `<i class="fas fa-toggle-${val ? 'on' : 'off'}"></i> ${name} = ${val ? 1 : 0}`;
+          btn.style.background = val ? '#27ae60' : '';
+          btn.style.borderColor = val ? '#27ae60' : '';
+          btn.style.color = val ? 'white' : '';
+        };
+        setBtn('toggleA', 'A', a);
+        setBtn('toggleB', 'B', b);
+        setBtn('toggleC', 'C', c);
+      }
+
+      function render() {
+        draw();
+        renderTruthTable();
+        renderReadout();
+        updateToggleButtons();
+      }
+
+      function renderReadout() {
+        const { out } = evaluateCircuit(state.inputs);
+        document.getElementById('roInputs').textContent =
+          `A=${state.inputs.A ? 1 : 0} B=${state.inputs.B ? 1 : 0} C=${state.inputs.C ? 1 : 0}`;
+        document.getElementById('roOutput').textContent = out ? '1' : '0';
+        document.getElementById('roOutput').style.color = out ? '#1e7a3a' : '#8aa5ba';
+        document.getElementById('roExpression').textContent = 'y = ' + buildExpression();
+      }
+
+      function renderTruthTable() {
+        const head = document.getElementById('truthHead');
+        const body = document.getElementById('truthBody');
+
+        const usedInputs = new Set();
+        state.gates.forEach(g => {
+          ['in1', 'in2'].forEach(k => {
+            const s = g[k];
+            if (s === 'A' || s === 'B' || s === 'C') usedInputs.add(s);
+          });
+        });
+        const showA = usedInputs.size === 0 || usedInputs.has('A');
+        const showB = usedInputs.size === 0 || usedInputs.has('B');
+        const showC = usedInputs.size === 0 || usedInputs.has('C');
+
+        let headHTML = '<tr>';
+        if (showA) headHTML += '<th>A</th>';
+        if (showB) headHTML += '<th>B</th>';
+        if (showC) headHTML += '<th>C</th>';
+        headHTML += '<th>y</th></tr>';
+        head.innerHTML = headHTML;
+
+        body.innerHTML = '';
+        const combos = [];
+        const aVals = showA ? [false, true] : [false];
+        const bVals = showB ? [false, true] : [false];
+        const cVals = showC ? [false, true] : [false];
+        aVals.forEach(a => {
+          bVals.forEach(b => {
+            cVals.forEach(c => {
+              combos.push({ A: a, B: b, C: c });
+            });
+          });
+        });
+
+        combos.forEach(inputs => {
+          const { out } = evaluateCircuit(inputs);
+          const isCurrent =
+            (!showA || inputs.A === state.inputs.A) &&
+            (!showB || inputs.B === state.inputs.B) &&
+            (!showC || inputs.C === state.inputs.C);
+
+          const tr = document.createElement('tr');
+          if (isCurrent) tr.classList.add('current');
+          let html = '';
+          if (showA) html += `<td>${inputs.A ? 1 : 0}</td>`;
+          if (showB) html += `<td>${inputs.B ? 1 : 0}</td>`;
+          if (showC) html += `<td>${inputs.C ? 1 : 0}</td>`;
+          html += `<td class="${out ? 'out1' : 'out0'}">${out ? 1 : 0}</td>`;
+          tr.innerHTML = html;
+          body.appendChild(tr);
+        });
+      }
+
+      function toggleInput(name) {
+        state.inputs[name] = !state.inputs[name];
+        render();
+      }
+
+      document.getElementById('toggleA').addEventListener('click', () => toggleInput('A'));
+      document.getElementById('toggleB').addEventListener('click', () => toggleInput('B'));
+      document.getElementById('toggleC').addEventListener('click', () => toggleInput('C'));
+
+      document.getElementById('addGate').addEventListener('click', () => {
+        if (state.gates.length >= 3) {
+          alert('Maximum 3 gates in this circuit.');
+          return;
+        }
+        const idx = state.gates.length;
+        const defaultIn = idx === 0 ? 'A' : 'g' + idx;
+        state.gates.push({ type: 'AND', in1: defaultIn, in2: 'B' });
+        renderGateList();
+        render();
+      });
+
+      document.getElementById('clearGates').addEventListener('click', () => {
+        state.gates = [];
+        renderGateList();
+        render();
+      });
+
+      const PRESETS = {
+        and: { gates: [{ type: 'AND', in1: 'A', in2: 'B' }], inputs: { A: false, B: false, C: false } },
+        xor: { gates: [{ type: 'XOR', in1: 'A', in2: 'B' }], inputs: { A: false, B: false, C: false } },
+        halfadder: { gates: [{ type: 'XOR', in1: 'A', in2: 'B' }], inputs: { A: false, B: false, C: false } },
+        'xor-nand': {
+          gates: [
+            { type: 'NAND', in1: 'A', in2: 'B' },
+            { type: 'NAND', in1: 'A', in2: 'g1' },
+            { type: 'NAND', in1: 'B', in2: 'g1' },
+          ],
+          inputs: { A: false, B: false, C: false },
+        },
+        majority: {
+          gates: [
+            { type: 'AND', in1: 'A', in2: 'B' },
+            { type: 'AND', in1: 'B', in2: 'C' },
+            { type: 'OR', in1: 'g1', in2: 'g2' },
+          ],
+          inputs: { A: false, B: false, C: false },
+        },
+      };
+
+      document.querySelectorAll('[data-preset]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const p = PRESETS[btn.dataset.preset];
+          if (!p) return;
+          state.gates = p.gates.map(g => ({ ...g }));
+          state.inputs = { ...p.inputs };
+          renderGateList();
+          render();
+        });
+      });
+
+      function logCurrentState() {
+        const { gateOutputs, out } = evaluateCircuit(state.inputs);
+        const entry = {
+          inputs: { ...state.inputs },
+          gateOutputs: [...gateOutputs],
+          out,
+          expression: buildExpression(),
+          time: new Date().toLocaleTimeString(),
+        };
+        state.log.push(entry);
+        renderLog();
+      }
+
+      function renderLog() {
+        const root = document.getElementById('logList');
+        if (state.log.length === 0) {
+          root.innerHTML = '<div style="color:#8aa5ba;font-style:italic;font-size:0.8rem;">No observations yet.</div>';
+          return;
+        }
+        root.innerHTML = '';
+        state.log.forEach((e, i) => {
+          const div = document.createElement('div');
+          div.className = 'log-entry';
+          const inputsStr = `A=${e.inputs.A ? 1 : 0} B=${e.inputs.B ? 1 : 0} C=${e.inputs.C ? 1 : 0}`;
+          const outStr = e.out ? '1' : '0';
+          div.textContent = `#${i + 1} [${e.time}] ${inputsStr} → y=${outStr}  ${e.expression}`;
+          root.appendChild(div);
+        });
+        root.scrollTop = root.scrollHeight;
+      }
+
+      document.getElementById('logCurrent').addEventListener('click', logCurrentState);
+
+      // ---- Export ----
+      const exportOverlay = document.getElementById('exportOverlay');
+      const exportText = document.getElementById('exportText');
+
+      function buildReport() {
+        const lines = [];
+        const now = new Date();
+        lines.push('Logic Gates & Circuits — Experiment Report');
+        lines.push('='.repeat(55));
+        lines.push('Generated: ' + now.toLocaleString());
+        lines.push('');
+        lines.push('CIRCUIT');
+        lines.push('-'.repeat(55));
+        if (state.gates.length === 0) {
+          lines.push('  (no gates)');
+        } else {
+          state.gates.forEach((g, i) => {
+            const inputs = g.type === 'NOT' || g.type === 'BUF'
+              ? `in = ${g.in1}`
+              : `in1 = ${g.in1}, in2 = ${g.in2}`;
+            lines.push(`  G${i + 1}: ${g.type}  (${inputs})`);
+          });
+        }
+        lines.push('');
+        lines.push('  Final expression:  y = ' + buildExpression());
+        lines.push('');
+
+        lines.push('CURRENT STATE');
+        lines.push('-'.repeat(55));
+        const { gateOutputs, out } = evaluateCircuit(state.inputs);
+        lines.push(`  A = ${state.inputs.A ? 1 : 0}`);
+        lines.push(`  B = ${state.inputs.B ? 1 : 0}`);
+        lines.push(`  C = ${state.inputs.C ? 1 : 0}`);
+        if (gateOutputs.length > 0) {
+          lines.push('  Gate outputs:');
+          gateOutputs.forEach((v, i) => {
+            lines.push(`    G${i + 1} = ${v ? 1 : 0}`);
+          });
+        }
+        lines.push(`  Output y = ${out ? 1 : 0}`);
+        lines.push('');
+
+        lines.push('TRUTH TABLE');
+        lines.push('-'.repeat(55));
+        const usedInputs = new Set();
+        state.gates.forEach(g => {
+          ['in1', 'in2'].forEach(k => {
+            const s = g[k];
+            if (s === 'A' || s === 'B' || s === 'C') usedInputs.add(s);
+          });
+        });
+        const showA = usedInputs.size === 0 || usedInputs.has('A');
+        const showB = usedInputs.size === 0 || usedInputs.has('B');
+        const showC = usedInputs.size === 0 || usedInputs.has('C');
+        let header = '  ';
+        if (showA) header += 'A ';
+        if (showB) header += 'B ';
+        if (showC) header += 'C ';
+        header += '| y';
+        lines.push(header);
+        lines.push('  ' + '-'.repeat(header.length - 2));
+
+        const aVals = showA ? [false, true] : [false];
+        const bVals = showB ? [false, true] : [false];
+        const cVals = showC ? [false, true] : [false];
+        aVals.forEach(a => {
+          bVals.forEach(b => {
+            cVals.forEach(c => {
+              const result = evaluateCircuit({ A: a, B: b, C: c });
+              let row = '  ';
+              if (showA) row += (a ? '1 ' : '0 ');
+              if (showB) row += (b ? '1 ' : '0 ');
+              if (showC) row += (c ? '1 ' : '0 ');
+              row += '| ' + (result.out ? '1' : '0');
+              lines.push(row);
+            });
+          });
+        });
+        lines.push('');
+
+        lines.push('OBSERVATION LOG (' + state.log.length + ' entries)');
+        lines.push('-'.repeat(55));
+        if (state.log.length === 0) {
+          lines.push('  (no observations logged)');
+        } else {
+          state.log.forEach((e, i) => {
+            const inputsStr = `A=${e.inputs.A ? 1 : 0} B=${e.inputs.B ? 1 : 0} C=${e.inputs.C ? 1 : 0}`;
+            const outStr = e.out ? '1' : '0';
+            lines.push(`  #${i + 1} [${e.time}] ${inputsStr}  →  y=${outStr}`);
+          });
+        }
+        lines.push('');
+        lines.push('END OF REPORT');
+        return lines.join('\n');
+      }
+
+      document.getElementById('openExport').addEventListener('click', () => {
+        exportText.value = buildReport();
+        exportOverlay.classList.add('active');
+        document.getElementById('copyFeedback').classList.remove('show');
+      });
+
+      document.getElementById('exportClose').addEventListener('click', () => {
+        exportOverlay.classList.remove('active');
+      });
+      exportOverlay.addEventListener('click', (e) => {
+        if (e.target === exportOverlay) exportOverlay.classList.remove('active');
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && exportOverlay.classList.contains('active')) {
+          exportOverlay.classList.remove('active');
+        }
+      });
+
+      document.getElementById('copyBtn').addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(exportText.value);
+        } catch (err) {
+          exportText.select();
+          document.execCommand('copy');
+        }
+        const fb = document.getElementById('copyFeedback');
+        fb.classList.add('show');
+        setTimeout(() => fb.classList.remove('show'), 1800);
+      });
+
+      document.getElementById('downloadBtn').addEventListener('click', () => {
+        const blob = new Blob([exportText.value], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+        a.href = url;
+        a.download = `logic-gates-report-${ts}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      });
+
+      renderGateList();
+      render();
+      renderLog();
+    })();
+  </script>
+</body>
+</html>
