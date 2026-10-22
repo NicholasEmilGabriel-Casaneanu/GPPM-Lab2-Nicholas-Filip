@@ -8,10 +8,6 @@
   // ---------- Constants ----------
   const STORAGE_KEY = 'all-science-sims:starred';
 
-  // ---------- DOM References ----------
-  const loginBtn = document.getElementById('loginBtn');
-  const stars = document.querySelectorAll('.star-icon');
-
   // ---------- Star / Favorites Logic ----------
 
   function loadStarred() {
@@ -48,6 +44,7 @@
 
   function initStars() {
     const starred = loadStarred();
+    const stars = document.querySelectorAll('.star-icon');
 
     stars.forEach((star) => {
       const card = star.closest('.sim-card');
@@ -58,47 +55,44 @@
 
       star.addEventListener('click', (e) => {
         e.stopPropagation();
+        e.preventDefault();
         const isNowStarred = !starred.has(simId);
-
         if (isNowStarred) starred.add(simId);
         else starred.delete(simId);
-
         setStarVisual(star, isNowStarred);
         saveStarred(starred);
       });
     });
   }
 
-  // ---------- Open Simulation Logic ----------
+  // ---------- Open Simulation (event delegation) ----------
+  // Only intercept `.open-link` elements that are SPANS (stubs).
+  // Anchors with a real href navigate normally.
 
-  /**
-   * Only wire up the alert for <span> open-links (i.e. sims that
-   * don't have a real page yet). <a> open-links navigate normally.
-   */
   function initOpenLinks() {
-    const stubLinks = document.querySelectorAll('span.open-link');
-
-    stubLinks.forEach((link) => {
-      link.addEventListener('click', (e) => {
-        e.preventDefault();
-        const card = link.closest('.sim-card');
-        const simName = card ? card.querySelector('h3')?.innerText : 'this simulation';
-        const simId = card ? card.dataset.simId : 'unknown';
-
-        alert(
-          `🚧 "${simName}" is not wired up yet.\n\n` +
-          `Sim ID: ${simId}\n\n` +
-          `This is a starting point — you can add the actual sim page later!`
-        );
-      });
+    document.addEventListener('click', (e) => {
+      const link = e.target.closest('.open-link');
+      if (!link) return;
+      // If it's an <a> with an href → let the browser navigate
+      if (link.tagName === 'A' && link.getAttribute('href')) return;
+      // If it has no href → stub card, show alert
+      e.preventDefault();
+      const card = link.closest('.sim-card');
+      const simName = card ? (card.querySelector('h3')?.innerText || 'this simulation') : 'this simulation';
+      const simId = card ? card.dataset.simId : 'unknown';
+      alert(
+        `🚧 "${simName}" is not wired up yet.\n\n` +
+        `Sim ID: ${simId}\n\n` +
+        `This card still points to a placeholder. The real sim page hasn't been added yet.`
+      );
     });
   }
 
   // ---------- Login Button ----------
 
   function initLogin() {
+    const loginBtn = document.getElementById('loginBtn');
     if (!loginBtn) return;
-
     loginBtn.addEventListener('click', () => {
       alert(
         '🔐 Login / history feature coming soon.\n\n' +
@@ -144,10 +138,10 @@
   // ---------- Init ----------
 
   function init() {
-    initStars();
-    initOpenLinks();
-    initLogin();
-    initSubjectFilter();
+    try { initStars(); } catch (e) { console.error('initStars failed:', e); }
+    try { initOpenLinks(); } catch (e) { console.error('initOpenLinks failed:', e); }
+    try { initLogin(); } catch (e) { console.error('initLogin failed:', e); }
+    try { initSubjectFilter(); } catch (e) { console.error('initSubjectFilter failed:', e); }
   }
 
   if (document.readyState === 'loading') {

@@ -1,0 +1,1893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Engineering Lab — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="sim-theme.css">
+  <style>
+    .lab-wrap {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+    @media (min-width: 980px) {
+      .lab-wrap {
+        grid-template-columns: 1fr 300px;
+        grid-template-areas:
+          "tabs   tabs"
+          "stage  tools"
+          "stage  facts";
+      }
+    }
+
+    /* Discipline tabs */
+    .disc-bar {
+      grid-area: tabs;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      padding: 0.85rem 1rem;
+      background: white;
+      border-radius: 16px;
+      border: 1px solid #e2edf5;
+      box-shadow: 0 4px 12px -8px rgba(0, 20, 30, 0.08);
+    }
+    .disc-btn {
+      flex: 1 1 auto;
+      min-width: 100px;
+      padding: 0.6rem 0.9rem;
+      border-radius: 12px;
+      border: 1.5px solid #cfdde9;
+      background: #f8fafc;
+      color: #1b4a6b;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.3rem;
+      transition: all 0.15s ease;
+    }
+    .disc-btn:hover {
+      border-color: #8db3d0;
+      background: #eef4fa;
+      transform: translateY(-1px);
+    }
+    .disc-btn.is-active {
+      border-color: #2c7aa0;
+      background: #2c7aa0;
+      color: white;
+      box-shadow: 0 6px 16px -8px rgba(44, 122, 160, 0.6);
+    }
+    .disc-btn i { font-size: 1.1rem; }
+
+    /* Stage */
+    .stage-wrap {
+      grid-area: stage;
+      position: relative;
+      background: #0b2b3f;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 20px 40px -20px rgba(16, 70, 100, 0.5);
+      cursor: crosshair;
+      user-select: none;
+      min-height: 460px;
+    }
+    .stage-wrap canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      touch-action: none;
+    }
+
+    /* HUD */
+    .stage-hud {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      pointer-events: none;
+    }
+    .stage-hud .pill {
+      background: rgba(11, 43, 63, 0.82);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      color: white;
+      padding: 0.35rem 0.7rem;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .stage-hud .pill i { margin-right: 0.3rem; color: #f5b342; }
+
+    /* Bottom hint */
+    .stage-hint {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      pointer-events: none;
+    }
+    .stage-hint .hint {
+      background: rgba(11, 43, 63, 0.82);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      color: white;
+      padding: 0.32rem 0.65rem;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .stage-hint .hint kbd {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 0 5px;
+      border-radius: 3px;
+      font-size: 0.65rem;
+      font-family: inherit;
+    }
+
+    /* Cursor crosshair readout */
+    .stage-cursor {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: rgba(11, 43, 63, 0.85);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      color: white;
+      padding: 0.35rem 0.7rem;
+      border-radius: 8px;
+      font-size: 0.72rem;
+      font-variant-numeric: tabular-nums;
+      pointer-events: none;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+    .stage-wrap:hover .stage-cursor { opacity: 1; }
+
+    /* Tool panel */
+    .tool-panel {
+      grid-area: tools;
+      background: white;
+      border-radius: 16px;
+      border: 1px solid #e2edf5;
+      padding: 1rem 1.1rem;
+      box-shadow: 0 4px 12px -8px rgba(0, 20, 30, 0.08);
+    }
+    .tool-panel h4 {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #6f8da3;
+      margin-bottom: 0.7rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .tool-panel h4 i { color: #2c7aa0; }
+    .tool-panel h4:not(:first-child) { margin-top: 1rem; }
+
+    .tool-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.45rem;
+    }
+    .tool-btn {
+      padding: 0.6rem 0.5rem;
+      border-radius: 10px;
+      border: 1.5px solid #cfdde9;
+      background: #f8fafc;
+      color: #1b4a6b;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+      transition: all 0.15s ease;
+      text-align: center;
+      line-height: 1.2;
+    }
+    .tool-btn:hover { border-color: #8db3d0; background: #eef4fa; }
+    .tool-btn.is-active {
+      border-color: #2c7aa0;
+      background: #2c7aa0;
+      color: white;
+    }
+    .tool-btn i { font-size: 1rem; }
+
+    .material-row {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+    .mat-btn {
+      flex: 1 1 0;
+      min-width: 60px;
+      padding: 0.5rem 0.3rem;
+      border-radius: 8px;
+      border: 1.5px solid #cfdde9;
+      background: #f8fafc;
+      color: #1b4a6b;
+      font-size: 0.7rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      text-align: center;
+      transition: all 0.15s ease;
+    }
+    .mat-btn:hover { border-color: #8db3d0; }
+    .mat-btn.is-active {
+      border-color: #2c7aa0;
+      background: #2c7aa0;
+      color: white;
+    }
+
+    /* Slider (only where genuinely needed) */
+    .slider-row {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      margin-bottom: 0.7rem;
+    }
+    .slider-row label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #1b4a6b;
+      display: flex;
+      justify-content: space-between;
+    }
+    .slider-row .value-chip {
+      background: #e4f0f9;
+      color: #1b4a6b;
+      padding: 0.15rem 0.55rem;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+    }
+    .slider-row input[type="range"] {
+      width: 100%;
+      accent-color: #2c7aa0;
+      cursor: pointer;
+    }
+
+    /* Facts panel */
+    .fact-panel {
+      grid-area: facts;
+      background: white;
+      border-radius: 16px;
+      border: 1px solid #e2edf5;
+      padding: 1rem 1.1rem;
+      box-shadow: 0 4px 12px -8px rgba(0, 20, 30, 0.08);
+    }
+    .fact-panel h4 {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #6f8da3;
+      margin-bottom: 0.7rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .fact-panel h4 i { color: #2c7aa0; }
+
+    .facts {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.4rem;
+    }
+    .fact {
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 0.5rem 0.6rem;
+      border: 1px solid #eef4fa;
+    }
+    .fact .fl {
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #6f8da3;
+      font-weight: 600;
+    }
+    .fact .fv {
+      font-size: 0.86rem;
+      font-weight: 700;
+      color: #0b2b3f;
+      font-variant-numeric: tabular-nums;
+      margin-top: 1px;
+    }
+    .fact .fv.good { color: #5a8a4a; }
+    .fact .fv.warn { color: #c76b3b; }
+    .fact .fv.bad { color: #c0392b; }
+
+    /* Info banner */
+    .info-banner {
+      background: linear-gradient(135deg, #f0f7fe, #e4f0f9);
+      border-left: 4px solid #2c7aa0;
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      color: #1b4a6b;
+      line-height: 1.5;
+      margin-bottom: 0.75rem;
+    }
+    .info-banner strong { color: #0b2b3f; }
+
+    @media (max-width: 600px) {
+      .stage-hint { display: none; }
+      .disc-btn { min-width: 70px; font-size: 0.72rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Engineering Lab</h1>
+      <div class="sim-meta">Engineering · A Hands-On Physics Sandbox</div>
+    </div>
+
+    <div class="sim-description">
+      Five interactive labs in one. Switch between trusses, beams, circuits, gears, and projectiles. Every number updates live, everything is directly manipulable, and every physics effect is real. No goals, no scores — just explore.
+    </div>
+
+    <div class="lab-wrap">
+      <!-- Discipline switcher -->
+      <div class="disc-bar" id="discBar">
+        <button class="disc-btn is-active" data-disc="truss">
+          <i class="fas fa-project-diagram"></i>
+          <span>Truss</span>
+        </button>
+        <button class="disc-btn" data-disc="beam">
+          <i class="fas fa-minus"></i>
+          <span>Beam</span>
+        </button>
+        <button class="disc-btn" data-disc="circuit">
+          <i class="fas fa-bolt"></i>
+          <span>Circuit</span>
+        </button>
+        <button class="disc-btn" data-disc="gears">
+          <i class="fas fa-cog"></i>
+          <span>Gears</span>
+        </button>
+        <button class="disc-btn" data-disc="projectile">
+          <i class="fas fa-rocket"></i>
+          <span>Projectile</span>
+        </button>
+      </div>
+
+      <!-- Stage -->
+      <div class="stage-wrap" id="stage">
+        <canvas id="canvas"></canvas>
+        <div class="stage-hud">
+          <div class="pill" id="modePill"><i class="fas fa-project-diagram"></i> Truss</div>
+        </div>
+        <div class="stage-cursor" id="cursorReadout">—</div>
+        <div class="stage-hint" id="stageHint"></div>
+      </div>
+
+      <!-- Tool panel -->
+      <div class="tool-panel" id="toolPanel"></div>
+
+      <!-- Facts panel -->
+      <div class="fact-panel">
+        <h4><i class="fas fa-info-circle"></i> Live measurements</h4>
+        <div class="info-banner" id="infoBanner"></div>
+        <div class="facts" id="facts"></div>
+      </div>
+    </div>
+
+    <div class="insight-panel">
+      <h4><i class="fas fa-lightbulb"></i> What you can learn here</h4>
+      <p>
+        Each tab is a real simulation. Try things, break things, watch numbers change. In <strong>Truss</strong>, add joints and beams and watch forces flow to the supports — members turn red when they're overstressed. In <strong>Beam</strong>, drag the load to see how shear and moment change shape. In <strong>Circuit</strong>, click to place components and watch current flow through the wires. In <strong>Gears</strong>, spin the driver and see how tooth counts trade speed for torque. In <strong>Projectile</strong>, drag the launch vector and trace the arc.
+      </p>
+      <p>
+        Nothing is graded. Nothing can fail permanently. Every change is one undo away (right-click or press <kbd>R</kbd> to reset the current tab).
+      </p>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ============================================================
+      //  DOM
+      // ============================================================
+      const stage = document.getElementById('stage');
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const discBar = document.getElementById('discBar');
+      const modePill = document.getElementById('modePill');
+      const cursorReadout = document.getElementById('cursorReadout');
+      const stageHint = document.getElementById('stageHint');
+      const toolPanel = document.getElementById('toolPanel');
+      const factsEl = document.getElementById('facts');
+      const infoBanner = document.getElementById('infoBanner');
+
+      // ============================================================
+      //  Canvas sizing
+      // ============================================================
+      canvas.style.aspectRatio = '4 / 3';
+      canvas.style.width = '100%';
+      canvas.style.height = 'auto';
+      let W = 800, H = 600;
+
+      function resize() {
+        const rect = canvas.getBoundingClientRect();
+        const dpr = Math.min(2, window.devicePixelRatio || 1);
+        W = Math.round(rect.width * dpr);
+        H = Math.round(rect.height * dpr);
+        if (canvas.width !== W || canvas.height !== H) {
+          canvas.width = W;
+          canvas.height = H;
+        }
+      }
+
+      // ============================================================
+      //  Global state
+      // ============================================================
+      const state = {
+        disc: 'truss', // truss | beam | circuit | gears | projectile
+        mouse: { x: 0, y: 0, in: false },
+      };
+
+      // ============================================================
+      //  TRUSS LAB
+      // ============================================================
+      const truss = {
+        // Grid in world coords, mapped 1:1 to canvas pixels
+        nodes: [],
+        members: [],
+        supports: [], // indices into nodes
+        load: { x: 0, y: 0, weight: 10 },
+        material: 'steel', // steel | wood | cable
+        selectedNode: null,
+        hoveredMember: null,
+        draggingNode: null,
+        // Material definitions
+        MATS: {
+          steel: { color: '#2c7aa0', strength: 30, label: 'Steel' },
+          wood: { color: '#a0522d', strength: 3, label: 'Wood' },
+          cable: { color: '#f5b342', strength: 25, label: 'Cable', tensionOnly: true },
+        },
+      };
+
+      function initTruss() {
+        truss.nodes = [];
+        truss.members = [];
+        truss.supports = [];
+        truss.load = { x: 0, y: 0, weight: 10 };
+        truss.selectedNode = null;
+        truss.hoveredMember = null;
+        truss.draggingNode = null;
+        // Build a default simple truss
+        const groundY = 400;
+        const nodes = [
+          { x: 100, y: groundY }, // 0
+          { x: 300, y: groundY }, // 1
+          { x: 500, y: groundY }, // 2
+          { x: 200, y: groundY - 150 }, // 3
+          { x: 400, y: groundY - 150 }, // 4
+        ];
+        nodes.forEach((n) => truss.nodes.push(n));
+        truss.supports = [0, 2];
+        // Members (bottom chord + top chord + diagonals)
+        const members = [
+          [0, 1], [1, 2],
+          [3, 4],
+          [0, 3], [3, 1], [1, 4], [4, 2],
+        ];
+        members.forEach(([a, b]) => {
+          truss.members.push({ a, b, material: 'steel' });
+        });
+        // Load on node 3
+        truss.load = { x: truss.nodes[3].x, y: truss.nodes[3].y, weight: 10, attachedTo: 3 };
+      }
+
+      function solveTruss() {
+        const n = truss.nodes.length;
+        if (n < 2) return null;
+
+        // Build node positions array
+        const pos = truss.nodes.map((node) => ({ x: node.x, y: node.y }));
+
+        // Build member directions + lengths
+        const dirs = truss.members.map((m) => {
+          const a = pos[m.a], b = pos[m.b];
+          const dx = b.x - a.x, dy = b.y - a.y;
+          const len = Math.hypot(dx, dy);
+          return { dx: dx / len, dy: dy / len, len };
+        });
+
+        // Reactions: assume support at first index is pinned (rx, ry),
+        // second is roller (ry only). Other supports are ignored for simplicity.
+        const supports = truss.supports;
+        if (supports.length < 2) return null;
+
+        const numMembers = truss.members.length;
+        const unknowns = numMembers + 3; // member forces + rx + ry1 + ry2
+
+        // Build equilibrium equations: 2 per node = 2n equations
+        // For a statically determinate truss, 2n = members + reactions
+        if (2 * n !== unknowns) {
+          // Not statically determinate — still try to solve least-squares style
+        }
+
+        // Matrix: rows = 2n, cols = unknowns
+        const A = [];
+        const b = [];
+        for (let i = 0; i < n; i++) {
+          // x equation
+          const rowX = new Array(unknowns).fill(0);
+          const rowY = new Array(unknowns).fill(0);
+          // Member contributions
+          truss.members.forEach((m, idx) => {
+            const d = dirs[idx];
+            if (m.a === i) {
+              rowX[idx] += d.dx;
+              rowY[idx] += d.dy;
+            }
+            if (m.b === i) {
+              rowX[idx] -= d.dx;
+              rowY[idx] -= d.dy;
+            }
+          });
+          // Reaction contributions
+          // Support 0: rx (col numMembers), ry (col numMembers + 1)
+          // Support 1: ry (col numMembers + 2)
+          if (i === supports[0]) {
+            rowX[numMembers] += 1;
+            rowY[numMembers + 1] += 1;
+          }
+          if (i === supports[1]) {
+            rowY[numMembers + 2] += 1;
+          }
+          // Load at this node
+          const bx = 0, by = 0;
+          if (truss.load.attachedTo === i) {
+            by -= truss.load.weight;
+          }
+          A.push(rowX); b.push(-bx);
+          A.push(rowY); b.push(-by);
+        }
+
+        // Solve via least squares (A^T A) x = A^T b — robust for over/under-determined
+        const forces = leastSquaresSolve(A, b, unknowns);
+        return forces;
+      }
+
+      // Simple least-squares solver using Gaussian elimination on normal equations
+      function leastSquaresSolve(A, b, nCols) {
+        const nRows = A.length;
+        // Build normal equations: M = A^T A, v = A^T b
+        const M = Array.from({ length: nCols }, () => new Array(nCols).fill(0));
+        const v = new Array(nCols).fill(0);
+        for (let i = 0; i < nRows; i++) {
+          for (let j = 0; j < nCols; j++) {
+            v[j] += A[i][j] * b[i];
+            for (let k = 0; k < nCols; k++) {
+              M[j][k] += A[i][j] * A[i][k];
+            }
+          }
+        }
+        // Add small regularization to avoid singularity
+        for (let i = 0; i < nCols; i++) M[i][i] += 1e-6;
+        // Solve M x = v
+        return gaussSolve(M, v);
+      }
+
+      function gaussSolve(M, v) {
+        const n = v.length;
+        const A = M.map((row) => [...row]);
+        const b = [...v];
+        for (let i = 0; i < n; i++) {
+          // Pivot
+          let maxRow = i;
+          for (let k = i + 1; k < n; k++) {
+            if (Math.abs(A[k][i]) > Math.abs(A[maxRow][i])) maxRow = k;
+          }
+          [A[i], A[maxRow]] = [A[maxRow], A[i]];
+          [b[i], b[maxRow]] = [b[maxRow], b[i]];
+          if (Math.abs(A[i][i]) < 1e-9) continue;
+          for (let k = i + 1; k < n; k++) {
+            const factor = A[k][i] / A[i][i];
+            for (let j = i; j < n; j++) A[k][j] -= factor * A[i][j];
+            b[k] -= factor * b[i];
+          }
+        }
+        const x = new Array(n).fill(0);
+        for (let i = n - 1; i >= 0; i--) {
+          let sum = b[i];
+          for (let j = i + 1; j < n; j++) sum -= A[i][j] * x[j];
+          x[i] = Math.abs(A[i][i]) < 1e-9 ? 0 : sum / A[i][i];
+        }
+        return x;
+      }
+
+      function drawTruss() {
+        const forces = solveTruss();
+        const memberForces = forces ? forces.slice(0, truss.members.length) : null;
+        const supportX = forces ? forces[truss.members.length] : 0;
+        const supportY1 = forces ? forces[truss.members.length + 1] : 0;
+        const supportY2 = forces ? forces[truss.members.length + 2] : 0;
+
+        // Ground line
+        const groundY = truss.nodes.length > 0 ? Math.max(...truss.nodes.map((n) => n.y)) : H * 0.7;
+        ctx.strokeStyle = '#5a8a4a';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(0, groundY + 20);
+        ctx.lineTo(W, groundY + 20);
+        ctx.stroke();
+        // Ground hatch
+        for (let x = 0; x < W; x += 20) {
+          ctx.beginPath();
+          ctx.moveTo(x, groundY + 20);
+          ctx.lineTo(x - 10, groundY + 30);
+          ctx.strokeStyle = '#5a8a4a';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+
+        // Members
+        truss.members.forEach((m, idx) => {
+          const a = truss.nodes[m.a], b = truss.nodes[m.b];
+          const mat = truss.MATS[m.material];
+          let color = mat.color;
+          let lineWidth = 4;
+
+          if (memberForces) {
+            const force = Math.abs(memberForces[idx]);
+            // Cable under compression = slack, force = 0
+            const effectiveForce = (mat.tensionOnly && memberForces[idx] < 0) ? 0 : force;
+            const stress = effectiveForce / mat.strength;
+            if (stress > 1) {
+              color = '#c0392b'; // failed
+              lineWidth = 5;
+            } else if (stress > 0.8) {
+              color = '#c76b3b';
+            } else if (stress > 0.5) {
+              color = '#f5b342';
+            } else {
+              color = '#5a8a4a';
+            }
+            if (stress > 1) {
+              // Draw broken member
+              const midX = (a.x + b.x) / 2;
+              const midY = (a.y + b.y) / 2;
+              const dx = b.x - a.x, dy = b.y - a.y;
+              const len = Math.hypot(dx, dy);
+              const breakAngle = Math.atan2(dy, dx);
+              ctx.strokeStyle = color;
+              ctx.lineWidth = lineWidth;
+              ctx.beginPath();
+              ctx.moveTo(a.x, a.y);
+              ctx.lineTo(midX - 8 * Math.cos(breakAngle), midY - 8 * Math.sin(breakAngle));
+              ctx.stroke();
+              ctx.beginPath();
+              ctx.moveTo(midX + 8 * Math.cos(breakAngle), midY + 8 * Math.sin(breakAngle));
+              ctx.lineTo(b.x, b.y);
+              ctx.stroke();
+              return;
+            }
+          }
+
+          ctx.strokeStyle = color;
+          ctx.lineWidth = lineWidth;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          ctx.stroke();
+        });
+
+        // Joints
+        truss.nodes.forEach((node, i) => {
+          const isSupport = truss.supports.includes(i);
+          const isSelected = truss.selectedNode === i;
+          ctx.beginPath();
+          ctx.arc(node.x, node.y, isSelected ? 9 : 7, 0, Math.PI * 2);
+          ctx.fillStyle = isSelected ? '#f5b342' : (isSupport ? '#c76b3b' : '#ffffff');
+          ctx.fill();
+          ctx.strokeStyle = '#0b2b3f';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          if (isSupport) {
+            // Draw support triangle
+            const isFixed = truss.supports.indexOf(i) === 0;
+            ctx.fillStyle = '#c76b3b';
+            ctx.beginPath();
+            ctx.moveTo(node.x, node.y + 10);
+            ctx.lineTo(node.x - 12, node.y + 25);
+            ctx.lineTo(node.x + 12, node.y + 25);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#0b2b3f';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            // Hatch marks
+            for (let hx = -10; hx <= 10; hx += 5) {
+              ctx.beginPath();
+              ctx.moveTo(node.x + hx, node.y + 25);
+              ctx.lineTo(node.x + hx - 4, node.y + 30);
+              ctx.stroke();
+            }
+            if (isFixed) {
+              // Draw pin
+              ctx.fillStyle = '#0b2b3f';
+              ctx.beginPath();
+              ctx.arc(node.x, node.y + 5, 2, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+        });
+
+        // Load arrow
+        if (truss.load.attachedTo !== undefined && truss.load.attachedTo !== null) {
+          const node = truss.nodes[truss.load.attachedTo];
+          if (node) {
+            const arrowLen = 40 + truss.load.weight * 3;
+            ctx.strokeStyle = '#c0392b';
+            ctx.fillStyle = '#c0392b';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(node.x, node.y - arrowLen);
+            ctx.lineTo(node.x, node.y - 15);
+            ctx.stroke();
+            // Arrowhead
+            ctx.beginPath();
+            ctx.moveTo(node.x, node.y - 10);
+            ctx.lineTo(node.x - 8, node.y - 25);
+            ctx.lineTo(node.x + 8, node.y - 25);
+            ctx.closePath();
+            ctx.fill();
+            // Weight label
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 12px system-ui';
+            ctx.textAlign = 'center';
+            ctx.fillText(truss.load.weight + ' kN', node.x, node.y - arrowLen - 6);
+          }
+        }
+
+        // Update facts
+        if (memberForces) {
+          const maxForce = Math.max(...truss.members.map((m, i) => {
+            const mat = truss.MATS[m.material];
+            const f = memberForces[i];
+            const eff = (mat.tensionOnly && f < 0) ? 0 : Math.abs(f);
+            return eff;
+          }), 0);
+          const failedCount = truss.members.filter((m, i) => {
+            const mat = truss.MATS[m.material];
+            const f = memberForces[i];
+            const eff = (mat.tensionOnly && f < 0) ? 0 : Math.abs(f);
+            return eff > mat.strength;
+          }).length;
+
+          updateFacts({
+            'Members': truss.members.length,
+            'Joints': truss.nodes.length,
+            'Max force': maxForce.toFixed(1) + ' kN',
+            'Failed': failedCount > 0 ? failedCount : 'none',
+            'Reaction L': Math.abs(supportY1).toFixed(1) + ' kN',
+            'Reaction R': Math.abs(supportY2).toFixed(1) + ' kN',
+          });
+        } else {
+          updateFacts({
+            'Members': truss.members.length,
+            'Joints': truss.nodes.length,
+            'Status': 'Add more members',
+          });
+        }
+      }
+
+      function trussTools() {
+        return `
+          <h4><i class="fas fa-tools"></i> Tools</h4>
+          <div class="tool-grid">
+            <button class="tool-btn is-active" data-action="trussAdd">
+              <i class="fas fa-plus-circle"></i> Add member
+            </button>
+            <button class="tool-btn" data-action="trussMove">
+              <i class="fas fa-arrows-alt"></i> Move joint
+            </button>
+            <button class="tool-btn" data-action="trussSupport">
+              <i class="fas fa-anchor"></i> Toggle support
+            </button>
+            <button class="tool-btn" data-action="trussLoad">
+              <i class="fas fa-weight-hanging"></i> Set load
+            </button>
+          </div>
+          <h4><i class="fas fa-cube"></i> Material</h4>
+          <div class="material-row" id="materialRow">
+            <button class="mat-btn is-active" data-mat="steel">Steel</button>
+            <button class="mat-btn" data-mat="wood">Wood</button>
+            <button class="mat-btn" data-mat="cable">Cable</button>
+          </div>
+          <h4><i class="fas fa-weight-hanging"></i> Load</h4>
+          <div class="slider-row">
+            <label>Weight <span class="value-chip" id="trussLoadChip">10 kN</span></label>
+            <input type="range" id="trussLoadInput" min="1" max="50" value="10" step="1">
+          </div>
+          <div class="slider-row">
+            <label>Loaded joint <span class="value-chip" id="trussJointChip">#3</span></label>
+            <input type="range" id="trussJointInput" min="0" max="${truss.nodes.length - 1}" value="3" step="1">
+          </div>
+        `;
+      }
+
+      function bindTrussTools() {
+        toolPanel.querySelectorAll('[data-action]').forEach((b) => {
+          b.addEventListener('click', () => {
+            toolPanel.querySelectorAll('[data-action]').forEach((x) => x.classList.remove('is-active'));
+            b.classList.add('is-active');
+            truss.tool = b.dataset.action;
+          });
+        });
+        toolPanel.querySelectorAll('[data-mat]').forEach((b) => {
+          b.addEventListener('click', () => {
+            truss.material = b.dataset.mat;
+            toolPanel.querySelectorAll('[data-mat]').forEach((x) => x.classList.toggle('is-active', x === b));
+          });
+        });
+        const loadInput = document.getElementById('trussLoadInput');
+        const loadChip = document.getElementById('trussLoadChip');
+        if (loadInput) {
+          loadInput.addEventListener('input', () => {
+            truss.load.weight = parseFloat(loadInput.value);
+            loadChip.textContent = truss.load.weight + ' kN';
+          });
+        }
+        const jointInput = document.getElementById('trussJointInput');
+        const jointChip = document.getElementById('trussJointChip');
+        if (jointInput) {
+          jointInput.addEventListener('input', () => {
+            truss.load.attachedTo = parseInt(jointInput.value, 10);
+            jointChip.textContent = '#' + truss.load.attachedTo;
+          });
+        }
+      }
+
+      // Truss interactions
+      let trussMode = 'trussAdd'; // add | move
+      let pendingMemberStart = null;
+
+      function trussClick(x, y) {
+        // Find nearest node
+        let nearest = null, bestDist = 20;
+        truss.nodes.forEach((node, i) => {
+          const d = Math.hypot(node.x - x, node.y - y);
+          if (d < bestDist) { bestDist = d; nearest = i; }
+        });
+
+        if (trussMode === 'trussAdd') {
+          if (nearest !== null) {
+            if (pendingMemberStart === null) {
+              pendingMemberStart = nearest;
+              truss.selectedNode = nearest;
+            } else if (pendingMemberStart !== nearest) {
+              // Check duplicate
+              const exists = truss.members.some((m) =>
+                (m.a === pendingMemberStart && m.b === nearest) ||
+                (m.a === nearest && m.b === pendingMemberStart)
+              );
+              if (!exists) {
+                truss.members.push({ a: pendingMemberStart, b: nearest, material: truss.material });
+              }
+              pendingMemberStart = null;
+              truss.selectedNode = null;
+            }
+          } else {
+            // Add new node
+            truss.nodes.push({ x, y });
+            truss.selectedNode = truss.nodes.length - 1;
+            pendingMemberStart = null;
+          }
+        }
+      }
+
+      function trussRightClick(x, y) {
+        // Delete member if near one
+        truss.members.forEach((m, i) => {
+          const a = truss.nodes[m.a], b = truss.nodes[m.b];
+          const dist = pointToSegmentDist(x, y, a.x, a.y, b.x, b.y);
+          if (dist < 8) {
+            truss.members.splice(i, 1);
+          }
+        });
+      }
+
+      function pointToSegmentDist(px, py, x1, y1, x2, y2) {
+        const dx = x2 - x1, dy = y2 - y1;
+        const len2 = dx * dx + dy * dy;
+        if (len2 === 0) return Math.hypot(px - x1, py - y1);
+        let t = ((px - x1) * dx + (py - y1) * dy) / len2;
+        t = Math.max(0, Math.min(1, t));
+        return Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy));
+      }
+
+      // ============================================================
+      //  BEAM LAB
+      // ============================================================
+      const beam = {
+        length: 8, // metres
+        loadPos: 0.5, // 0-1
+        loadMag: 10, // kN
+        supportType: 'simple', // simple | cantilever
+      };
+
+      function drawBeam() {
+        const padX = 80;
+        const beamY = H / 2;
+        const beamLengthPx = W - 2 * padX;
+        const x0 = padX;
+        const x1 = W - padX;
+
+        // Beam
+        ctx.fillStyle = '#cfdde9';
+        ctx.fillRect(x0, beamY - 12, beamLengthPx, 24);
+        ctx.strokeStyle = '#8ba9c0';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x0, beamY - 12, beamLengthPx, 24);
+
+        // Supports
+        ctx.fillStyle = '#c76b3b';
+        if (beam.supportType === 'simple') {
+          // Pin at left
+          ctx.beginPath();
+          ctx.moveTo(x0, beamY + 12);
+          ctx.lineTo(x0 - 12, beamY + 32);
+          ctx.lineTo(x0 + 12, beamY + 32);
+          ctx.closePath();
+          ctx.fill();
+          ctx.strokeStyle = '#0b2b3f';
+          ctx.stroke();
+          // Roller at right
+          ctx.beginPath();
+          ctx.moveTo(x1, beamY + 12);
+          ctx.lineTo(x1 - 12, beamY + 32);
+          ctx.lineTo(x1 + 12, beamY + 32);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+          // Rollers
+          ctx.beginPath();
+          ctx.arc(x1 - 6, beamY + 36, 4, 0, Math.PI * 2);
+          ctx.arc(x1 + 6, beamY + 36, 4, 0, Math.PI * 2);
+          ctx.fillStyle = '#0b2b3f';
+          ctx.fill();
+        } else {
+          // Fixed wall at left
+          ctx.fillRect(x0 - 20, beamY - 40, 20, 80);
+          ctx.strokeStyle = '#0b2b3f';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(x0 - 20, beamY - 40, 20, 80);
+          for (let yy = -40; yy <= 40; yy += 10) {
+            ctx.beginPath();
+            ctx.moveTo(x0 - 20, beamY + yy);
+            ctx.lineTo(x0 - 30, beamY + yy + 8);
+            ctx.stroke();
+          }
+        }
+
+        // Load arrow
+        const loadX = x0 + beam.loadPos * beamLengthPx;
+        const arrowH = 30 + beam.loadMag * 3;
+        ctx.strokeStyle = '#c0392b';
+        ctx.fillStyle = '#c0392b';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(loadX, beamY - 12 - arrowH);
+        ctx.lineTo(loadX, beamY - 12);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(loadX, beamY - 12);
+        ctx.lineTo(loadX - 8, beamY - 24);
+        ctx.lineTo(loadX + 8, beamY - 24);
+        ctx.closePath();
+        ctx.fill();
+
+        // Weight label
+        ctx.fillStyle = '#0b2b3f';
+        ctx.font = 'bold 13px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText(beam.loadMag + ' kN', loadX, beamY - 12 - arrowH - 6);
+
+        // Shear and moment diagrams (below beam)
+        const diagTop = beamY + 80;
+        const diagHeight = 90;
+
+        // Compute shear & moment
+        const L = beam.length;
+        const a = beam.loadPos * L;
+        const P = beam.loadMag;
+        const N = 100;
+        const shear = [], moment = [];
+
+        let Ra, Rb;
+        if (beam.supportType === 'simple') {
+          Ra = P * (L - a) / L;
+          Rb = P * a / L;
+          for (let i = 0; i <= N; i++) {
+            const x = (i / N) * L;
+            const V = x < a ? Ra : Ra - P;
+            const M = x < a ? Ra * x : Rb * (L - x);
+            shear.push({ x, v: V });
+            moment.push({ x, m: M });
+          }
+        } else {
+          // Cantilever
+          Ra = P;
+          for (let i = 0; i <= N; i++) {
+            const x = (i / N) * L;
+            const V = x < a ? -P : 0;
+            const M = x < a ? -P * (a - x) : 0;
+            shear.push({ x, v: V });
+            moment.push({ x, m: M });
+          }
+        }
+
+        const maxV = Math.max(...shear.map((s) => Math.abs(s.v)), 1);
+        const maxM = Math.max(...moment.map((m) => Math.abs(m.m)), 1);
+
+        // Draw shear diagram
+        drawDiagram(x0, beamLengthPx, diagTop, diagHeight, shear, 'v', maxV, '#2c7aa0', 'Shear (kN)');
+
+        // Draw moment diagram
+        drawDiagram(x0, beamLengthPx, diagTop + diagHeight + 50, diagHeight, moment, 'm', maxM, '#c76b3b', 'Moment (kN·m)');
+
+        updateFacts({
+          'Span': beam.length.toFixed(1) + ' m',
+          'Load': beam.loadMag.toFixed(0) + ' kN',
+          'Support': beam.supportType === 'simple' ? 'Simple' : 'Cantilever',
+          'Max shear': maxV.toFixed(1) + ' kN',
+          'Max moment': maxM.toFixed(1) + ' kN·m',
+          'Load pos': (beam.loadPos * 100).toFixed(0) + '%',
+        });
+      }
+
+      function drawDiagram(x0, width, top, height, data, key, maxVal, color, label) {
+        const midY = top + height / 2;
+        const half = height / 2 - 4;
+
+        // Baseline
+        ctx.strokeStyle = '#e0eaf2';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x0, midY);
+        ctx.lineTo(x0 + width, midY);
+        ctx.stroke();
+
+        // Fill
+        ctx.fillStyle = color.replace('rgb', 'rgba').replace(')', ', 0.15)');
+        ctx.beginPath();
+        ctx.moveTo(x0, midY);
+        data.forEach((pt) => {
+          const x = x0 + (pt.x / data[data.length - 1].x) * width;
+          const y = midY - (pt[key] / maxVal) * half;
+          ctx.lineTo(x, y);
+        });
+        ctx.lineTo(x0 + width, midY);
+        ctx.closePath();
+        ctx.fillStyle = key === 'v' ? 'rgba(44, 122, 160, 0.15)' : 'rgba(199, 107, 59, 0.15)';
+        ctx.fill();
+
+        // Line
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        data.forEach((pt, i) => {
+          const x = x0 + (pt.x / data[data.length - 1].x) * width;
+          const y = midY - (pt[key] / maxVal) * half;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+
+        // Label
+        ctx.fillStyle = color;
+        ctx.font = 'bold 11px system-ui';
+        ctx.textAlign = 'left';
+        ctx.fillText(label, x0, top - 4);
+      }
+
+      function beamTools() {
+        return `
+          <h4><i class="fas fa-tools"></i> Support</h4>
+          <div class="tool-grid">
+            <button class="tool-btn ${beam.supportType === 'simple' ? 'is-active' : ''}" data-support="simple">
+              <i class="fas fa-grip-lines"></i> Simple
+            </button>
+            <button class="tool-btn ${beam.supportType === 'cantilever' ? 'is-active' : ''}" data-support="cantilever">
+              <i class="fas fa-square"></i> Cantilever
+            </button>
+          </div>
+          <h4><i class="fas fa-sliders-h"></i> Load</h4>
+          <div class="slider-row">
+            <label>Magnitude <span class="value-chip" id="beamMagChip">${beam.loadMag} kN</span></label>
+            <input type="range" id="beamMagInput" min="1" max="50" value="${beam.loadMag}" step="1">
+          </div>
+          <div class="slider-row">
+            <label>Position <span class="value-chip" id="beamPosChip">${(beam.loadPos * 100).toFixed(0)}%</span></label>
+            <input type="range" id="beamPosInput" min="0.05" max="0.95" value="${beam.loadPos}" step="0.01">
+          </div>
+          <h4><i class="fas fa-ruler-horizontal"></i> Span</h4>
+          <div class="slider-row">
+            <label>Length <span class="value-chip" id="beamLenChip">${beam.length.toFixed(1)} m</span></label>
+            <input type="range" id="beamLenInput" min="3" max="15" value="${beam.length}" step="0.5">
+          </div>
+        `;
+      }
+
+      function bindBeamTools() {
+        toolPanel.querySelectorAll('[data-support]').forEach((b) => {
+          b.addEventListener('click', () => {
+            beam.supportType = b.dataset.support;
+            toolPanel.querySelectorAll('[data-support]').forEach((x) => x.classList.toggle('is-active', x === b));
+          });
+        });
+        const mag = document.getElementById('beamMagInput');
+        if (mag) mag.addEventListener('input', () => {
+          beam.loadMag = parseFloat(mag.value);
+          document.getElementById('beamMagChip').textContent = beam.loadMag + ' kN';
+        });
+        const pos = document.getElementById('beamPosInput');
+        if (pos) pos.addEventListener('input', () => {
+          beam.loadPos = parseFloat(pos.value);
+          document.getElementById('beamPosChip').textContent = (beam.loadPos * 100).toFixed(0) + '%';
+        });
+        const len = document.getElementById('beamLenInput');
+        if (len) len.addEventListener('input', () => {
+          beam.length = parseFloat(len.value);
+          document.getElementById('beamLenChip').textContent = beam.length.toFixed(1) + ' m';
+        });
+      }
+
+      // ============================================================
+      //  CIRCUIT LAB
+      // ============================================================
+      const circuit = {
+        components: [], // { type, x, y, value }
+        wires: [], // { from: idx, to: idx }
+        selected: null,
+        nextId: 1,
+        type: 'battery', // battery | resistor | led | capacitor
+      };
+
+      function initCircuit() {
+        circuit.components = [
+          { id: 1, type: 'battery', x: 200, y: 300, value: 9 },
+          { id: 2, type: 'resistor', x: 400, y: 300, value: 100 },
+          { id: 3, type: 'led', x: 600, y: 300, value: 0 },
+        ];
+        circuit.wires = [{ from: 1, to: 2 }, { from: 2, to: 3 }, { from: 3, to: 1 }];
+        circuit.nextId = 4;
+      }
+
+      function drawCircuit() {
+        // Simple series circuit: battery → resistor → LED → back to battery
+        // Draw ground grid
+        ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+        ctx.lineWidth = 1;
+        for (let x = 0; x < W; x += 40) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, H);
+          ctx.stroke();
+        }
+        for (let y = 0; y < H; y += 40) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(W, y);
+          ctx.stroke();
+        }
+
+        // Wires
+        circuit.wires.forEach((w) => {
+          const a = circuit.components.find((c) => c.id === w.from);
+          const b = circuit.components.find((c) => c.id === w.to);
+          if (!a || !b) return;
+          ctx.strokeStyle = '#8db3d0';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          ctx.stroke();
+        });
+
+        // Compute circuit values (assume series)
+        const batt = circuit.components.find((c) => c.type === 'battery');
+        const resistor = circuit.components.find((c) => c.type === 'resistor');
+        const led = circuit.components.find((c) => c.type === 'led');
+        let current = 0, voltage = 0, power = 0, ledOn = false;
+        if (batt && resistor) {
+          voltage = batt.value;
+          current = voltage / (resistor.value || 1);
+          power = voltage * current;
+          ledOn = current > 0.01;
+        }
+
+        // Animate current flow
+        const t = performance.now() / 1000;
+        circuit.wires.forEach((w) => {
+          const a = circuit.components.find((c) => c.id === w.from);
+          const b = circuit.components.find((c) => c.id === w.to);
+          if (!a || !b) return;
+          const dx = b.x - a.x, dy = b.y - a.y;
+          const len = Math.hypot(dx, dy);
+          const ux = dx / len, uy = dy / len;
+          const numDots = Math.floor(len / 30);
+          for (let i = 0; i < numDots; i++) {
+            const frac = ((i / numDots) + t * current * 2) % 1;
+            const px = a.x + ux * len * frac;
+            const py = a.y + uy * len * frac;
+            ctx.beginPath();
+            ctx.arc(px, py, 3, 0, Math.PI * 2);
+            ctx.fillStyle = current > 0.001 ? '#f5b342' : 'rgba(255,255,255,0.2)';
+            ctx.fill();
+          }
+        });
+
+        // Components
+        circuit.components.forEach((c) => {
+          drawComponent(c, ledOn, current);
+        });
+
+        updateFacts({
+          'Voltage': voltage.toFixed(1) + ' V',
+          'Resistance': (resistor ? resistor.value : 0) + ' Ω',
+          'Current': current.toFixed(3) + ' A',
+          'Power': power.toFixed(2) + ' W',
+          'LED': ledOn ? 'ON' : 'off',
+          'Components': circuit.components.length,
+        });
+      }
+
+      function drawComponent(c, ledOn, current) {
+        const r = 24;
+        if (c.type === 'battery') {
+          // Battery symbol
+          ctx.fillStyle = '#8db3d0';
+          ctx.fillRect(c.x - 15, c.y - 20, 8, 40);
+          ctx.fillStyle = '#cfdde9';
+          ctx.fillRect(c.x + 5, c.y - 12, 8, 24);
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 11px system-ui';
+          ctx.textAlign = 'center';
+          ctx.fillText(c.value + 'V', c.x, c.y + 40);
+        } else if (c.type === 'resistor') {
+          // Zigzag resistor
+          ctx.strokeStyle = '#cfdde9';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(c.x - 20, c.y);
+          for (let i = 0; i < 6; i++) {
+            ctx.lineTo(c.x - 15 + i * 5, c.y + (i % 2 === 0 ? -10 : 10));
+          }
+          ctx.lineTo(c.x + 20, c.y);
+          ctx.stroke();
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 11px system-ui';
+          ctx.textAlign = 'center';
+          ctx.fillText(c.value + 'Ω', c.x, c.y + 40);
+        } else if (c.type === 'led') {
+          // LED
+          ctx.beginPath();
+          ctx.arc(c.x, c.y, 18, 0, Math.PI * 2);
+          const glowColor = ledOn ? '#f5b342' : 'rgba(245, 179, 66, 0.15)';
+          ctx.fillStyle = glowColor;
+          ctx.fill();
+          if (ledOn) {
+            const glow = ctx.createRadialGradient(c.x, c.y, 5, c.x, c.y, 40);
+            glow.addColorStop(0, 'rgba(245, 179, 66, 0.6)');
+            glow.addColorStop(1, 'rgba(245, 179, 66, 0)');
+            ctx.fillStyle = glow;
+            ctx.beginPath();
+            ctx.arc(c.x, c.y, 40, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.strokeStyle = '#f5b342';
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.arc(c.x, c.y, 18, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 11px system-ui';
+          ctx.textAlign = 'center';
+          ctx.fillText('LED', c.x, c.y + 4);
+        }
+      }
+
+      function circuitTools() {
+        return `
+          <h4><i class="fas fa-tools"></i> Add component</h4>
+          <div class="tool-grid">
+            <button class="tool-btn is-active" data-comp="battery">
+              <i class="fas fa-battery-full"></i> Battery
+            </button>
+            <button class="tool-btn" data-comp="resistor">
+              <i class="fas fa-wave-square"></i> Resistor
+            </button>
+            <button class="tool-btn" data-comp="led">
+              <i class="fas fa-lightbulb"></i> LED
+            </button>
+          </div>
+          <h4><i class="fas fa-sliders-h"></i> Adjust</h4>
+          <div class="slider-row">
+            <label>Battery <span class="value-chip" id="battChip">9 V</span></label>
+            <input type="range" id="battInput" min="1" max="24" value="9" step="1">
+          </div>
+          <div class="slider-row">
+            <label>Resistor <span class="value-chip" id="resChip">100 Ω</span></label>
+            <input type="range" id="resInput" min="10" max="1000" value="100" step="10">
+          </div>
+          <div class="info-banner" style="margin-top:0.75rem;margin-bottom:0;">
+            <strong>Ohm's law:</strong> V = I·R. Current flows from + to −.
+          </div>
+        `;
+      }
+
+      function bindCircuitTools() {
+        toolPanel.querySelectorAll('[data-comp]').forEach((b) => {
+          b.addEventListener('click', () => {
+            toolPanel.querySelectorAll('[data-comp]').forEach((x) => x.classList.remove('is-active'));
+            b.classList.add('is-active');
+            circuit.type = b.dataset.comp;
+          });
+        });
+        const batt = document.getElementById('battInput');
+        if (batt) batt.addEventListener('input', () => {
+          const b = circuit.components.find((c) => c.type === 'battery');
+          if (b) b.value = parseFloat(batt.value);
+          document.getElementById('battChip').textContent = batt.value + ' V';
+        });
+        const res = document.getElementById('resInput');
+        if (res) res.addEventListener('input', () => {
+          const r = circuit.components.find((c) => c.type === 'resistor');
+          if (r) r.value = parseFloat(res.value);
+          document.getElementById('resChip').textContent = res.value + ' Ω';
+        });
+      }
+
+      // ============================================================
+      //  GEARS LAB
+      // ============================================================
+      const gears = {
+        driverTeeth: 12,
+        drivenTeeth: 36,
+        driverRPM: 60,
+        driverAngle: 0,
+        drivenAngle: 0,
+        lastTime: 0,
+      };
+
+      function drawGears(t) {
+        const dt = t - (gears.lastTime || t);
+        gears.lastTime = t;
+
+        const centerY = H / 2;
+        const driverRadius = 40 + gears.driverTeeth * 1.8;
+        const drivenRadius = 40 + gears.drivenTeeth * 1.8;
+
+        const driverX = W / 2 - driverRadius - 20;
+        const drivenX = W / 2 + drivenRadius + 20;
+
+        // Update angles
+        const driverOmega = (gears.driverRPM / 60) * Math.PI * 2;
+        gears.driverAngle += driverOmega * dt / 1000;
+        gears.drivenAngle = -gears.driverAngle * (gears.driverTeeth / gears.drivenTeeth);
+
+        drawGear(driverX, centerY, driverRadius, gears.driverTeeth, gears.driverAngle, '#2c7aa0');
+        drawGear(drivenX, centerY, drivenRadius, gears.drivenTeeth, gears.drivenAngle, '#c76b3b');
+
+        // Labels
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 14px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('Driver', driverX, centerY + driverRadius + 40);
+        ctx.fillText(gears.driverTeeth + ' teeth', driverX, centerY + driverRadius + 60);
+        ctx.fillText(gears.driverRPM + ' RPM', driverX, centerY + driverRadius + 80);
+
+        ctx.fillText('Driven', drivenX, centerY + drivenRadius + 40);
+        ctx.fillText(gears.drivenTeeth + ' teeth', drivenX, centerY + drivenRadius + 60);
+        const drivenRPM = gears.driverRPM * (gears.driverTeeth / gears.drivenTeeth);
+        ctx.fillText(drivenRPM.toFixed(1) + ' RPM', drivenX, centerY + drivenRadius + 80);
+
+        const ratio = gears.drivenTeeth / gears.driverTeeth;
+        updateFacts({
+          'Driver teeth': gears.driverTeeth,
+          'Driven teeth': gears.drivenTeeth,
+          'Driver RPM': gears.driverRPM,
+          'Driven RPM': drivenRPM.toFixed(1),
+          'Gear ratio': ratio.toFixed(2) + ':1',
+          'Torque ×': ratio.toFixed(2),
+        });
+      }
+
+      function drawGear(cx, cy, radius, teeth, angle, color) {
+        const innerRadius = radius * 0.82;
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(angle);
+
+        ctx.beginPath();
+        for (let i = 0; i < teeth; i++) {
+          const a0 = (i / teeth) * Math.PI * 2;
+          const a1 = ((i + 0.25) / teeth) * Math.PI * 2;
+          const a2 = ((i + 0.75) / teeth) * Math.PI * 2;
+          const a3 = ((i + 1) / teeth) * Math.PI * 2;
+          if (i === 0) {
+            ctx.moveTo(Math.cos(a0) * innerRadius, Math.sin(a0) * innerRadius);
+          } else {
+            ctx.lineTo(Math.cos(a0) * innerRadius, Math.sin(a0) * innerRadius);
+          }
+          ctx.lineTo(Math.cos(a1) * radius, Math.sin(a1) * radius);
+          ctx.lineTo(Math.cos(a2) * radius, Math.sin(a2) * radius);
+          ctx.lineTo(Math.cos(a3) * innerRadius, Math.sin(a3) * innerRadius);
+        }
+        ctx.closePath();
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.strokeStyle = '#0b2b3f';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Hub
+        ctx.beginPath();
+        ctx.arc(0, 0, radius * 0.25, 0, Math.PI * 2);
+        ctx.fillStyle = '#0b2b3f';
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(0, 0, radius * 0.1, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+
+        // Spoke marker
+        ctx.strokeStyle = '#0b2b3f';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(innerRadius * 0.9, 0);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      function gearsTools() {
+        return `
+          <h4><i class="fas fa-cog"></i> Gear train</h4>
+          <div class="slider-row">
+            <label>Driver teeth <span class="value-chip" id="driverTeethChip">${gears.driverTeeth}</span></label>
+            <input type="range" id="driverTeethInput" min="8" max="48" value="${gears.driverTeeth}" step="1">
+          </div>
+          <div class="slider-row">
+            <label>Driven teeth <span class="value-chip" id="drivenTeethChip">${gears.drivenTeeth}</span></label>
+            <input type="range" id="drivenTeethInput" min="8" max="48" value="${gears.drivenTeeth}" step="1">
+          </div>
+          <div class="slider-row">
+            <label>Driver RPM <span class="value-chip" id="driverRPMChip">${gears.driverRPM}</span></label>
+            <input type="range" id="driverRPMInput" min="1" max="200" value="${gears.driverRPM}" step="1">
+          </div>
+          <div class="info-banner" style="margin-top:0.75rem;margin-bottom:0;">
+            <strong>Gear ratio</strong> = driven teeth / driver teeth.<br>
+            Speed divides by ratio; torque multiplies by ratio.
+          </div>
+        `;
+      }
+
+      function bindGearsTools() {
+        const dT = document.getElementById('driverTeethInput');
+        if (dT) dT.addEventListener('input', () => {
+          gears.driverTeeth = parseInt(dT.value, 10);
+          document.getElementById('driverTeethChip').textContent = gears.driverTeeth;
+        });
+        const drT = document.getElementById('drivenTeethInput');
+        if (drT) drT.addEventListener('input', () => {
+          gears.drivenTeeth = parseInt(drT.value, 10);
+          document.getElementById('drivenTeethChip').textContent = gears.drivenTeeth;
+        });
+        const rpm = document.getElementById('driverRPMInput');
+        if (rpm) rpm.addEventListener('input', () => {
+          gears.driverRPM = parseInt(rpm.value, 10);
+          document.getElementById('driverRPMChip').textContent = gears.driverRPM;
+        });
+      }
+
+      // ============================================================
+      //  PROJECTILE LAB
+      // ============================================================
+      const proj = {
+        angle: 45,
+        speed: 30,
+        gravity: 9.81,
+        drag: 0,
+        trails: [],
+        running: false,
+        lastTime: 0,
+      };
+
+      function initProj() {
+        proj.trails = [];
+        proj.running = false;
+        proj.lastTime = 0;
+      }
+
+      function simulateProjectile(angleDeg, speed, gravity, drag) {
+        const dt = 0.01;
+        const rad = (angleDeg * Math.PI) / 180;
+        let x = 0, y = 0;
+        let vx = speed * Math.cos(rad);
+        let vy = speed * Math.sin(rad);
+        const points = [{ x, y }];
+        let t = 0;
+        while (y >= 0 && t < 30) {
+          const v = Math.hypot(vx, vy);
+          const ax = -drag * v * vx;
+          const ay = -gravity - drag * v * vy;
+          vx += ax * dt;
+          vy += ay * dt;
+          x += vx * dt;
+          y += vy * dt;
+          t += dt;
+          points.push({ x, y });
+        }
+        return points;
+      }
+
+      function drawProjectile(t) {
+        const points = simulateProjectile(proj.angle, proj.speed, proj.gravity, proj.drag);
+        const maxX = Math.max(...points.map((p) => p.x), 1);
+        const maxY = Math.max(...points.map((p) => p.y), 1);
+
+        const padX = 60, padY = 40;
+        const groundY = H - padY;
+        const scale = Math.min((W - 2 * padX) / maxX, (groundY - padY) / maxY);
+
+        // Ground
+        ctx.fillStyle = '#5a8a4a';
+        ctx.fillRect(0, groundY, W, H - groundY);
+
+        // Grid
+        ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+        ctx.lineWidth = 1;
+        const step = 5;
+        for (let x = 0; x <= maxX; x += step) {
+          const px = padX + x * scale;
+          ctx.beginPath();
+          ctx.moveTo(px, padY);
+          ctx.lineTo(px, groundY);
+          ctx.stroke();
+        }
+        for (let y = 0; y <= maxY; y += step) {
+          const py = groundY - y * scale;
+          ctx.beginPath();
+          ctx.moveTo(padX, py);
+          ctx.lineTo(W - padX, py);
+          ctx.stroke();
+        }
+
+        // Trajectory
+        ctx.strokeStyle = '#2c7aa0';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        points.forEach((p, i) => {
+          const px = padX + p.x * scale;
+          const py = groundY - p.y * scale;
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        });
+        ctx.stroke();
+
+        // Ground markers
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '11px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText(Math.round(maxX) + ' m', padX + points[points.length - 1].x * scale, groundY + 18);
+        ctx.fillText('Range', padX + points[points.length - 1].x * scale, groundY + 32);
+
+        // Launch arrow
+        const startPx = padX;
+        const startPy = groundY;
+        const arrowLen = 60;
+        const rad = (proj.angle * Math.PI) / 180;
+        const endX = startPx + Math.cos(rad) * arrowLen;
+        const endY = startPy - Math.sin(rad) * arrowLen;
+        ctx.strokeStyle = '#f5b342';
+        ctx.fillStyle = '#f5b342';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(startPx, startPy);
+        ctx.lineTo(endX, endY);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(endX, endY);
+        ctx.lineTo(endX - 10 * Math.cos(rad - 0.4), endY + 10 * Math.sin(rad - 0.4));
+        ctx.lineTo(endX - 10 * Math.cos(rad + 0.4), endY + 10 * Math.sin(rad + 0.4));
+        ctx.closePath();
+        ctx.fill();
+
+        // Ball
+        const apex = Math.max(...points.map((p) => p.y));
+        const apexPoint = points.find((p) => p.y === apex);
+        ctx.fillStyle = '#c0392b';
+        ctx.beginPath();
+        ctx.arc(padX + apexPoint.x * scale, groundY - apexPoint.y * scale, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 11px system-ui';
+        ctx.textAlign = 'left';
+        ctx.fillText('apex ' + apex.toFixed(1) + ' m', padX + apexPoint.x * scale + 10, groundY - apexPoint.y * scale);
+
+        updateFacts({
+          'Angle': proj.angle.toFixed(0) + '°',
+          'Speed': proj.speed.toFixed(0) + ' m/s',
+          'Gravity': proj.gravity.toFixed(2) + ' m/s²',
+          'Range': maxX.toFixed(1) + ' m',
+          'Apex': apex.toFixed(1) + ' m',
+          'Flight time': (points.length * 0.01).toFixed(2) + ' s',
+        });
+      }
+
+      function projTools() {
+        return `
+          <h4><i class="fas fa-rocket"></i> Launch</h4>
+          <div class="slider-row">
+            <label>Angle <span class="value-chip" id="projAngleChip">${proj.angle.toFixed(0)}°</span></label>
+            <input type="range" id="projAngleInput" min="5" max="85" value="${proj.angle}" step="1">
+          </div>
+          <div class="slider-row">
+            <label>Speed <span class="value-chip" id="projSpeedChip">${proj.speed.toFixed(0)} m/s</span></label>
+            <input type="range" id="projSpeedInput" min="5" max="80" value="${proj.speed}" step="1">
+          </div>
+          <h4><i class="fas fa-globe"></i> Environment</h4>
+          <div class="tool-grid">
+            <button class="tool-btn ${Math.abs(proj.gravity - 9.81) < 0.01 ? 'is-active' : ''}" data-grav="9.81">
+              <i class="fas fa-globe"></i> Earth
+            </button>
+            <button class="tool-btn ${Math.abs(proj.gravity - 1.62) < 0.01 ? 'is-active' : ''}" data-grav="1.62">
+              <i class="fas fa-moon"></i> Moon
+            </button>
+          </div>
+          <div class="slider-row" style="margin-top:0.7rem;">
+            <label>Air drag <span class="value-chip" id="projDragChip">${proj.drag.toFixed(2)}</span></label>
+            <input type="range" id="projDragInput" min="0" max="0.1" value="${proj.drag}" step="0.005">
+          </div>
+        `;
+      }
+
+      function bindProjTools() {
+        const a = document.getElementById('projAngleInput');
+        if (a) a.addEventListener('input', () => {
+          proj.angle = parseFloat(a.value);
+          document.getElementById('projAngleChip').textContent = proj.angle.toFixed(0) + '°';
+        });
+        const s = document.getElementById('projSpeedInput');
+        if (s) s.addEventListener('input', () => {
+          proj.speed = parseFloat(s.value);
+          document.getElementById('projSpeedChip').textContent = proj.speed.toFixed(0) + ' m/s';
+        });
+        const d = document.getElementById('projDragInput');
+        if (d) d.addEventListener('input', () => {
+          proj.drag = parseFloat(d.value);
+          document.getElementById('projDragChip').textContent = proj.drag.toFixed(2);
+        });
+        toolPanel.querySelectorAll('[data-grav]').forEach((b) => {
+          b.addEventListener('click', () => {
+            proj.gravity = parseFloat(b.dataset.grav);
+            toolPanel.querySelectorAll('[data-grav]').forEach((x) => x.classList.toggle('is-active', x === b));
+          });
+        });
+      }
+
+      // ============================================================
+      //  Shared UI
+      // ============================================================
+      function updateFacts(entries) {
+        factsEl.innerHTML = Object.entries(entries).map(([k, v]) => `
+          <div class="fact">
+            <div class="fl">${k}</div>
+            <div class="fv">${v}</div>
+          </div>
+        `).join('');
+      }
+
+      function setInfoBanner(html) {
+        infoBanner.innerHTML = html;
+      }
+
+      function setStageHint(hints) {
+        stageHint.innerHTML = hints.map((h) => `<span class="hint">${h}</span>`).join('');
+      }
+
+      function updateModePill(icon, label) {
+        modePill.innerHTML = `<i class="fas fa-${icon}"></i> ${label}`;
+      }
+
+      // ============================================================
+      //  Discipline switching
+      // ============================================================
+      function switchDiscipline(disc) {
+        state.disc = disc;
+        discBar.querySelectorAll('.disc-btn').forEach((b) => {
+          b.classList.toggle('is-active', b.dataset.disc === disc);
+        });
+
+        // Reset per-discipline state
+        if (disc === 'truss') {
+          if (truss.nodes.length === 0) initTruss();
+          trussMode = 'trussAdd';
+          pendingMemberStart = null;
+          updateModePill('project-diagram', 'Truss');
+          setStageHint([
+            '<i class="fas fa-mouse"></i> Click empty = add joint',
+            '<i class="fas fa-mouse"></i> Click joint, then joint = add member',
+            '<i class="fas fa-mouse"></i> Right-click member = delete',
+          ]);
+          setInfoBanner('<strong>Truss:</strong> members carry only axial force. Colors show stress — green is safe, red means the member has failed under the current load.');
+          toolPanel.innerHTML = trussTools();
+          bindTrussTools();
+        } else if (disc === 'beam') {
+          updateModePill('minus', 'Beam');
+          setStageHint([
+            '<i class="fas fa-sliders-h"></i> Adjust load in side panel',
+            '<i class="fas fa-eye"></i> Watch shear &amp; moment diagrams',
+          ]);
+          setInfoBanner('<strong>Beam:</strong> the shear diagram shows internal force, the moment diagram shows internal bending moment. Beams fail where the moment peaks.');
+          toolPanel.innerHTML = beamTools();
+          bindBeamTools();
+        } else if (disc === 'circuit') {
+          if (circuit.components.length === 0) initCircuit();
+          updateModePill('bolt', 'Circuit');
+          setStageHint([
+            '<i class="fas fa-sliders-h"></i> Adjust voltage &amp; resistance',
+            '<i class="fas fa-lightbulb"></i> Watch LED light up',
+          ]);
+          setInfoBanner('<strong>Circuit:</strong> a simple series loop. Voltage from the battery pushes current through the resistor. Higher resistance = lower current = dimmer LED.');
+          toolPanel.innerHTML = circuitTools();
+          bindCircuitTools();
+        } else if (disc === 'gears') {
+          updateModePill('cog', 'Gears');
+          setStageHint([
+            '<i class="fas fa-sliders-h"></i> Adjust teeth &amp; RPM',
+            '<i class="fas fa-sync"></i> Gears spin continuously',
+          ]);
+          setInfoBanner('<strong>Gears:</strong> teeth count determines the ratio. A 12-tooth driver and 36-tooth driven gear gives a 3:1 ratio — the driven gear spins 3× slower but with 3× the torque.');
+          toolPanel.innerHTML = gearsTools();
+          bindGearsTools();
+        } else if (disc === 'projectile') {
+          if (proj.trails.length === 0) initProj();
+          updateModePill('rocket', 'Projectile');
+          setStageHint([
+            '<i class="fas fa-sliders-h"></i> Set angle &amp; speed',
+            '<i class="fas fa-moon"></i> Try Moon gravity',
+          ]);
+          setInfoBanner('<strong>Projectile:</strong> without drag, the trajectory is a perfect parabola. Turn on air drag and watch the arc become asymmetric — the ball falls faster than it rises.');
+          toolPanel.innerHTML = projTools();
+          bindProjTools();
+        }
+      }
+
+      // ============================================================
+      //  Canvas events
+      // ============================================================
+      function canvasCoords(e) {
+        const rect = canvas.getBoundingClientRect();
+        const dpr = canvas.width / rect.width;
+        return {
+          x: (e.clientX - rect.left) * dpr,
+          y: (e.clientY - rect.top) * dpr,
+        };
+      }
+
+      let mouseDown = false;
+
+      canvas.addEventListener('mousedown', (e) => {
+        if (state.disc === 'truss' && e.button === 0) {
+          const { x, y } = canvasCoords(e);
+          trussClick(x, y);
+        }
+        mouseDown = true;
+      });
+
+      canvas.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        if (state.disc === 'truss') {
+          const { x, y } = canvasCoords(e);
+          trussRightClick(x, y);
+        }
+      });
+
+      canvas.addEventListener('mousemove', (e) => {
+        const { x, y } = canvasCoords(e);
+        state.mouse = { x, y, in: true };
+
+        if (state.disc === 'truss') {
+          const rect = canvas.getBoundingClientRect();
+          cursorReadout.textContent = `(${Math.round(x)}, ${Math.round(y)})`;
+        } else if (state.disc === 'beam') {
+          // Update load position by dragging
+          if (mouseDown) {
+            const padX = 80;
+            const beamLengthPx = W - 2 * padX;
+            const frac = Math.max(0.05, Math.min(0.95, (x - padX) / beamLengthPx));
+            beam.loadPos = frac;
+            const posInput = document.getElementById('beamPosInput');
+            const posChip = document.getElementById('beamPosChip');
+            if (posInput) posInput.value = frac;
+            if (posChip) posChip.textContent = (frac * 100).toFixed(0) + '%';
+          }
+          cursorReadout.textContent = `Position ${((x - 80) / (W - 160) * 100).toFixed(0)}%`;
+        } else {
+          cursorReadout.textContent = `(${Math.round(x)}, ${Math.round(y)})`;
+        }
+      });
+
+      canvas.addEventListener('mouseup', () => { mouseDown = false; });
+      canvas.addEventListener('mouseleave', () => {
+        mouseDown = false;
+        state.mouse.in = false;
+      });
+
+      // ============================================================
+      //  Main loop
+      // ============================================================
+      function draw(t) {
+        resize();
+        ctx.fillStyle = '#0b2b3f';
+        ctx.fillRect(0, 0, W, H);
+
+        if (state.disc === 'truss') drawTruss();
+        else if (state.disc === 'beam') drawBeam();
+        else if (state.disc === 'circuit') drawCircuit();
+        else if (state.disc === 'gears') drawGears(t);
+        else if (state.disc === 'projectile') drawProjectile(t);
+
+        requestAnimationFrame(draw);
+      }
+
+      // ============================================================
+      //  Init
+      // ============================================================
+      discBar.querySelectorAll('.disc-btn').forEach((b) => {
+        b.addEventListener('click', () => switchDiscipline(b.dataset.disc));
+      });
+
+      initTruss();
+      initCircuit();
+      switchDiscipline('truss');
+
+      window.addEventListener('resize', () => {
+        // Just trigger resize on next frame
+      });
+
+      requestAnimationFrame(draw);
+    })();
+  </script>
+</body>
+</html>
