@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Moon Phases & Eclipses — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+    body { background: #f8fafc; color: #0b2b3f; min-height: 100vh; display: flex; flex-direction: column; line-height: 1.5; }
+
+    .sim-header {
+      background: linear-gradient(135deg, #0b2b3f 0%, #1b4a6b 100%);
+      color: white; padding: 1rem 0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .sim-header .container {
+      max-width: 1180px; margin: 0 auto; padding: 0 1.5rem;
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 1rem; flex-wrap: wrap;
+    }
+    .sim-header h1 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.3px; }
+    .sim-tag {
+      font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;
+      font-weight: 600; color: #bfe0f5; display: block; margin-bottom: 0.15rem;
+    }
+    .back-link {
+      color: white; background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 0.5rem 1.1rem; border-radius: 30px;
+      font-size: 0.85rem; font-weight: 500; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      transition: all 0.15s ease;
+    }
+    .back-link:hover { background: rgba(255,255,255,0.28); border-color: rgba(255,255,255,0.55); }
+
+    .sim-main {
+      flex: 1; max-width: 1180px; margin: 0 auto;
+      padding: 2rem 1.5rem 3rem; width: 100%;
+    }
+    .sim-intro { color: #4f6f86; font-size: 0.95rem; margin-bottom: 1.5rem; max-width: 85ch; }
+
+    .sim-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 1.25rem;
+      align-items: start;
+    }
+    @media (max-width: 1000px) {
+      .sim-layout { grid-template-columns: 1fr; }
+    }
+
+    .sim-panel {
+      background: white; border-radius: 18px; padding: 1.25rem;
+      border: 1px solid #e2edf5;
+      box-shadow: 0 8px 18px -6px rgba(0,20,30,0.08);
+      margin-bottom: 1rem;
+    }
+    .sim-panel h3 {
+      font-size: 0.85rem; font-weight: 600; color: #1b4a6b;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      margin-bottom: 0.75rem;
+    }
+
+    .sim-panel canvas {
+      display: block; max-width: 100%;
+      border-radius: 12px; background: #0a1a2a;
+      border: 1px solid #1e3a52; touch-action: none; margin: 0 auto;
+      cursor: grab;
+    }
+    .sim-panel canvas:active { cursor: grabbing; }
+
+    .sim-btn {
+      background: #2c7aa0; color: white; border: none;
+      padding: 0.5rem 1.1rem; border-radius: 30px;
+      font-weight: 500; font-size: 0.85rem; cursor: pointer;
+      transition: background 0.15s ease;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      font-family: inherit;
+    }
+    .sim-btn:hover { background: #1b5a7a; }
+    .sim-btn.secondary { background: #e4f0f9; color: #1b4a6b; }
+    .sim-btn.secondary:hover { background: #cfe4f4; }
+    .sim-btn-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem; }
+
+    .sim-toggles { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem; }
+    .sim-toggle {
+      background: white; border: 1px solid #cfdde9; color: #1b4a6b;
+      padding: 0.4rem 0.85rem; border-radius: 30px;
+      font-size: 0.78rem; font-weight: 500; cursor: pointer;
+      transition: all 0.12s ease; font-family: inherit;
+    }
+    .sim-toggle.active { background: #2c7aa0; border-color: #2c7aa0; color: white; }
+    .sim-toggle:hover:not(.active) { background: #eef4fa; }
+
+    .sim-control-group {
+      display: flex; flex-direction: column; gap: 0.35rem;
+      margin-bottom: 0.9rem;
+    }
+    .sim-control-group label {
+      font-size: 0.72rem; font-weight: 600; color: #1b4a6b;
+      text-transform: uppercase; letter-spacing: 0.03em;
+      display: flex; justify-content: space-between;
+    }
+    .sim-control-group label span.range-value {
+      color: #2c7aa0; text-transform: none; letter-spacing: 0;
+      font-variant-numeric: tabular-nums;
+    }
+    .sim-control-group input[type="range"] { width: 100%; accent-color: #2c7aa0; }
+
+    .sim-readout {
+      padding: 0.85rem 1rem;
+      background: #f4f9ff; border-radius: 12px;
+      border: 1px solid #cde0ef;
+      font-size: 0.85rem; color: #1e5a7a; line-height: 1.6;
+    }
+    .sim-readout strong { color: #0b2b3f; }
+    .sim-readout .value {
+      font-variant-numeric: tabular-nums;
+      font-weight: 600; color: #2c7aa0;
+    }
+
+    .readout-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.4rem 1rem;
+    }
+    .readout-grid div {
+      display: flex; justify-content: space-between;
+      font-size: 0.82rem;
+    }
+    .readout-grid span:first-child { color: #4f6f86; }
+    .readout-grid span:last-child { font-weight: 600; font-variant-numeric: tabular-nums; color: #0b2b3f; }
+
+    .status-badge {
+      display: inline-block;
+      padding: 0.25rem 0.7rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-top: 0.5rem;
+    }
+    .status-badge.normal { background: #e4f0f9; color: #1b4a6b; }
+    .status-badge.eclipse-solar { background: #fde2e1; color: #b03a2e; }
+    .status-badge.eclipse-lunar { background: #fde8d4; color: #a04000; }
+    .status-badge.near { background: #fff8e0; color: #7d6608; }
+
+    /* Observation log */
+    .data-table-wrap {
+      max-height: 240px;
+      overflow-y: auto;
+      border-radius: 10px;
+      border: 1px solid #e2edf5;
+    }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+    }
+    .data-table th, .data-table td {
+      padding: 0.35rem 0.5rem;
+      text-align: center;
+      border-bottom: 1px solid #eaf1f7;
+    }
+    .data-table th {
+      background: #e4f0f9;
+      color: #1b4a6b;
+      font-weight: 600;
+      position: sticky; top: 0;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr.current td { background: #fff8e0; font-weight: 600; }
+
+    /* Export modal */
+    .export-overlay {
+      position: fixed; inset: 0;
+      background: rgba(8,30,45,0.7);
+      backdrop-filter: blur(3px);
+      display: none;
+      align-items: center; justify-content: center;
+      padding: 1.5rem;
+      z-index: 50;
+    }
+    .export-overlay.active { display: flex; }
+    .export-dialog {
+      background: white;
+      border-radius: 16px;
+      max-width: 640px; width: 100%;
+      max-height: 90vh;
+      display: flex; flex-direction: column;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4);
+      overflow: hidden;
+    }
+    .export-header {
+      padding: 1rem 1.25rem;
+      background: linear-gradient(135deg, #0b2b3f 0%, #1b4a6b 100%);
+      color: white;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .export-header h3 { font-size: 1rem; font-weight: 600; }
+    .export-close {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white; width: 32px; height: 32px;
+      border-radius: 50%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s ease;
+    }
+    .export-close:hover { background: rgba(255,255,255,0.3); transform: rotate(90deg); }
+    .export-body {
+      padding: 1.25rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .export-body textarea {
+      width: 100%;
+      min-height: 340px;
+      padding: 0.85rem;
+      border-radius: 10px;
+      border: 1px solid #cfdde9;
+      font-family: 'Courier New', monospace;
+      font-size: 0.78rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: #0b2b3f;
+      background: #f8fbfe;
+    }
+    .export-footer {
+      padding: 1rem 1.25rem;
+      border-top: 1px solid #eaf1f7;
+      display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: flex-end;
+    }
+    .copy-feedback {
+      color: #27ae60; font-size: 0.85rem; font-weight: 500;
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      align-self: center; margin-right: auto;
+      opacity: 0; transition: opacity 0.2s;
+    }
+    .copy-feedback.show { opacity: 1; }
+
+    .sim-footer {
+      text-align: center; font-size: 0.8rem; color: #6f8da3;
+      padding: 1.5rem; border-top: 1px solid #d9e6f0;
+    }
+    .sim-footer a { color: #2c7aa0; text-decoration: none; }
+    .sim-footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <header class="sim-header">
+    <div class="container">
+      <div>
+        <span class="sim-tag">Earth &amp; Space · Orbital Mechanics</span>
+        <h1>Moon Phases &amp; Eclipses — Full Lab</h1>
+      </div>
+      <a class="back-link" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+    </div>
+  </header>
+
+  <main class="sim-main">
+    <p class="sim-intro">
+      Drag the Moon around its orbit to see the phase it presents from Earth. Adjust the
+      <strong>Moon's orbital tilt</strong> — the key parameter that determines whether eclipses
+      can happen. When the Moon crosses the Earth-Sun line (the node line) while tilted slightly,
+      the geometry lines up for a solar or lunar eclipse. The dashed lines in the canvas show
+      Earth's shadow cone and the Moon's orbit, and the red/blue markers show the node line.
+      Observe multiple angles and use <em>Export data</em> for a full report.
+    </p>
+
+    <div class="sim-layout">
+      <div>
+        <div class="sim-panel">
+          <canvas id="c" width="780" height="480"></canvas>
+
+          <div class="sim-readout" style="margin-top: 1rem;">
+            <div class="readout-grid">
+              <div><span>Phase</span><span id="roPhase">—</span></div>
+              <div><span>Illumination</span><span id="roIllum">—</span></div>
+              <div><span>Orbit angle</span><span id="roAngle">—</span></div>
+              <div><span>Moon distance</span><span id="roDist">—</span></div>
+              <div><span>Days since new</span><span id="roDays">—</span></div>
+              <div><span>Node line</span><span id="roNode">—</span></div>
+            </div>
+            <div id="roStatus"></div>
+          </div>
+
+          <div class="sim-btn-row">
+            <button class="sim-btn secondary" id="stepBack">
+              <i class="fas fa-arrow-left"></i> −1 day
+            </button>
+            <button class="sim-btn secondary" id="stepFwd">
+              <i class="fas fa-arrow-right"></i> +1 day
+            </button>
+            <button class="sim-btn secondary" id="resetAngle">
+              <i class="fas fa-rotate-left"></i> Reset angle
+            </button>
+            <button class="sim-btn secondary" id="logObservation">
+              <i class="fas fa-plus-circle"></i> Log this observation
+            </button>
+          </div>
+        </div>
+
+        <div class="sim-panel">
+          <h3><i class="fas fa-book"></i> Observation log</h3>
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Angle</th>
+                  <th>Phase</th>
+                  <th>Illum.</th>
+                  <th>Tilt</th>
+                  <th>Event</th>
+                </tr>
+              </thead>
+              <tbody id="logBody">
+                <tr><td colspan="6" style="color:#8aa5ba;font-style:italic;padding:0.75rem;">
+                  No observations yet — click "Log this observation" to record the current position.
+                </td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="sim-panel">
+          <h3><i class="fas fa-sliders-h"></i> Orbital parameters</h3>
+
+          <div class="sim-control-group">
+            <label>Moon orbital angle <span class="range-value" id="angleVal">0°</span></label>
+            <input type="range" id="angleSlider" min="0" max="360" step="1" value="0">
+          </div>
+
+          <div class="sim-control-group">
+            <label>Orbital tilt <span class="range-value" id="tiltVal">5.1°</span></label>
+            <input type="range" id="tiltSlider" min="0" max="10" step="0.1" value="5.1">
+            <div style="font-size:0.72rem; color:#4f6f86; margin-top:0.2rem;">
+              Real Moon: 5.1°. At 0° eclipses happen every month; at >10° they rarely happen.
+            </div>
+          </div>
+
+          <div class="sim-control-group">
+            <label>Moon orbital distance <span class="range-value" id="distVal">384,400 km</span></label>
+            <input type="range" id="distSlider" min="0.8" max="1.2" step="0.01" value="1">
+            <div style="font-size:0.72rem; color:#4f6f86; margin-top:0.2rem;">
+              Actual orbit varies (perigee/apogee). Closer moon = larger apparent size.
+            </div>
+          </div>
+
+          <div class="sim-control-group">
+            <label>Sun distance <span class="range-value" id="sunVal">1.00 AU</span></label>
+            <input type="range" id="sunSlider" min="0.8" max="1.2" step="0.01" value="1">
+            <div style="font-size:0.72rem; color:#4f6f86; margin-top:0.2rem;">
+              Same idea for the Sun. Affects apparent size, so influences eclipse type.
+            </div>
+          </div>
+        </div>
+
+        <div class="sim-panel">
+          <h3><i class="fas fa-eye"></i> Overlays</h3>
+          <div class="sim-toggles" id="overlayToggles">
+            <button class="sim-toggle active" data-overlay="shadow">Earth shadow</button>
+            <button class="sim-toggle active" data-overlay="nodes">Node line</button>
+            <button class="sim-toggle active" data-overlay="rays">Sun rays</button>
+            <button class="sim-toggle" data-overlay="labels">Extra labels</button>
+          </div>
+        </div>
+
+        <div class="sim-panel">
+          <h3><i class="fas fa-mouse-pointer"></i> Scenarios</h3>
+          <div class="sim-btn-row" style="margin-top:0;">
+            <button class="sim-btn secondary" id="presetNew">New Moon</button>
+            <button class="sim-btn secondary" id="presetFirst">First Quarter</button>
+            <button class="sim-btn secondary" id="presetFull">Full Moon</button>
+            <button class="sim-btn secondary" id="presetSolar">Solar Eclipse</button>
+            <button class="sim-btn secondary" id="presetLunar">Lunar Eclipse</button>
+          </div>
+        </div>
+
+        <div class="sim-panel">
+          <h3><i class="fas fa-file-export"></i> Export</h3>
+          <button class="sim-btn" id="openExport" style="width: 100%; justify-content: center;">
+            <i class="fas fa-download"></i> Save / copy experiment data
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="sim-footer">
+    All-Science Sims — Earth &amp; Space · <a href="../index.html">Back to catalog</a>
+  </footer>
+
+  <div class="export-overlay" id="exportOverlay">
+    <div class="export-dialog">
+      <div class="export-header">
+        <h3><i class="fas fa-file-alt"></i> Experiment data</h3>
+        <button class="export-close" id="exportClose" aria-label="Close">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="export-body">
+        <textarea id="exportText" spellcheck="false" readonly></textarea>
+      </div>
+      <div class="export-footer">
+        <span class="copy-feedback" id="copyFeedback">
+          <i class="fas fa-check-circle"></i> Copied!
+        </span>
+        <button class="sim-btn secondary" id="copyBtn">
+          <i class="fas fa-copy"></i> Copy to clipboard
+        </button>
+        <button class="sim-btn" id="downloadBtn">
+          <i class="fas fa-download"></i> Download .txt
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ---- Canvas geometry ----
+      const W = 780, H = 480;
+      const canvas = document.getElementById('c');
+      const ctx = canvas.getContext('2d');
+
+      // Earth is centered on canvas; Sun is off to the left (light from -x direction)
+      const CX = W / 2;
+      const CY = H / 2;
+      const EARTH_R = 22;
+      const ORBIT_R_BASE = 150;   // pixels at distance multiplier = 1
+      const MOON_R_BASE = 10;
+
+      // ---- State ----
+      const state = {
+        angleDeg: 0,             // 0 = new moon (moon between Earth and Sun)
+        tiltDeg: 5.1,            // Moon's orbital inclination
+        distanceFactor: 1.0,     // Moon orbital radius multiplier
+        sunDistanceFactor: 1.0,  // Sun distance multiplier
+        overlays: {
+          shadow: true,
+          nodes: true,
+          rays: true,
+          labels: false,
+        },
+        log: [],                 // array of observation entries
+        dragging: false,
+      };
+
+      // Real-world references for scale (for the report)
+      const REAL = {
+        moonSemiMajor_km: 384400,
+        moonOrbitalPeriod_days: 29.53,
+        moonRadius_km: 1737,
+        earthRadius_km: 6371,
+        sunRadius_km: 696000,
+        sunDistance_km: 149600000,
+      };
+
+      // ---- Geometry helpers ----
+      // Convert angle 0..360 (0 = new moon) into canvas Moon position.
+      // New moon = Moon on the sun side of Earth = on the LEFT in our canvas.
+      // Angle 180° = full moon = Moon on the RIGHT.
+      // We use: theta = 180° + angleDeg so 0° → left, 180° → right.
+      function moonPos() {
+        const theta = (180 + state.angleDeg) * Math.PI / 180;
+        const dist = ORBIT_R_BASE * state.distanceFactor;
+        // Apply tilt visually: the orbit is an ellipse viewed near edge-on.
+        // Tilt = 0 → circle; larger tilt → foreshortened (in reality 5° would be
+        // almost edge-on, but we exaggerate a bit so students can see it).
+        // Tilt is also what allows out-of-plane crossings (nodes).
+        const tiltRad = state.tiltDeg * Math.PI / 180;
+        // Foreshorten the y-axis by cos(tilt). For 0° → cos=1 (circle),
+        // for 10° → cos≈0.98 (barely noticeable)... we scale it up for visibility.
+        const yScale = Math.cos(tiltRad * 3);   // exaggerate by ×3 for teaching
+        const mx = CX + Math.cos(theta) * dist;
+        const my = CY + Math.sin(theta) * dist * yScale;
+        return {
+          x: mx,
+          y: my,
+          theta,
+          distancePx: dist,
+        };
+      }
+
+      // The node line: where the Moon's orbit crosses the ecliptic plane.
+      // In our 2D schematic, nodes are at angle = 90° and 270° (the two points
+      // where the tilted orbit crosses the "ecliptic" horizontal plane).
+      // For solar/lunar eclipses, the Moon must be at a node AND at new/full moon.
+      function isNearNode() {
+        const a = ((state.angleDeg % 360) + 360) % 360;
+        // New moon is at angle 0, full at 180. Nodes at 90 and 270.
+        // We consider the Moon "near a node" if it's within ~15° of 90 or 270
+        // BUT only in the new/full moon configuration. However for eclipse
+        // geometry, the node alignment matters at 0° and 180° as well: the
+        // node line is the *intersection* of the orbital plane and the ecliptic.
+        // Simplification: eclipses only happen when tilt is small enough AND
+        // the Moon is near 0° (solar) or 180° (lunar).
+        return {
+          nearNew: Math.abs(((a + 180) % 360) - 180) < 3 ||
+                   Math.abs(a) < 3 ||
+                   Math.abs(a - 360) < 3,
+          nearFull: Math.abs(a - 180) < 3,
+        };
+      }
+
+      // Classify the current eclipse state
+      function eclipseState() {
+        const { nearNew, nearFull } = isNearNode();
+        // Eclipses require the tilt to be small enough that the Moon's shadow
+        // or Earth's shadow can intersect the other body.
+        // In reality, the "eclipse limit" is ~1.5° deviation from the ecliptic.
+        // We use a generous teaching threshold scaled to our exaggerated tilt.
+        const tiltOk = state.tiltDeg <= 3.5;
+        if (!tiltOk) {
+          return { type: 'normal', label: 'No eclipse — orbital tilt too large', cls: 'normal' };
+        }
+        if (nearNew) {
+          return { type: 'solar', label: '☀️ Solar eclipse alignment', cls: 'eclipse-solar' };
+        }
+        if (nearFull) {
+          return { type: 'lunar', label: '🌑 Lunar eclipse alignment', cls: 'eclipse-lunar' };
+        }
+        return {
+          type: 'near',
+          label: 'Tilt OK, but not near new or full moon',
+          cls: 'near',
+        };
+      }
+
+      function phaseName(angleDeg) {
+        const a = ((angleDeg % 360) + 360) % 360;
+        if (a < 22.5 || a >= 337.5) return 'New Moon';
+        if (a < 67.5) return 'Waxing Crescent';
+        if (a < 112.5) return 'First Quarter';
+        if (a < 157.5) return 'Waxing Gibbous';
+        if (a < 202.5) return 'Full Moon';
+        if (a < 247.5) return 'Waning Gibbous';
+        if (a < 292.5) return 'Last Quarter';
+        return 'Waning Crescent';
+      }
+
+      function illuminationPercent(angleDeg) {
+        const a = ((angleDeg % 360) + 360) % 360;
+        // Illumination = (1 - cos(phase)) / 2, with phase 0 = new
+        // But our angle=0 is new, so illumination = (1 - cos(angle)) / 2
+        return Math.round(((1 - Math.cos(a * Math.PI / 180)) / 2) * 100);
+      }
+
+      // ---- Draw ----
+      function draw() {
+        ctx.clearRect(0, 0, W, H);
+
+        // Space background
+        const bg = ctx.createRadialGradient(CX, CY, 30, CX, CY, W * 0.8);
+        bg.addColorStop(0, '#0d2236');
+        bg.addColorStop(1, '#020610');
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, W, H);
+
+        // Stars
+        for (let i = 0; i < 100; i++) {
+          const x = (i * 137) % W;
+          const y = (i * 73) % H;
+          const size = ((i % 4) * 0.3) + 0.4;
+          ctx.fillStyle = `rgba(255,255,255,${0.2 + (i % 5) * 0.1})`;
+          ctx.fillRect(x, y, size, size);
+        }
+
+        const moon = moonPos();
+        const eclipse = eclipseState();
+
+        // ---- Node line ----
+        if (state.overlays.nodes) {
+          // Node line passes through Earth at angle 90-270 (vertical here)
+          // but really it's the intersection of the two orbital planes.
+          // In this 2D schematic, draw it as the vertical line through Earth.
+          ctx.strokeStyle = 'rgba(231,76,60,0.4)';
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([6, 6]);
+          ctx.beginPath();
+          ctx.moveTo(CX, 40);
+          ctx.lineTo(CX, H - 40);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          // Node markers at the "poles" of the orbit where it crosses
+          const nodeR = ORBIT_R_BASE * state.distanceFactor;
+          const tiltRad = state.tiltDeg * Math.PI / 180;
+          const yScale = Math.cos(tiltRad * 3);
+          [Math.PI / 2, 3 * Math.PI / 2].forEach(phi => {
+            const nx = CX + Math.cos(phi) * nodeR;
+            const ny = CY + Math.sin(phi) * nodeR * yScale;
+            ctx.beginPath();
+            ctx.arc(nx, ny, 4, 0, Math.PI * 2);
+            ctx.fillStyle = '#e74c3c';
+            ctx.fill();
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          });
+
+          ctx.fillStyle = 'rgba(231,76,60,0.7)';
+          ctx.font = '600 9px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('node', CX, 32);
+          ctx.fillText('node', CX, H - 22);
+        }
+
+        // ---- Sun (off-screen left, or shown with indicator) ----
+        const sunDist = 300 * state.sunDistanceFactor;
+        const sunX = CX - sunDist;
+        const sunY = CY;
+
+        // Sun glow / visible portion
+        const sunGlow = ctx.createRadialGradient(sunX, sunY, 20, sunX, sunY, 200);
+        sunGlow.addColorStop(0, 'rgba(255,235,150,0.85)');
+        sunGlow.addColorStop(0.4, 'rgba(255,200,80,0.35)');
+        sunGlow.addColorStop(1, 'rgba(255,200,80,0)');
+        ctx.fillStyle = sunGlow;
+        ctx.beginPath();
+        ctx.arc(sunX, sunY, 200, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Sun body
+        ctx.beginPath();
+        ctx.arc(sunX, sunY, 36, 0, Math.PI * 2);
+        const sunGrad = ctx.createRadialGradient(sunX - 8, sunY - 8, 4, sunX, sunY, 36);
+        sunGrad.addColorStop(0, '#fff6b0');
+        sunGrad.addColorStop(1, '#ffc63f');
+        ctx.fillStyle = sunGrad;
+        ctx.fill();
+        ctx.fillStyle = '#7d6608';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('SUN', sunX, sunY + 4);
+
+        // ---- Sun rays (showing direction of illumination) ----
+        if (state.overlays.rays) {
+          ctx.strokeStyle = 'rgba(255,220,120,0.15)';
+          ctx.lineWidth = 1;
+          for (let i = -3; i <= 3; i++) {
+            const y = CY + i * 55;
+            ctx.beginPath();
+            ctx.moveTo(sunX + 36, y);
+            ctx.lineTo(CX + 200, y);
+            ctx.stroke();
+          }
+        }
+
+        // ---- Earth's shadow cone ----
+        if (state.overlays.shadow) {
+          // Draw the umbra + penumbra as a triangular cone extending to the right
+          const shadowLength = 340;
+          const umbraHalfWidth = EARTH_R * 0.85;
+          const penumbraStart = EARTH_R * 2.2;
+          const penumbraEnd = EARTH_R * 2.8;
+          // Umbra
+          ctx.beginPath();
+          ctx.moveTo(CX + EARTH_R, CY - umbraHalfWidth * 0.3);
+          ctx.lineTo(CX + shadowLength, CY - 4);
+          ctx.lineTo(CX + shadowLength, CY + 4);
+          ctx.lineTo(CX + EARTH_R, CY + umbraHalfWidth * 0.3);
+          ctx.closePath();
+          ctx.fillStyle = 'rgba(60,40,40,0.45)';
+          ctx.fill();
+          // Penumbra
+          ctx.beginPath();
+          ctx.moveTo(CX + EARTH_R, CY - penumbraEnd);
+          ctx.lineTo(CX + shadowLength, CY - penumbraStart);
+          ctx.lineTo(CX + shadowLength, CY + penumbraStart);
+          ctx.lineTo(CX + EARTH_R, CY + penumbraEnd);
+          ctx.closePath();
+          ctx.fillStyle = 'rgba(80,60,60,0.15)';
+          ctx.fill();
+
+          // Label
+          if (state.overlays.labels) {
+            ctx.fillStyle = 'rgba(180,140,140,0.7)';
+            ctx.font = '9px sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('umbra', CX + shadowLength - 40, CY - 8);
+            ctx.fillText('penumbra', CX + shadowLength - 40, CY + 14);
+          }
+        }
+
+        // ---- Orbit path ----
+        const orbitDist = ORBIT_R_BASE * state.distanceFactor;
+        const tiltRad = state.tiltDeg * Math.PI / 180;
+        const yScale = Math.cos(tiltRad * 3);
+        ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 6]);
+        ctx.beginPath();
+        ctx.ellipse(CX, CY, orbitDist, orbitDist * yScale, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // ---- Earth ----
+        // Draw Earth with correct lit side (facing Sun = left)
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(CX, CY, EARTH_R, 0, Math.PI * 2);
+        ctx.clip();
+        // Dark side
+        ctx.fillStyle = '#0e3a55';
+        ctx.fillRect(CX - EARTH_R, CY - EARTH_R, EARTH_R * 2, EARTH_R * 2);
+        // Lit side (right half faces... wait Sun is to the LEFT)
+        // Sun is on left, so lit side of Earth faces left
+        ctx.fillStyle = '#3a8ac0';
+        ctx.fillRect(CX - EARTH_R, CY - EARTH_R, EARTH_R * 1.4, EARTH_R * 2);
+        // Continent hints (rough)
+        ctx.fillStyle = '#3fa86a';
+        ctx.beginPath();
+        ctx.arc(CX - 8, CY - 6, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(CX - 4, CY + 8, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // Earth outline
+        ctx.beginPath();
+        ctx.arc(CX, CY, EARTH_R, 0, Math.PI * 2);
+        ctx.strokeStyle = '#5ba3d0';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Earth label
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('EARTH', CX, CY + EARTH_R + 18);
+
+        // ---- Moon ----
+        const moonR = MOON_R_BASE;
+        // Moon is always lit from the left (toward Sun)
+        // Draw dark base
+        ctx.beginPath();
+        ctx.arc(moon.x, moon.y, moonR, 0, Math.PI * 2);
+        ctx.fillStyle = '#2a2a35';
+        ctx.fill();
+        // Lit half (left side facing Sun)
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(moon.x, moon.y, moonR, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.fillStyle = '#e8e8f0';
+        ctx.fillRect(moon.x - moonR, moon.y - moonR, moonR, moonR * 2);
+        ctx.restore();
+        // Outline
+        ctx.beginPath();
+        ctx.arc(moon.x, moon.y, moonR, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Moon label
+        ctx.fillStyle = '#f5b342';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('MOON', moon.x, moon.y - moonR - 8);
+
+        // ---- Earth-view of the Moon (top-right) ----
+        drawEarthView(W - 90, 90, 55);
+
+        // ---- Eclipse indicator ----
+        if (eclipse.type === 'solar' || eclipse.type === 'lunar') {
+          // Draw connection between Sun-Moon-Earth (solar) or Sun-Earth-Moon (lunar)
+          ctx.strokeStyle = 'rgba(231,76,60,0.6)';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([4, 3]);
+          ctx.beginPath();
+          ctx.moveTo(sunX, sunY);
+          ctx.lineTo(moon.x, moon.y);
+          if (eclipse.type === 'lunar') {
+            // For lunar eclipse the alignment is Sun-Earth-Moon
+            ctx.moveTo(sunX, sunY);
+            ctx.lineTo(CX, CY);
+            ctx.lineTo(moon.x, moon.y);
+          } else {
+            ctx.lineTo(CX, CY);
+          }
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        // ---- Top label ----
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.font = '600 13px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`Phase: ${phaseName(state.angleDeg)}  ·  ${illuminationPercent(state.angleDeg)}% illuminated`, CX, 26);
+
+        // ---- Bottom bar with scale hints ----
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.font = '10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Sun ← (not to scale)', 90, H - 10);
+        ctx.fillText('Light direction →', CX + 40, H - 10);
+      }
+
+      function drawEarthView(ex, ey, r) {
+        // Frame
+        ctx.fillStyle = 'rgba(255,255,255,0.06)';
+        ctx.beginPath();
+        ctx.arc(ex, ey, r + 12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Clip to moon circle
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(ex, ey, r, 0, Math.PI * 2);
+        ctx.clip();
+
+        // Base (dark side)
+        ctx.fillStyle = '#1a1a24';
+        ctx.fillRect(ex - r, ey - r, r * 2, r * 2);
+
+        // Phase angle relative to new moon
+        const phaseRad = (state.angleDeg * Math.PI / 180) % (2 * Math.PI);
+        // lit fraction = (1 - cos(phase)) / 2
+        const litFrac = (1 - Math.cos(phaseRad)) / 2;
+        const isWaxing = state.angleDeg <= 180;
+
+        ctx.fillStyle = '#e8e8f0';
+
+        // Draw the lit region as the intersection of:
+        //  - a half-circle on the side facing the Sun
+        //  - an ellipse whose horizontal radius is r * |cos(phase)|
+        if (litFrac < 0.01) {
+          // New — nothing lit
+        } else if (litFrac > 0.99) {
+          // Full — everything lit
+          ctx.beginPath();
+          ctx.arc(ex, ey, r, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          ctx.beginPath();
+          if (isWaxing) {
+            // Lit on the right (from Earth, waxing moon is lit on the right)
+            ctx.arc(ex, ey, r, -Math.PI / 2, Math.PI / 2);
+          } else {
+            ctx.arc(ex, ey, r, Math.PI / 2, -Math.PI / 2);
+          }
+          // Terminator ellipse
+          const ellipseHalfWidth = r * Math.abs(Math.cos(phaseRad));
+          if (litFrac > 0.5) {
+            ctx.ellipse(ex, ey, ellipseHalfWidth, r, 0, 0, Math.PI * 2);
+          } else {
+            ctx.ellipse(ex, ey, ellipseHalfWidth, r, 0, 0, Math.PI * 2, true);
+          }
+          ctx.fill();
+        }
+        ctx.restore();
+
+        // Outline
+        ctx.beginPath();
+        ctx.arc(ex, ey, r, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Label
+        ctx.fillStyle = 'rgba(255,255,255,0.75)';
+        ctx.font = '10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('View from Earth', ex, ey + r + 18);
+      }
+
+      // ---- Readout ----
+      function updateReadout() {
+        const phase = phaseName(state.angleDeg);
+        const illum = illuminationPercent(state.angleDeg);
+        const days = (state.angleDeg / 360) * REAL.moonOrbitalPeriod_days;
+        const distKm = state.distanceFactor * REAL.moonSemiMajor_km;
+
+        document.getElementById('roPhase').textContent = phase;
+        document.getElementById('roIllum').textContent = illum + '%';
+        document.getElementById('roAngle').textContent = state.angleDeg.toFixed(1) + '°';
+        document.getElementById('roDist').textContent = Math.round(distKm).toLocaleString() + ' km';
+        document.getElementById('roDays').textContent = days.toFixed(2) + ' d';
+
+        const near = isNearNode();
+        document.getElementById('roNode').textContent =
+          near.nearNew ? 'near new (solar node)' :
+          near.nearFull ? 'near full (lunar node)' : '—';
+
+        const eclipse = eclipseState();
+        const statusEl = document.getElementById('roStatus');
+        statusEl.innerHTML = `<span class="status-badge ${eclipse.cls}">${eclipse.label}</span>`;
+
+        // Update slider displays
+        document.getElementById('angleVal').textContent = state.angleDeg.toFixed(0) + '°';
+        document.getElementById('tiltVal').textContent = state.tiltDeg.toFixed(1) + '°';
+        document.getElementById('distVal').textContent = Math.round(distKm).toLocaleString() + ' km';
+        document.getElementById('sunVal').textContent = state.sunDistanceFactor.toFixed(2) + ' AU';
+      }
+
+      // ---- Draw + readout ----
+      function render() {
+        draw();
+        updateReadout();
+      }
+
+      // ---- Observation log ----
+      function logObservation() {
+        const eclipse = eclipseState();
+        const entry = {
+          angle: state.angleDeg,
+          phase: phaseName(state.angleDeg),
+          illum: illuminationPercent(state.angleDeg),
+          tilt: state.tiltDeg,
+          event: eclipse.type === 'solar' ? 'Solar eclipse'
+               : eclipse.type === 'lunar' ? 'Lunar eclipse'
+               : eclipse.type === 'near' ? 'Tilt OK' : '',
+        };
+        state.log.push(entry);
+        renderLog();
+      }
+
+      function renderLog() {
+        const body = document.getElementById('logBody');
+        body.innerHTML = '';
+        if (state.log.length === 0) {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td colspan="6" style="color:#8aa5ba;font-style:italic;padding:0.75rem;">
+            No observations yet — click "Log this observation" to record the current position.</td>`;
+          body.appendChild(tr);
+          return;
+        }
+        state.log.forEach((e, i) => {
+          const tr = document.createElement('tr');
+          if (i === state.log.length - 1) tr.classList.add('current');
+          tr.innerHTML = `
+            <td>${i + 1}</td>
+            <td>${e.angle.toFixed(0)}°</td>
+            <td>${e.phase}</td>
+            <td>${e.illum}%</td>
+            <td>${e.tilt.toFixed(1)}°</td>
+            <td>${e.event || '—'}</td>
+          `;
+          body.appendChild(tr);
+        });
+        // Auto-scroll
+        const wrap = document.querySelector('.data-table-wrap');
+        if (wrap) wrap.scrollTop = wrap.scrollHeight;
+      }
+
+      // ---- Slider bindings ----
+      document.getElementById('angleSlider').addEventListener('input', (e) => {
+        state.angleDeg = parseFloat(e.target.value);
+        render();
+      });
+      document.getElementById('tiltSlider').addEventListener('input', (e) => {
+        state.tiltDeg = parseFloat(e.target.value);
+        render();
+      });
+      document.getElementById('distSlider').addEventListener('input', (e) => {
+        state.distanceFactor = parseFloat(e.target.value);
+        render();
+      });
+      document.getElementById('sunSlider').addEventListener('input', (e) => {
+        state.sunDistanceFactor = parseFloat(e.target.value);
+        render();
+      });
+
+      // ---- Overlay toggles ----
+      document.querySelectorAll('#overlayToggles .sim-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const key = btn.dataset.overlay;
+          state.overlays[key] = !state.overlays[key];
+          btn.classList.toggle('active', state.overlays[key]);
+          render();
+        });
+      });
+
+      // ---- Step buttons ----
+      document.getElementById('stepBack').addEventListener('click', () => {
+        // 1 day ≈ 360/29.53 ≈ 12.2°
+        state.angleDeg = ((state.angleDeg - 12.2) % 360 + 360) % 360;
+        document.getElementById('angleSlider').value = state.angleDeg;
+        render();
+      });
+      document.getElementById('stepFwd').addEventListener('click', () => {
+        state.angleDeg = (state.angleDeg + 12.2) % 360;
+        document.getElementById('angleSlider').value = state.angleDeg;
+        render();
+      });
+      document.getElementById('resetAngle').addEventListener('click', () => {
+        state.angleDeg = 0;
+        document.getElementById('angleSlider').value = 0;
+        render();
+      });
+      document.getElementById('logObservation').addEventListener('click', logObservation);
+
+      // ---- Canvas dragging ----
+      function getCanvasPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+          x: (clientX - rect.left) * scaleX,
+          y: (clientY - rect.top) * scaleY,
+        };
+      }
+      function onDown(e) {
+        state.dragging = true;
+        onMove(e);
+      }
+      function onMove(e) {
+        if (!state.dragging) return;
+        e.preventDefault();
+        const { x, y } = getCanvasPos(e);
+        const dx = x - CX;
+        const dy = y - CY;
+        // Convert from canvas angle to our angle convention (0 = left = new moon)
+        // In canvas, atan2(dy, dx): angle 0 = right, π = left.
+        // Our 0° is left (moon between Earth and sun), so we need to add π and flip.
+        const canvasAngle = Math.atan2(dy, dx);  // -π..π
+        let orbitAngle = canvasAngle + Math.PI;  // now 0 = left
+        // But our orbit parameter uses theta = 180 + angleDeg
+        // so angleDeg = (orbitAngle in degrees) - 180
+        let deg = (orbitAngle * 180 / Math.PI) - 180;
+        deg = ((deg % 360) + 360) % 360;
+        state.angleDeg = deg;
+        document.getElementById('angleSlider').value = deg;
+        render();
+      }
+      function onUp() { state.dragging = false; }
+
+      canvas.addEventListener('mousedown', onDown);
+      canvas.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
+      canvas.addEventListener('touchstart', onDown, { passive: false });
+      canvas.addEventListener('touchmove', onMove, { passive: false });
+      canvas.addEventListener('touchend', onUp);
+
+      // ---- Preset scenarios ----
+      function setScenario(angle, tilt) {
+        state.angleDeg = angle;
+        state.tiltDeg = tilt;
+        document.getElementById('angleSlider').value = angle;
+        document.getElementById('tiltSlider').value = tilt;
+        render();
+      }
+      document.getElementById('presetNew').addEventListener('click', () => setScenario(0, 5.1));
+      document.getElementById('presetFirst').addEventListener('click', () => setScenario(90, 5.1));
+      document.getElementById('presetFull').addEventListener('click', () => setScenario(180, 5.1));
+      document.getElementById('presetSolar').addEventListener('click', () => setScenario(0, 0.5));
+      document.getElementById('presetLunar').addEventListener('click', () => setScenario(180, 0.5));
+
+      // ---- Export ----
+      const exportOverlay = document.getElementById('exportOverlay');
+      const exportText = document.getElementById('exportText');
+
+      function buildReport() {
+        const lines = [];
+        const now = new Date();
+        const eclipse = eclipseState();
+        const distKm = state.distanceFactor * REAL.moonSemiMajor_km;
+        const sunDistAU = state.sunDistanceFactor;
+
+        lines.push('Moon Phases & Eclipses — Experiment Report');
+        lines.push('='.repeat(55));
+        lines.push('Generated: ' + now.toLocaleString());
+        lines.push('');
+        lines.push('ORBITAL PARAMETERS');
+        lines.push('-'.repeat(55));
+        lines.push('  Moon orbital angle:   ' + state.angleDeg.toFixed(2) + '°');
+        lines.push('  Orbital tilt:         ' + state.tiltDeg.toFixed(2) + '°');
+        lines.push('  Moon distance:        ' + Math.round(distKm).toLocaleString() + ' km  (' + state.distanceFactor.toFixed(2) + '× nominal)');
+        lines.push('  Sun distance:         ' + sunDistAU.toFixed(2) + ' AU');
+        lines.push('');
+        lines.push('CURRENT PHASE');
+        lines.push('-'.repeat(55));
+        lines.push('  Phase:                ' + phaseName(state.angleDeg));
+        lines.push('  Illumination:         ' + illuminationPercent(state.angleDeg) + '%');
+        lines.push('  Days since new:       ' + ((state.angleDeg / 360) * REAL.moonOrbitalPeriod_days).toFixed(2) + ' days');
+        lines.push('');
+        lines.push('ECLIPSE STATUS');
+        lines.push('-'.repeat(55));
+        lines.push('  Status:               ' + eclipse.label);
+        const near = isNearNode();
+        lines.push('  Near new moon:        ' + (near.nearNew ? 'yes' : 'no'));
+        lines.push('  Near full moon:       ' + (near.nearFull ? 'yes' : 'no'));
+        lines.push('  Tilt allows eclipse:  ' + (state.tiltDeg <= 3.5 ? 'yes' : 'no') +
+          ' (threshold 3.5° for teaching)');
+        lines.push('');
+        lines.push('OBSERVATION LOG (' + state.log.length + ' entries)');
+        lines.push('-'.repeat(55));
+        if (state.log.length === 0) {
+          lines.push('  (no observations logged)');
+        } else {
+          lines.push('  #    Angle    Phase              Illum.  Tilt    Event');
+          state.log.forEach((e, i) => {
+            const pad = (s, n) => String(s).padEnd(n).slice(0, n);
+            lines.push(
+              '  ' + pad(i + 1, 4) + ' ' +
+              pad(e.angle.toFixed(0) + '°', 8) + ' ' +
+              pad(e.phase, 18) + ' ' +
+              pad(e.illum + '%', 7) + ' ' +
+              pad(e.tilt.toFixed(1) + '°', 7) + ' ' +
+              (e.event || '—')
+            );
+          });
+        }
+        lines.push('');
+        lines.push('END OF REPORT');
+        return lines.join('\n');
+      }
+
+      document.getElementById('openExport').addEventListener('click', () => {
+        exportText.value = buildReport();
+        exportOverlay.classList.add('active');
+        document.getElementById('copyFeedback').classList.remove('show');
+      });
+
+      document.getElementById('exportClose').addEventListener('click', () => {
+        exportOverlay.classList.remove('active');
+      });
+      exportOverlay.addEventListener('click', (e) => {
+        if (e.target === exportOverlay) exportOverlay.classList.remove('active');
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && exportOverlay.classList.contains('active')) {
+          exportOverlay.classList.remove('active');
+        }
+      });
+
+      document.getElementById('copyBtn').addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(exportText.value);
+        } catch (err) {
+          exportText.select();
+          document.execCommand('copy');
+        }
+        const fb = document.getElementById('copyFeedback');
+        fb.classList.add('show');
+        setTimeout(() => fb.classList.remove('show'), 1800);
+      });
+
+      document.getElementById('downloadBtn').addEventListener('click', () => {
+        const blob = new Blob([exportText.value], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+        a.href = url;
+        a.download = `moon-phases-report-${ts}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      });
+
+      // ---- Boot ----
+      render();
+      renderLog();
+    })();
+  </script>
+</body>
+</html>
