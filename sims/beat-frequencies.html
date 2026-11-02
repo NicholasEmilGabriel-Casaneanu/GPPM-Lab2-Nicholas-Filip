@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Beat Frequencies — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Beat Frequencies</h1>
+      <div class="sim-meta">Music &amp; Acoustics · Interference</div>
+    </div>
+
+    <div class="sim-description">
+      Two pure tones close in frequency produce a slow amplitude beat at the difference frequency. Tune the two pitches and watch the envelope swell and fade. Press Play to hear it — musicians use this exact phenomenon to tune by ear.
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="canvas" width="820" height="360"></canvas>
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>Frequency A: <span id="faLabel">440 Hz</span></label>
+        <input type="range" id="fa" min="200" max="600" value="440" step="0.5">
+      </div>
+      <div class="control">
+        <label>Frequency B: <span id="fbLabel">444 Hz</span></label>
+        <input type="range" id="fb" min="200" max="600" value="444" step="0.5">
+      </div>
+      <div class="control">
+        <label>Beats per second</label>
+        <div class="stat" style="background:#f8fafc; padding:0.6rem 1rem; border-radius:8px; border:1px solid #e2edf5;">
+          <span class="stat-value" id="beatFreq">4.0 Hz</span>
+        </div>
+      </div>
+      <div class="control">
+        <label>&nbsp;</label>
+        <div class="btn-row">
+          <button class="btn" id="play">Play</button>
+          <button class="btn secondary" id="stop">Stop</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">|fA − fB|</span><span class="stat-value" id="diff">—</span></div>
+      <div class="stat"><span class="stat-label">Beat period</span><span class="stat-value" id="beatPeriod">—</span></div>
+      <div class="stat"><span class="stat-label">Audio</span><span class="stat-value" id="audioStatus">off</span></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const faInput = document.getElementById('fa');
+      const fbInput = document.getElementById('fb');
+      const faLabel = document.getElementById('faLabel');
+      const fbLabel = document.getElementById('fbLabel');
+      const beatFreqEl = document.getElementById('beatFreq');
+      const diffEl = document.getElementById('diff');
+      const beatPeriodEl = document.getElementById('beatPeriod');
+      const audioStatusEl = document.getElementById('audioStatus');
+      const playBtn = document.getElementById('play');
+      const stopBtn = document.getElementById('stop');
+
+      let audioCtx = null;
+      let oscA = null;
+      let oscB = null;
+      let gainA = null;
+      let gainB = null;
+      let isPlaying = false;
+
+      let phase = 0;
+      let lastTime = 0;
+      let animHandle = null;
+      let trail = [];
+
+      function getFreqs() {
+        return {
+          a: parseFloat(faInput.value),
+          b: parseFloat(fbInput.value),
+        };
+      }
+
+      function update() {
+        const { a, b } = getFreqs();
+        faLabel.textContent = a.toFixed(1) + ' Hz';
+        fbLabel.textContent = b.toFixed(1) + ' Hz';
+        const diff = Math.abs(a - b);
+        beatFreqEl.textContent = diff.toFixed(2) + ' Hz';
+        diffEl.textContent = diff.toFixed(2) + ' Hz';
+        beatPeriodEl.textContent = diff > 0 ? (1 / diff).toFixed(2) + ' s' : '∞';
+
+        if (oscA) oscA.frequency.setTargetAtTime(a, audioCtx.currentTime, 0.02);
+        if (oscB) oscB.frequency.setTargetAtTime(b, audioCtx.currentTime, 0.02);
+      }
+
+      function startAudio() {
+        if (isPlaying) return;
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        const { a, b } = getFreqs();
+        gainA = audioCtx.createGain();
+        gainB = audioCtx.createGain();
+        gainA.gain.value = 0.15;
+        gainB.gain.value = 0.15;
+        oscA = audioCtx.createOscillator();
+        oscB = audioCtx.createOscillator();
+        oscA.type = 'sine';
+        oscB.type = 'sine';
+        oscA.frequency.value = a;
+        oscB.frequency.value = b;
+        oscA.connect(gainA).connect(audioCtx.destination);
+        oscB.connect(gainB).connect(audioCtx.destination);
+        oscA.start();
+        oscB.start();
+        isPlaying = true;
+        audioStatusEl.textContent = 'playing';
+      }
+
+      function stopAudio() {
+        if (!isPlaying) return;
+        try {
+          oscA.stop();
+          oscB.stop();
+          oscA.disconnect();
+          oscB.disconnect();
+          gainA.disconnect();
+          gainB.disconnect();
+        } catch (e) {}
+        oscA = oscB = gainA = gainB = null;
+        isPlaying = false;
+        audioStatusEl.textContent = 'off';
+      }
+
+      function draw() {
+        const w = canvas.width, h = canvas.height;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+
+        const padL = 40, padR = 40, padT = 30, padB = 40;
+        const plotW = w - padL - padR;
+        const plotH = h - padT - padB;
+        const midY = padT + plotH / 2;
+
+        const { a, b } = getFreqs();
+
+        // Show 0.1 seconds window
+        const windowSec = 0.1;
+        const samples = 800;
+
+        // Sum wave
+        ctx.strokeStyle = '#2c7aa0';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        for (let i = 0; i < samples; i++) {
+          const t = (i / samples) * windowSec;
+          const val = Math.sin(2 * Math.PI * a * t) + Math.sin(2 * Math.PI * b * t);
+          const x = padL + (i / samples) * plotW;
+          const y = midY - (val / 2) * (plotH / 2) * 0.9;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        // Envelope (2*cos at half-diff)
+        const diff = Math.abs(a - b);
+        ctx.strokeStyle = '#f5b342';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        for (let i = 0; i < samples; i++) {
+          const t = (i / samples) * windowSec;
+          const env = 2 * Math.abs(Math.cos(Math.PI * diff * t));
+          const x = padL + (i / samples) * plotW;
+          const y = midY - env * (plotH / 2) * 0.9;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        ctx.beginPath();
+        for (let i = 0; i < samples; i++) {
+          const t = (i / samples) * windowSec;
+          const env = -2 * Math.abs(Math.cos(Math.PI * diff * t));
+          const x = padL + (i / samples) * plotW;
+          const y = midY - env * (plotH / 2) * 0.9;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Zero line
+        ctx.strokeStyle = '#e0eaf2';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(padL, midY);
+        ctx.lineTo(padL + plotW, midY);
+        ctx.stroke();
+
+        // Labels
+        ctx.fillStyle = '#0b2b3f';
+        ctx.font = 'bold 12px system-ui';
+        ctx.textAlign = 'left';
+        ctx.fillText('Sum of two sines', padL, padT - 8);
+        ctx.fillStyle = '#6f8da3';
+        ctx.font = '11px system-ui';
+        ctx.textAlign = 'right';
+        ctx.fillText('0.1 s window', padL + plotW, padT - 8);
+
+        // Beat indicator
+        ctx.fillStyle = '#f5b342';
+        ctx.font = 'bold 13px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('Beat envelope', padL + plotW / 2, padT + 20);
+      }
+
+      function loop(now) {
+        if (!lastTime) lastTime = now;
+        draw();
+        animHandle = requestAnimationFrame(loop);
+      }
+
+      [faInput, fbInput].forEach((el) => el.addEventListener('input', update));
+      playBtn.addEventListener('click', startAudio);
+      stopBtn.addEventListener('click', stopAudio);
+
+      update();
+      draw();
+      animHandle = requestAnimationFrame(loop);
+    })();
+  </script>
+</body>
+</html>

@@ -1,5 +1,13 @@
 /* ============================================
-   All-Science Sims — Main Script
+   All-Science Sims — Main Script (merged)
+   ============================================
+   Structure based on Branch B:
+     - category filtering via data-category
+     - norm() decodes HTML entities (&amp; -> &)
+     - live result count + no-results message
+   Behaviors imported from Branch A:
+     - stub cards (no real href) show an alert instead of 404
+     - star toggling saves to localStorage
    ============================================ */
 
 (function () {
@@ -7,11 +15,6 @@
 
   // ---------- Constants ----------
   const STORAGE_KEY = 'all-science-sims:starred';
-
-  // ---------- DOM References ----------
-  const loginBtn = document.getElementById('loginBtn');
-  const stars = document.querySelectorAll('.star-icon');
-  const openLinks = document.querySelectorAll('.open-link');
 
   // ---------- Star / Favorites Logic ----------
 
@@ -65,6 +68,7 @@
    */
   function initStars() {
     const starred = loadStarred();
+    const stars = document.querySelectorAll('.star-icon');
 
     stars.forEach((star) => {
       const card = star.closest('.sim-card');
@@ -76,7 +80,8 @@
 
       // Toggle on click
       star.addEventListener('click', (e) => {
-        e.stopPropagation(); // prevent triggering the card's open-link
+        e.stopPropagation(); // prevent the card's open handler from firing
+        e.preventDefault();
         const isNowStarred = !starred.has(simId);
 
         if (isNowStarred) {
@@ -92,40 +97,69 @@
   }
 
   // ---------- Open Simulation Logic ----------
+  //
+  // Hybrid behavior:
+  //   - If the card has a real <a class="open-link" href="...">, navigate there.
+  //   - If not (stub card), show an alert naming the sim and its ID.
+  //
+  // Whole card is clickable + keyboard-accessible (Enter / Space),
+  // except when the click target is the star icon.
 
   /**
-   * Navigate to the experiment page.
+   * Activate a sim card: navigate to its page, or alert if it's a stub.
+   * @param {HTMLElement} card
    */
-  function handleOpenSim(e) {
-    e.preventDefault();
-    const card = e.currentTarget.closest('.sim-card');
-    const simId = card ? card.dataset.simId : null;
-    if (!simId) return;
-    window.location.href = `sims/${simId}.html`;
+  function activateCard(card) {
+    const simId = card.dataset.simId;
+    const link = card.querySelector('.open-link');
+    const hasRealHref = link && link.tagName === 'A' && link.getAttribute('href');
+
+    if (hasRealHref) {
+      window.location.href = link.getAttribute('href');
+      return;
+    }
+
+    const name = (card.querySelector('h3')?.innerText || 'this simulation').trim();
+    alert(
+      `🚧 "${name}" is not wired up yet.\n\n` +
+      `Sim ID: ${simId || 'unknown'}\n\n` +
+      `This card still points to a placeholder. The real sim page hasn't been added yet.`
+    );
   }
 
   /**
-   * Wire up all sim cards → navigate to their page.
+   * Wire up all sim cards: whole-card click, Enter/Space, and
+   * let the browser handle real <a class="open-link"> clicks natively.
    */
   function initOpenLinks() {
     document.querySelectorAll('.sim-card').forEach((card) => {
       card.style.cursor = 'pointer';
       card.setAttribute('tabindex', '0');
       card.setAttribute('role', 'link');
+
       card.addEventListener('click', (e) => {
-        if (e.target.closest('.star-icon')) return; // let star handle itself
-        handleOpenSim(e);
+        // Let the star handle its own click
+        if (e.target.closest('.star-icon')) return;
+
+        // If the user actually clicked the anchor, let the browser navigate
+        const anchor = e.target.closest('a.open-link');
+        if (anchor && anchor.getAttribute('href')) return;
+
+        e.preventDefault();
+        activateCard(card);
       });
+
       card.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          handleOpenSim(e);
+          activateCard(card);
         }
       });
     });
   }
 
- // ---------- Category Filtering ----------
+  // ---------- Category Filtering ----------
+
   function initCategoryFilter() {
     const grid = document.getElementById('simsGrid');
     const pills = document.querySelectorAll('#subjectGrid .subject-pill');
@@ -136,11 +170,11 @@
 
     if (!grid || !pills.length) return;
 
-    // Normalize: decode HTML entities + trim
+    // Normalize: decode HTML entities (&amp; -> &) + trim
     function norm(s) {
       if (!s) return '';
       const txt = document.createElement('textarea');
-      txt.innerHTML = s;                 // decodes &amp; -> &
+      txt.innerHTML = s;
       return txt.value.trim();
     }
 
@@ -148,7 +182,7 @@
       const target = norm(category);
       let visibleCount = 0;
 
-      cards.forEach(card => {
+      cards.forEach((card) => {
         const cardCat = norm(card.dataset.category);
         const show = target === 'all' || cardCat === target;
         card.style.display = show ? '' : 'none';
@@ -159,40 +193,37 @@
         noResults.style.display = visibleCount === 0 ? 'block' : 'none';
       }
 
-      if (resultCount) {
-        resultCount.textContent = visibleCount;
-      }
-
       if (resultsBar) {
-        const label = target === 'all'
-          ? 'simulations available · ready to explore'
-          : `simulation${visibleCount === 1 ? '' : 's'} in "${target}" · click All to reset`;
+        const label =
+          target === 'all'
+            ? 'simulations available · ready to explore'
+            : `simulation${visibleCount === 1 ? '' : 's'} in "${target}" · click All to reset`;
+
         resultsBar.innerHTML =
           `<i class="fas fa-flask"></i> <span>Results</span> ` +
           `<span id="resultCount">${visibleCount}</span> ${label}`;
       }
 
-      pills.forEach(p => {
+      pills.forEach((p) => {
         p.classList.toggle('active', norm(p.dataset.category) === target);
       });
     }
 
-    pills.forEach(pill => {
+    pills.forEach((pill) => {
       pill.addEventListener('click', () => applyFilter(pill.dataset.category));
     });
 
     // Run once on load so the count reflects what's actually rendered
     applyFilter('all');
 
+    // Expose for debugging / future use
     window.filterByCategory = applyFilter;
   }
 
   // ---------- Login Button ----------
 
-  /**
-   * Handle login button click (placeholder).
-   */
   function initLogin() {
+    const loginBtn = document.getElementById('loginBtn');
     if (!loginBtn) return;
 
     loginBtn.addEventListener('click', () => {
@@ -207,13 +238,12 @@
   // ---------- Init ----------
 
   function init() {
-    initStars();
-    initOpenLinks();
-    initLogin();
-    initCategoryFilter();
+    try { initStars(); } catch (e) { console.error('initStars failed:', e); }
+    try { initOpenLinks(); } catch (e) { console.error('initOpenLinks failed:', e); }
+    try { initLogin(); } catch (e) { console.error('initLogin failed:', e); }
+    try { initCategoryFilter(); } catch (e) { console.error('initCategoryFilter failed:', e); }
   }
 
-  // Run once DOM is ready
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {

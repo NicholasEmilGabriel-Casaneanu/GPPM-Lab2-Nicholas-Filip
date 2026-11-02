@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Standing Waves — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Standing Waves</h1>
+      <div class="sim-meta">Music &amp; Acoustics · Modes of a String</div>
+    </div>
+
+    <div class="sim-description">
+      A guitar string fixed at both ends can only vibrate at certain frequencies — the harmonics. Change tension, length, and harmonic number and watch the nodes and antinodes move. This is why strings sound the way they do.
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="canvas" width="820" height="360"></canvas>
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>String length: <span id="lenLabel">1.0 m</span></label>
+        <input type="range" id="length" min="0.3" max="2" value="1" step="0.05">
+      </div>
+      <div class="control">
+        <label>Tension: <span id="tensionLabel">80 N</span></label>
+        <input type="range" id="tension" min="20" max="200" value="80" step="5">
+      </div>
+      <div class="control">
+        <label>Harmonic: <span id="harmLabel">2</span></label>
+        <input type="range" id="harmonic" min="1" max="6" value="2" step="1">
+      </div>
+      <div class="control">
+        <label>Linear density: <span id="muLabel">0.005 kg/m</span></label>
+        <input type="range" id="mu" min="0.001" max="0.02" value="0.005" step="0.001">
+      </div>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">Wave speed</span><span class="stat-value" id="speed">—</span></div>
+      <div class="stat"><span class="stat-label">Frequency</span><span class="stat-value" id="freq">—</span></div>
+      <div class="stat"><span class="stat-label">Wavelength</span><span class="stat-value" id="wavelength">—</span></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const lengthInput = document.getElementById('length');
+      const tensionInput = document.getElementById('tension');
+      const harmonicInput = document.getElementById('harmonic');
+      const muInput = document.getElementById('mu');
+      const lenLabel = document.getElementById('lenLabel');
+      const tensionLabel = document.getElementById('tensionLabel');
+      const harmLabel = document.getElementById('harmLabel');
+      const muLabel = document.getElementById('muLabel');
+      const speedEl = document.getElementById('speed');
+      const freqEl = document.getElementById('freq');
+      const wavelengthEl = document.getElementById('wavelength');
+
+      let phase = 0;
+      let lastTime = 0;
+      let animHandle = null;
+
+      function getParams() {
+        const L = parseFloat(lengthInput.value);
+        const T = parseFloat(tensionInput.value);
+        const n = parseInt(harmonicInput.value, 10);
+        const mu = parseFloat(muInput.value);
+        const v = Math.sqrt(T / mu);
+        const wavelength = 2 * L / n;
+        const f = v / wavelength;
+        return { L, T, n, mu, v, wavelength, f };
+      }
+
+      function updateStats() {
+        const { L, n, v, wavelength, f } = getParams();
+        lenLabel.textContent = L.toFixed(2) + ' m';
+        tensionLabel.textContent = tensionInput.value + ' N';
+        harmLabel.textContent = n;
+        muLabel.textContent = parseFloat(muInput.value).toFixed(3) + ' kg/m';
+        speedEl.textContent = v.toFixed(1) + ' m/s';
+        freqEl.textContent = f.toFixed(1) + ' Hz';
+        wavelengthEl.textContent = wavelength.toFixed(3) + ' m';
+      }
+
+      function draw() {
+        const w = canvas.width, h = canvas.height;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+
+        const { L, n } = getParams();
+
+        const padL = 50, padR = 50, padT = 40, padB = 70;
+        const plotW = w - padL - padR;
+        const plotH = h - padT - padB;
+        const midY = padT + plotH / 2;
+
+        // String baseline
+        ctx.strokeStyle = '#e0eaf2';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(padL, midY);
+        ctx.lineTo(padL + plotW, midY);
+        ctx.stroke();
+
+        // End supports
+        ctx.fillStyle = '#1b4a6b';
+        ctx.fillRect(padL - 6, midY - 12, 6, 24);
+        ctx.fillRect(padL + plotW, midY - 12, 6, 24);
+
+        // String wave
+        const samples = 400;
+        ctx.strokeStyle = '#2c7aa0';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        for (let i = 0; i <= samples; i++) {
+          const x = (i / samples) * L;
+          const y = Math.sin((n * Math.PI * x) / L) * Math.cos(phase);
+          const px = padL + (i / samples) * plotW;
+          const py = midY - y * (plotH / 2) * 0.85;
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+
+        // Nodes
+        for (let k = 0; k <= n; k++) {
+          const x = (k / n) * L;
+          const px = padL + (x / L) * plotW;
+          ctx.fillStyle = '#c76b3b';
+          ctx.beginPath();
+          ctx.arc(px, midY, 5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Antinodes
+        for (let k = 0; k < n; k++) {
+          const x = ((k + 0.5) / n) * L;
+          const px = padL + (x / L) * plotW;
+          // Draw antinode indicator above and below
+          ctx.strokeStyle = '#f5b342';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(px, midY - plotH / 2 * 0.85);
+          ctx.lineTo(px, midY + plotH / 2 * 0.85);
+          ctx.stroke();
+        }
+
+        // Labels
+        ctx.fillStyle = '#0b2b3f';
+        ctx.font = 'bold 12px system-ui';
+        ctx.textAlign = 'left';
+        ctx.fillText('Harmonic n = ' + n, padL, padT - 10);
+        ctx.fillStyle = '#6f8da3';
+        ctx.font = '11px system-ui';
+        ctx.textAlign = 'right';
+        ctx.fillText('Nodes: ' + (n + 1), padL + plotW, padT - 10);
+
+        // X-axis length labels
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#6f8da3';
+        for (let k = 0; k <= 4; k++) {
+          const x = (k / 4) * L;
+          const px = padL + (x / L) * plotW;
+          ctx.fillText(x.toFixed(2) + ' m', px, midY + plotH / 2 + 30);
+        }
+      }
+
+      function loop(now) {
+        if (!lastTime) lastTime = now;
+        const dt = Math.min(0.05, (now - lastTime) / 1000);
+        lastTime = now;
+        // Oscillation speed: make period ~1s
+        phase += dt * 2 * Math.PI;
+        draw();
+        animHandle = requestAnimationFrame(loop);
+      }
+
+      [lengthInput, tensionInput, harmonicInput, muInput].forEach((el) =>
+        el.addEventListener('input', updateStats)
+      );
+
+      updateStats();
+      animHandle = requestAnimationFrame(loop);
+    })();
+  </script>
+</body>
+</html>

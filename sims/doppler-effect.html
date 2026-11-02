@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doppler Effect — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Doppler Effect</h1>
+      <div class="sim-meta">Music &amp; Acoustics · Wave Mechanics</div>
+    </div>
+
+    <div class="sim-description">
+      An ambulance siren sounds higher as it approaches and lower as it recedes. Move a source past a listener and watch the sound waves bunch up in front and stretch behind — the same effect that lets police radar measure speed.
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="canvas" width="820" height="420"></canvas>
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>Source speed: <span id="speedLabel">0.30 c</span></label>
+        <input type="range" id="speed" min="0" max="0.9" value="0.3" step="0.01">
+      </div>
+      <div class="control">
+        <label>Source frequency: <span id="freqLabel">440 Hz</span></label>
+        <input type="range" id="freq" min="200" max="800" value="440" step="1">
+      </div>
+      <div class="control">
+        <label>&nbsp;</label>
+        <div class="btn-row">
+          <button class="btn" id="play">Play</button>
+          <button class="btn secondary" id="stop">Stop</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">Observed (approaching)</span><span class="stat-value" id="fApp">—</span></div>
+      <div class="stat"><span class="stat-label">Observed (receding)</span><span class="stat-value" id="fRec">—</span></div>
+      <div class="stat"><span class="stat-label">Audio</span><span class="stat-value" id="audioStatus">off</span></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const speedInput = document.getElementById('speed');
+      const freqInput = document.getElementById('freq');
+      const speedLabel = document.getElementById('speedLabel');
+      const freqLabel = document.getElementById('freqLabel');
+      const fAppEl = document.getElementById('fApp');
+      const fRecEl = document.getElementById('fRec');
+      const audioStatusEl = document.getElementById('audioStatus');
+      const playBtn = document.getElementById('play');
+      const stopBtn = document.getElementById('stop');
+
+      // Source moves right across canvas at speed. Speed shown as
+      // fraction of wave speed (Mach number).
+      const SOUND_SPEED = 343; // m/s (for reference)
+      let sourceX = 0; // 0..1 normalized
+      let phase = 0;
+      let lastTime = 0;
+      let animHandle = null;
+
+      // Emitted wave circles: {x, y, r, alpha}
+      let waves = [];
+
+      let audioCtx = null;
+      let osc = null;
+      let gain = null;
+      let isPlaying = false;
+
+      function updateStats() {
+        const M = parseFloat(speedInput.value);
+        const f0 = parseFloat(freqInput.value);
+        speedLabel.textContent = M.toFixed(2) + ' c';
+        freqLabel.textContent = f0.toFixed(0) + ' Hz';
+        const fApp = f0 / (1 - M);
+        const fRec = f0 / (1 + M);
+        fAppEl.textContent = fApp.toFixed(1) + ' Hz';
+        fRecEl.textContent = fRec.toFixed(1) + ' Hz';
+        updateAudioFreq();
+      }
+
+      function updateAudioFreq() {
+        if (!isPlaying || !osc) return;
+        const now = audioCtx.currentTime;
+        // Source moving right: approaching listener on left? We'll
+        // simulate pitch by source position relative to listener at center.
+        // Simpler: we just play the "receding" tone for now; the visual
+        // is the main learning tool.
+        const f0 = parseFloat(freqInput.value);
+        const M = parseFloat(speedInput.value);
+        const f = sourceX < 0.5 ? f0 / (1 - M) : f0 / (1 + M);
+        osc.frequency.setTargetAtTime(f, now, 0.05);
+      }
+
+      function startAudio() {
+        if (isPlaying) return;
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        osc = audioCtx.createOscillator();
+        gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = parseFloat(freqInput.value);
+        gain.gain.value = 0.12;
+        osc.connect(gain).connect(audioCtx.destination);
+        osc.start();
+        isPlaying = true;
+        audioStatusEl.textContent = 'playing';
+      }
+
+      function stopAudio() {
+        if (!isPlaying) return;
+        try { osc.stop(); osc.disconnect(); gain.disconnect(); } catch (e) {}
+        osc = gain = null;
+        isPlaying = false;
+        audioStatusEl.textContent = 'off';
+      }
+
+      function draw() {
+        const w = canvas.width, h = canvas.height;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+
+        const cy = h / 2;
+        const padL = 50, padR = 50;
+        const plotW = w - padL - padR;
+
+        // Listener at center
+        const listenerX = padL + plotW / 2;
+        ctx.fillStyle = '#c76b3b';
+        ctx.beginPath();
+        ctx.arc(listenerX, cy, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#0b2b3f';
+        ctx.font = 'bold 11px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('Listener', listenerX, cy + 24);
+
+        // Source position
+        const sourcePx = padL + sourceX * plotW;
+
+        // Draw emitted wave circles
+        waves.forEach((wv) => {
+          ctx.strokeStyle = 'rgba(44, 122, 160, ' + wv.alpha + ')';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(wv.x, cy, wv.r, 0, Math.PI * 2);
+          ctx.stroke();
+        });
+
+        // Source marker
+        ctx.fillStyle = '#2c7aa0';
+        ctx.beginPath();
+        ctx.arc(sourcePx, cy, 10, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 11px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('S', sourcePx, cy + 4);
+
+        // Motion arrow
+        ctx.strokeStyle = '#2c7aa0';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(sourcePx - 30, cy - 25);
+        ctx.lineTo(sourcePx + 30, cy - 25);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(sourcePx + 30, cy - 25);
+        ctx.lineTo(sourcePx + 22, cy - 30);
+        ctx.lineTo(sourcePx + 22, cy - 20);
+        ctx.closePath();
+        ctx.fillStyle = '#2c7aa0';
+        ctx.fill();
+
+        // Labels
+        ctx.fillStyle = '#0b2b3f';
+        ctx.font = 'bold 12px system-ui';
+        ctx.textAlign = 'left';
+        ctx.fillText('Sound waves', padL, 24);
+        const M = parseFloat(speedInput.value);
+        ctx.fillStyle = '#6f8da3';
+        ctx.font = '11px system-ui';
+        ctx.fillText('Mach ' + M.toFixed(2), padL, 40);
+
+        // Direction labels
+        ctx.fillStyle = '#c76b3b';
+        ctx.font = 'bold 11px system-ui';
+        ctx.textAlign = 'right';
+        ctx.fillText('← compressed (higher pitch)', listenerX - 20, cy - 30);
+        ctx.fillStyle = '#2c7aa0';
+        ctx.textAlign = 'left';
+        ctx.fillText('stretched → (lower pitch)', listenerX + 20, cy - 30);
+      }
+
+      function loop(now) {
+        if (!lastTime) lastTime = now;
+        const dt = Math.min(0.05, (now - lastTime) / 1000);
+        lastTime = now;
+
+        const M = parseFloat(speedInput.value);
+        const f0 = parseFloat(freqInput.value);
+
+        // Advance source
+        // speed = M (fraction of sound speed). We'll map M to canvas-fraction-per-second
+        const sourceSpeed = M * 0.4; // so 1x sound speed crosses in 2.5s
+        sourceX += sourceSpeed * dt;
+        if (sourceX > 1.1) sourceX = -0.1;
+
+        // Emit waves
+        if (Math.random() < dt * f0 / 40) {
+          const w = canvas.width;
+          const padL = 50, padR = 50;
+          const plotW = w - padL - padR;
+          waves.push({
+            x: padL + sourceX * plotW,
+            r: 0,
+            alpha: 0.7,
+          });
+        }
+
+        // Expand waves
+        waves.forEach((wv) => {
+          wv.r += 200 * dt;
+          wv.alpha -= 0.4 * dt;
+        });
+        waves = waves.filter((wv) => wv.alpha > 0.02);
+
+        updateAudioFreq();
+        draw();
+        animHandle = requestAnimationFrame(loop);
+      }
+
+      speedInput.addEventListener('input', updateStats);
+      freqInput.addEventListener('input', updateStats);
+      playBtn.addEventListener('click', startAudio);
+      stopBtn.addEventListener('click', stopAudio);
+
+      updateStats();
+      animHandle = requestAnimationFrame(loop);
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carbon Cycle — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Carbon Cycle</h1>
+      <div class="sim-meta">Climate &amp; Sustainability · Earth System Science</div>
+    </div>
+
+    <div class="sim-description">
+      Carbon flows between four reservoirs — atmosphere, surface ocean, deep ocean, and land biosphere — driven by photosynthesis, respiration, ocean exchange, and human emissions. Drag the emission rate and watch each pool evolve over a century.
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="canvas" width="820" height="440"></canvas>
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>Emissions: <span id="emisLabel">10 GtC/yr</span></label>
+        <input type="range" id="emissions" min="0" max="40" value="10" step="1">
+      </div>
+      <div class="control">
+        <label>Years to simulate: <span id="yearsLabel">100</span></label>
+        <input type="range" id="years" min="20" max="200" value="100" step="10">
+      </div>
+      <div class="control">
+        <label>&nbsp;</label>
+        <div class="btn-row">
+          <button class="btn" id="simulate">Simulate</button>
+          <button class="btn secondary" id="reset">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">Atmospheric CO₂ rise</span><span class="stat-value" id="atmRise">—</span></div>
+      <div class="stat"><span class="stat-label">Surface ocean rise</span><span class="stat-value" id="oceanRise">—</span></div>
+      <div class="stat"><span class="stat-label">Land biosphere</span><span class="stat-value" id="landRise">—</span></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const emisInput = document.getElementById('emissions');
+      const yearsInput = document.getElementById('years');
+      const emisLabel = document.getElementById('emisLabel');
+      const yearsLabel = document.getElementById('yearsLabel');
+      const simBtn = document.getElementById('simulate');
+      const resetBtn = document.getElementById('reset');
+      const atmRiseEl = document.getElementById('atmRise');
+      const oceanRiseEl = document.getElementById('oceanRise');
+      const landRiseEl = document.getElementById('landRise');
+
+      // Initial reservoir sizes (GtC)
+      const INIT = {
+        atmosphere: 800,
+        surfaceOcean: 900,
+        deepOcean: 37000,
+        land: 600,
+      };
+
+      // Rate constants (per year) for simple 4-box model
+      const K = {
+        atmToOcean: 0.05,
+        oceanToAtm: 0.03,
+        atmToLand: 0.03,
+        landToAtm: 0.03,
+        surfaceToDeep: 0.005,
+        deepToSurface: 0.0005,
+      };
+
+      let history = [];
+
+      function simulate() {
+        const emissions = parseFloat(emisInput.value);
+        const years = parseInt(yearsInput.value, 10);
+
+        let atm = INIT.atmosphere;
+        let surf = INIT.surfaceOcean;
+        let deep = INIT.deepOcean;
+        let land = INIT.land;
+
+        history = [{ year: 0, atmosphere: atm, surfaceOcean: surf, deepOcean: deep, land: land }];
+
+        const dt = 1; // 1 year
+        for (let y = 1; y <= years; y++) {
+          // Fluxes
+          const atmToOcean = K.atmToOcean * (atm - surf * 0.8);
+          const oceanToAtm = K.oceanToAtm * (surf - atm * 0.8);
+          const atmToLand = K.atmToLand * (atm - land * 0.8);
+          const landToAtm = K.landToAtm * (land - atm * 0.8);
+          const surfaceToDeep = K.surfaceToDeep * surf;
+          const deepToSurface = K.deepToSurface * deep;
+
+          // Updates
+          atm += (emissions + oceanToAtm + landToAtm - atmToOcean - atmToLand) * dt;
+          surf += (atmToOcean + deepToSurface - oceanToAtm - surfaceToDeep) * dt;
+          deep += (surfaceToDeep - deepToSurface) * dt;
+          land += (atmToLand - landToAtm) * dt;
+
+          history.push({ year: y, atmosphere: atm, surfaceOcean: surf, deepOcean: deep, land: land });
+        }
+
+        const last = history[history.length - 1];
+        atmRiseEl.textContent = '+' + (last.atmosphere - INIT.atmosphere).toFixed(0) + ' GtC';
+        oceanRiseEl.textContent = '+' + (last.surfaceOcean - INIT.surfaceOcean).toFixed(0) + ' GtC';
+        landRiseEl.textContent = '+' + (last.land - INIT.land).toFixed(0) + ' GtC';
+
+        draw();
+      }
+
+      function draw() {
+        const w = canvas.width, h = canvas.height;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+
+        if (history.length === 0) return;
+
+        const padL = 80, padR = 30, padT = 40, padB = 60;
+        const plotW = w - padL - padR;
+        const plotH = h - padT - padB;
+
+        const years = history[history.length - 1].year;
+
+        // Find scale
+        let maxVal = 0;
+        history.forEach((p) => {
+          maxVal = Math.max(maxVal, p.atmosphere, p.surfaceOcean, p.land);
+        });
+        maxVal *= 1.1;
+
+        // Axes
+        ctx.strokeStyle = '#cfdde9';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(padL, padT);
+        ctx.lineTo(padL, padT + plotH);
+        ctx.lineTo(padL + plotW, padT + plotH);
+        ctx.stroke();
+
+        // Gridlines
+        ctx.fillStyle = '#6f8da3';
+        ctx.font = '11px system-ui';
+        ctx.textAlign = 'right';
+        for (let i = 0; i <= 5; i++) {
+          const y = padT + (plotH * i) / 5;
+          const val = maxVal * (1 - i / 5);
+          ctx.fillText(Math.round(val), padL - 8, y + 4);
+          ctx.strokeStyle = '#eef4fa';
+          ctx.beginPath();
+          ctx.moveTo(padL, y);
+          ctx.lineTo(padL + plotW, y);
+          ctx.stroke();
+        }
+
+        // X labels
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#6f8da3';
+        for (let i = 0; i <= 5; i++) {
+          const x = padL + (plotW * i) / 5;
+          ctx.fillText(Math.round((years * i) / 5) + 'y', x, padT + plotH + 20);
+        }
+
+        const xFor = (year) => padL + (plotW * year) / Math.max(1, years);
+        const yFor = (v) => padT + plotH - (plotH * v) / maxVal;
+
+        // Draw each reservoir
+        const colors = {
+          atmosphere: '#c76b3b',
+          surfaceOcean: '#2c7aa0',
+          land: '#5a8a4a',
+        };
+        const labels = {
+          atmosphere: 'Atmosphere',
+          surfaceOcean: 'Surface ocean',
+          land: 'Land biosphere',
+        };
+
+        Object.keys(colors).forEach((key) => {
+          ctx.strokeStyle = colors[key];
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          history.forEach((p, i) => {
+            const x = xFor(p.year), y = yFor(p[key]);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          });
+          ctx.stroke();
+        });
+
+        // Legend
+        const lx = padL + 12;
+        const ly = padT + 12;
+        ctx.font = '12px system-ui';
+        ctx.textAlign = 'left';
+        let yy = ly;
+        Object.keys(colors).forEach((key) => {
+          ctx.strokeStyle = colors[key];
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.moveTo(lx, yy + 4);
+          ctx.lineTo(lx + 22, yy + 4);
+          ctx.stroke();
+          ctx.fillStyle = '#0b2b3f';
+          ctx.fillText(labels[key], lx + 28, yy + 8);
+          yy += 20;
+        });
+
+        // Title
+        ctx.fillStyle = '#0b2b3f';
+        ctx.font = 'bold 12px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('Carbon reservoir size over time (GtC)', padL + plotW / 2, padT - 12);
+      }
+
+      emisInput.addEventListener('input', () => {
+        emisLabel.textContent = emisInput.value + ' GtC/yr';
+      });
+      yearsInput.addEventListener('input', () => {
+        yearsLabel.textContent = yearsInput.value;
+      });
+
+      simBtn.addEventListener('click', simulate);
+      resetBtn.addEventListener('click', () => {
+        history = [];
+        atmRiseEl.textContent = '—';
+        oceanRiseEl.textContent = '—';
+        landRiseEl.textContent = '—';
+        draw();
+      });
+
+      // Init
+      emisLabel.textContent = emisInput.value + ' GtC/yr';
+      yearsLabel.textContent = yearsInput.value;
+      simulate();
+    })();
+  </script>
+</body>
+</html>

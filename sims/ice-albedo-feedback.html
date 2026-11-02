@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ice-Albedo Feedback — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Ice-Albedo Feedback</h1>
+      <div class="sim-meta">Climate &amp; Sustainability · Positive Feedback Loops</div>
+    </div>
+
+    <div class="sim-description">
+      White ice reflects sunlight; dark ocean absorbs it. Warm the planet a little and ice melts, which makes the surface darker, which makes it warm faster. Run the feedback loop and watch how a small initial warming can amplify into a large one.
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="canvas" width="820" height="420"></canvas>
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>External warming: <span id="warmLabel">+1.0 °C</span></label>
+        <input type="range" id="warming" min="0" max="5" value="1" step="0.1">
+      </div>
+      <div class="control">
+        <label>&nbsp;</label>
+        <div class="btn-row">
+          <button class="btn" id="start">Run feedback</button>
+          <button class="btn secondary" id="reset">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">Ice cover</span><span class="stat-value" id="ice">—</span></div>
+      <div class="stat"><span class="stat-label">Albedo</span><span class="stat-value" id="albedo">—</span></div>
+      <div class="stat"><span class="stat-label">Total warming</span><span class="stat-value" id="total">—</span></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const warmInput = document.getElementById('warming');
+      const warmLabel = document.getElementById('warmLabel');
+      const startBtn = document.getElementById('start');
+      const resetBtn = document.getElementById('reset');
+      const iceEl = document.getElementById('ice');
+      const albedoEl = document.getElementById('albedo');
+      const totalEl = document.getElementById('total');
+
+      // Model: ice cover = 1 / (1 + exp((T - T_melt) / k))
+      // Albedo = iceCover * 0.7 + (1 - iceCover) * 0.1
+      // Additional warming = (albedo_base - albedo) * feedbackGain
+      // where feedbackGain ~ 8 °C per unit albedo change
+      const T_MELT = 1.5;
+      const K = 0.6;
+      const ALBEDO_ICE = 0.7;
+      const ALBEDO_OCEAN = 0.1;
+      const FEEDBACK_GAIN = 5; // °C per unit albedo drop
+
+      let currentWarming = 0;
+      let currentIce = 1;
+      let currentAlbedo = ALBEDO_ICE;
+      let iterations = 0;
+      let running = false;
+      let animHandle = null;
+
+      function computeIce(temp) {
+        return 1 / (1 + Math.exp((temp - T_MELT) / K));
+      }
+
+      function iterate() {
+        // One timestep: recalculate ice at current temp, then feedback
+        const ice = computeIce(currentWarming);
+        const albedo = ice * ALBEDO_ICE + (1 - ice) * ALBEDO_OCEAN;
+        const feedbackWarming = (ALBEDO_ICE - albedo) * FEEDBACK_GAIN;
+        const external = parseFloat(warmInput.value);
+        const totalWarming = external + feedbackWarming;
+
+        currentIce = ice;
+        currentAlbedo = albedo;
+        currentWarming = currentWarming + (totalWarming - currentWarming) * 0.2; // relax toward new equilibrium
+        iterations++;
+
+        updateStats();
+        draw();
+
+        if (iterations < 200 && Math.abs(totalWarming - currentWarming) > 0.01) {
+          animHandle = requestAnimationFrame(() => setTimeout(iterate, 20));
+        } else {
+          running = false;
+        }
+      }
+
+      function updateStats() {
+        iceEl.textContent = (currentIce * 100).toFixed(0) + '%';
+        albedoEl.textContent = currentAlbedo.toFixed(2);
+        totalEl.textContent = (currentWarming >= 0 ? '+' : '') + currentWarming.toFixed(2) + ' °C';
+      }
+
+      function draw() {
+        const w = canvas.width, h = canvas.height;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+
+        // Sky
+        const skyGrad = ctx.createLinearGradient(0, 0, 0, h * 0.6);
+        skyGrad.addColorStop(0, '#87ceeb');
+        skyGrad.addColorStop(1, '#e0f0ff');
+        ctx.fillStyle = skyGrad;
+        ctx.fillRect(0, 0, w, h * 0.6);
+
+        // Sun
+        const sunX = 80, sunY = 70;
+        const sunGrad = ctx.createRadialGradient(sunX, sunY, 5, sunX, sunY, 50);
+        sunGrad.addColorStop(0, '#fff8a0');
+        sunGrad.addColorStop(0.5, '#f5b342');
+        sunGrad.addColorStop(1, 'rgba(245, 179, 66, 0)');
+        ctx.fillStyle = sunGrad;
+        ctx.beginPath();
+        ctx.arc(sunX, sunY, 50, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#f5b342';
+        ctx.beginPath();
+        ctx.arc(sunX, sunY, 22, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Incoming rays
+        for (let i = 0; i < 4; i++) {
+          const sx = sunX + 30 + i * 8;
+          const sy = sunY + 30 + i * 10;
+          drawArrow(sx, sy, w * 0.7, h * 0.55, '#f5b342', 2);
+        }
+
+        // Ocean
+        const oceanY = h * 0.55;
+        ctx.fillStyle = '#1b6b93';
+        ctx.fillRect(0, oceanY, w, h - oceanY);
+
+        // Waves
+        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 5; i++) {
+          ctx.beginPath();
+          const yy = oceanY + 30 + i * 30;
+          for (let x = 0; x < w; x += 10) {
+            const y = yy + Math.sin(x * 0.02 + i) * 4;
+            if (x === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+        }
+
+        // Ice
+        const iceH = currentIce * h * 0.15;
+        ctx.fillStyle = '#f0f8ff';
+        ctx.fillRect(0, oceanY - iceH, w, iceH);
+        ctx.strokeStyle = '#aac9e0';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, oceanY - iceH);
+        for (let x = 0; x <= w; x += 20) {
+          const y = oceanY - iceH + Math.sin(x * 0.1) * 3;
+          ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        // Reflected rays (proportional to albedo)
+        const reflectCount = Math.round(currentAlbedo * 5);
+        for (let i = 0; i < reflectCount; i++) {
+          const rx = w * 0.4 + i * 60;
+          drawArrow(rx, oceanY - 10, rx + 40, 100, 'rgba(245, 179, 66, 0.7)', 2);
+        }
+
+        // Labels
+        ctx.fillStyle = '#0b2b3f';
+        ctx.font = 'bold 13px system-ui';
+        ctx.textAlign = 'left';
+        ctx.fillText('Incoming sunlight', sunX + 40, sunY + 55);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 12px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('Ice cover: ' + (currentIce * 100).toFixed(0) + '%', w / 2, oceanY - iceH - 10);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText('Reflected: ' + (currentAlbedo * 100).toFixed(0) + '%', w * 0.75, 100);
+
+        // Temperature label
+        ctx.fillStyle = '#0b2b3f';
+        ctx.font = 'bold 14px system-ui';
+        ctx.textAlign = 'right';
+        ctx.fillText('Warming: +' + currentWarming.toFixed(2) + ' °C', w - 20, h - 20);
+      }
+
+      function drawArrow(x1, y1, x2, y2, color, width) {
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = width;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        const angle = Math.atan2(y2 - y1, x2 - x1);
+        const headLen = 8;
+        ctx.beginPath();
+        ctx.moveTo(x2, y2);
+        ctx.lineTo(x2 - headLen * Math.cos(angle - Math.PI / 6), y2 - headLen * Math.sin(angle - Math.PI / 6));
+        ctx.lineTo(x2 - headLen * Math.cos(angle + Math.PI / 6), y2 - headLen * Math.sin(angle + Math.PI / 6));
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      function start() {
+        if (animHandle) cancelAnimationFrame(animHandle);
+        iterations = 0;
+        currentWarming = 0;
+        currentIce = 1;
+        currentAlbedo = ALBEDO_ICE;
+        running = true;
+        iterate();
+      }
+
+      function reset() {
+        if (animHandle) cancelAnimationFrame(animHandle);
+        iterations = 0;
+        currentWarming = 0;
+        currentIce = 1;
+        currentAlbedo = ALBEDO_ICE;
+        running = false;
+        // Initialize to external forcing
+        const external = parseFloat(warmInput.value);
+        currentWarming = external;
+        currentIce = computeIce(currentWarming);
+        currentAlbedo = currentIce * ALBEDO_ICE + (1 - currentIce) * ALBEDO_OCEAN;
+        updateStats();
+        draw();
+      }
+
+      warmInput.addEventListener('input', () => {
+        warmLabel.textContent = (parseFloat(warmInput.value) >= 0 ? '+' : '') + warmInput.value + ' °C';
+      });
+
+      startBtn.addEventListener('click', start);
+      resetBtn.addEventListener('click', reset);
+
+      warmLabel.textContent = '+1.0 °C';
+      reset();
+    })();
+  </script>
+</body>
+</html>

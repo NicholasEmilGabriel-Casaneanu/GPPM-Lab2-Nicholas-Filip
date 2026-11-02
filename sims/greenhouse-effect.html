@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Greenhouse Effect — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Greenhouse Effect</h1>
+      <div class="sim-meta">Climate &amp; Sustainability · Planetary Energy Balance</div>
+    </div>
+
+    <div class="sim-description">
+      Sunlight comes in; infrared goes out. Greenhouse gases trap some of that outgoing heat. Change CO₂ concentration and see how the planet's energy balance shifts — and why a few hundred parts per million matters so much.
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="canvas" width="820" height="420"></canvas>
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>CO₂ concentration: <span id="co2Label">420 ppm</span></label>
+        <input type="range" id="co2" min="100" max="1000" value="420" step="10">
+      </div>
+      <div class="control">
+        <label>&nbsp;</label>
+        <div class="btn-row">
+          <button class="btn secondary" id="preIndustrial">Pre-industrial (280)</button>
+          <button class="btn secondary" id="current">Today (420)</button>
+          <button class="btn secondary" id="double">Doubled (560)</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">Surface temperature</span><span class="stat-value" id="temp">—</span></div>
+      <div class="stat"><span class="stat-label">Radiative forcing</span><span class="stat-value" id="forcing">—</span></div>
+      <div class="stat"><span class="stat-label">Δ vs pre-industrial</span><span class="stat-value" id="delta">—</span></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const co2Input = document.getElementById('co2');
+      const co2Label = document.getElementById('co2Label');
+      const tempEl = document.getElementById('temp');
+      const forcingEl = document.getElementById('forcing');
+      const deltaEl = document.getElementById('delta');
+      const preIndBtn = document.getElementById('preIndustrial');
+      const currentBtn = document.getElementById('current');
+      const doubleBtn = document.getElementById('double');
+
+      // Simple energy balance model
+      // T = T0 + lambda * F
+      // where F = 5.35 * ln(C / C0)  (Myhre et al. 1998)
+      // and lambda ~ 0.8 K per W/m² (climate sensitivity)
+      const T0 = 14; // °C pre-industrial equilibrium
+      const C0 = 280; // ppm pre-industrial
+      const LAMBDA = 0.8;
+      const S0 = 1361; // solar constant W/m²
+      const ALBEDO = 0.3;
+
+      function computeTemp(co2) {
+        const forcing = 5.35 * Math.log(co2 / C0);
+        const temp = T0 + LAMBDA * forcing;
+        return { temp, forcing, delta: temp - T0 };
+      }
+
+      function update() {
+        const co2 = parseFloat(co2Input.value);
+        co2Label.textContent = co2.toFixed(0) + ' ppm';
+
+        const { temp, forcing, delta } = computeTemp(co2);
+        tempEl.textContent = temp.toFixed(1) + ' °C';
+        forcingEl.textContent = forcing.toFixed(2) + ' W/m²';
+        deltaEl.textContent = (delta >= 0 ? '+' : '') + delta.toFixed(1) + ' °C';
+
+        draw(co2, temp, forcing);
+      }
+
+      function draw(co2, temp, forcing) {
+        const w = canvas.width, h = canvas.height;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+
+        // Sky gradient
+        const skyGrad = ctx.createLinearGradient(0, 0, 0, h * 0.7);
+        skyGrad.addColorStop(0, '#87ceeb');
+        skyGrad.addColorStop(1, '#e0f0ff');
+        ctx.fillStyle = skyGrad;
+        ctx.fillRect(0, 0, w, h * 0.7);
+
+        // Ground
+        ctx.fillStyle = '#5a8a4a';
+        ctx.fillRect(0, h * 0.7, w, h * 0.3);
+
+        // Sun
+        const sunX = 80, sunY = 60;
+        const sunGrad = ctx.createRadialGradient(sunX, sunY, 5, sunX, sunY, 40);
+        sunGrad.addColorStop(0, '#fff8a0');
+        sunGrad.addColorStop(0.5, '#f5b342');
+        sunGrad.addColorStop(1, 'rgba(245, 179, 66, 0)');
+        ctx.fillStyle = sunGrad;
+        ctx.beginPath();
+        ctx.arc(sunX, sunY, 40, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#f5b342';
+        ctx.beginPath();
+        ctx.arc(sunX, sunY, 20, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Incoming solar radiation (yellow arrows)
+        drawArrow(sunX + 30, sunY + 20, w * 0.7, h * 0.65, '#f5b342', 3);
+        drawArrow(sunX + 30, sunY + 30, w * 0.65, h * 0.7, '#f5b342', 3);
+
+        // Atmospheric CO₂ cloud
+        const atmY = 200;
+        const co2Alpha = Math.min(0.8, co2 / 1000);
+        ctx.fillStyle = 'rgba(199, 107, 59, ' + (co2Alpha * 0.4) + ')';
+        for (let i = 0; i < 8; i++) {
+          ctx.beginPath();
+          ctx.arc(200 + i * 60, atmY + Math.sin(i * 0.9) * 15, 30, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Outgoing IR radiation (red arrows)
+        // More CO₂ = more reflected back
+        const reflectFrac = Math.min(0.7, co2 / 1500);
+        const irArrows = [
+          { x: w * 0.35, up: true, back: reflectFrac },
+          { x: w * 0.5, up: true, back: reflectFrac * 0.8 },
+          { x: w * 0.65, up: true, back: reflectFrac * 1.1 },
+        ];
+        irArrows.forEach((a) => {
+          // Outgoing IR (up)
+          drawArrow(a.x, h * 0.65, a.x + 20, h * 0.15, '#c76b3b', 2);
+          // Reflected back (down)
+          if (a.back > 0.1) {
+            drawArrow(a.x + 20, h * 0.25, a.x - 10, h * 0.65, 'rgba(199, 107, 59, ' + a.back + ')', 2);
+          }
+        });
+
+        // Labels
+        ctx.fillStyle = '#0b2b3f';
+        ctx.font = 'bold 13px system-ui';
+        ctx.textAlign = 'left';
+        ctx.fillText('Sunlight in', sunX + 40, sunY + 50);
+        ctx.fillStyle = '#c76b3b';
+        ctx.textAlign = 'right';
+        ctx.fillText('IR out', w - 40, 30);
+        ctx.fillStyle = '#6f8da3';
+        ctx.font = '11px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('CO₂ = ' + co2.toFixed(0) + ' ppm', w / 2, atmY - 60);
+
+        // Thermometer on left
+        const thX = 40, thY = h * 0.72, thH = h * 0.22;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(thX - 6, thY - thH, 12, thH);
+        ctx.strokeStyle = '#1b4a6b';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(thX - 6, thY - thH, 12, thH);
+        const tempFrac = Math.max(0, Math.min(1, (temp - 10) / 20));
+        ctx.fillStyle = '#c76b3b';
+        ctx.fillRect(thX - 4, thY - thH * tempFrac, 8, thH * tempFrac);
+        ctx.beginPath();
+        ctx.arc(thX, thY + 10, 14, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#0b2b3f';
+        ctx.font = 'bold 12px system-ui';
+        ctx.textAlign = 'left';
+        ctx.fillText(temp.toFixed(1) + ' °C', 70, thY + 15);
+        ctx.font = '10px system-ui';
+        ctx.fillStyle = '#6f8da3';
+        ctx.fillText('Surface T', 70, thY + 30);
+
+        // Forcing label
+        ctx.fillStyle = '#0b2b3f';
+        ctx.font = 'bold 12px system-ui';
+        ctx.textAlign = 'right';
+        ctx.fillText('Forcing: ' + forcing.toFixed(2) + ' W/m²', w - 20, h - 20);
+      }
+
+      function drawArrow(x1, y1, x2, y2, color, width) {
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = width;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        // Arrowhead
+        const angle = Math.atan2(y2 - y1, x2 - x1);
+        const headLen = 10;
+        ctx.beginPath();
+        ctx.moveTo(x2, y2);
+        ctx.lineTo(x2 - headLen * Math.cos(angle - Math.PI / 6), y2 - headLen * Math.sin(angle - Math.PI / 6));
+        ctx.lineTo(x2 - headLen * Math.cos(angle + Math.PI / 6), y2 - headLen * Math.sin(angle + Math.PI / 6));
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      co2Input.addEventListener('input', update);
+      preIndBtn.addEventListener('click', () => { co2Input.value = 280; update(); });
+      currentBtn.addEventListener('click', () => { co2Input.value = 420; update(); });
+      doubleBtn.addEventListener('click', () => { co2Input.value = 560; update(); });
+
+      update();
+    })();
+  </script>
+</body>
+</html>

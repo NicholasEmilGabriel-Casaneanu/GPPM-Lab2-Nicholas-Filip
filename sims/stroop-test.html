@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stroop Test — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Stroop Test</h1>
+      <div class="sim-meta">Psychology · Attention &amp; Interference</div>
+    </div>
+
+    <div class="sim-description">
+      Name the <strong>INK colour</strong>, not the word. When the word and colour disagree, your brain takes longer to suppress the automatic reading response. Run timed trials and watch your reaction time double on incongruent stimuli.
+    </div>
+
+    <div class="sim-canvas-wrap" style="padding: 2rem; text-align: center;">
+      <div id="stage" style="min-height: 220px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem;">
+        <div style="color:#4f6f86; font-size:0.95rem;">Click "Start" to begin</div>
+      </div>
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>Trial type</label>
+        <select id="trialType">
+          <option value="mixed" selected>Mixed (random)</option>
+          <option value="congruent">All congruent</option>
+          <option value="incongruent">All incongruent</option>
+        </select>
+      </div>
+      <div class="control">
+        <label>Number of trials</label>
+        <input type="number" id="nTrials" value="20" min="5" max="100" step="1">
+      </div>
+      <div class="control">
+        <label>&nbsp;</label>
+        <div class="btn-row">
+          <button class="btn" id="start">Start</button>
+          <button class="btn secondary" id="reset">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">Congruent mean</span><span class="stat-value" id="congMean">—</span></div>
+      <div class="stat"><span class="stat-label">Incongruent mean</span><span class="stat-value" id="inconMean">—</span></div>
+      <div class="stat"><span class="stat-label">Stroop effect</span><span class="stat-value" id="effect">—</span></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const stage = document.getElementById('stage');
+      const trialTypeSel = document.getElementById('trialType');
+      const nTrialsInput = document.getElementById('nTrials');
+      const startBtn = document.getElementById('start');
+      const resetBtn = document.getElementById('reset');
+      const congMeanEl = document.getElementById('congMean');
+      const inconMeanEl = document.getElementById('inconMean');
+      const effectEl = document.getElementById('effect');
+
+      const COLORS = [
+        { name: 'red', hex: '#c0392b' },
+        { name: 'blue', hex: '#2c7aa0' },
+        { name: 'green', hex: '#5a8a4a' },
+        { name: 'yellow', hex: '#d4a017' },
+        { name: 'purple', hex: '#8a5ac7' },
+      ];
+      const WORD_COLORS = ['red', 'blue', 'green', 'yellow', 'purple'];
+
+      const congRT = [];
+      const inconRT = [];
+      let trialIndex = 0;
+      let totalTrials = 0;
+      let trialStart = 0;
+      let currentTrial = null;
+      let accepting = false;
+
+      function pick(arr) {
+        return arr[Math.floor(Math.random() * arr.length)];
+      }
+
+      function newTrial() {
+        const type = trialTypeSel.value;
+        let isCongruent;
+        if (type === 'congruent') isCongruent = true;
+        else if (type === 'incongruent') isCongruent = false;
+        else isCongruent = Math.random() < 0.5;
+
+        const ink = pick(COLORS);
+        let wordColor;
+        if (isCongruent) {
+          wordColor = ink.name;
+        } else {
+          // Pick a word that isn't the ink colour
+          const others = WORD_COLORS.filter((w) => w !== ink.name);
+          wordColor = pick(others);
+        }
+
+        return { ink, wordColor, congruent: isCongruent };
+      }
+
+      function showTrial() {
+        currentTrial = newTrial();
+        stage.innerHTML = '';
+        const word = document.createElement('div');
+        word.textContent = currentTrial.wordColor.toUpperCase();
+        word.style.cssText = `
+          font-size: 4rem;
+          font-weight: 800;
+          color: ${currentTrial.ink.hex};
+          letter-spacing: 0.05em;
+          user-select: none;
+        `;
+        stage.appendChild(word);
+
+        const hint = document.createElement('div');
+        hint.textContent = 'Pick the INK colour:';
+        hint.style.cssText = 'color:#4f6f86; font-size:0.9rem;';
+        stage.appendChild(hint);
+
+        const btnRow = document.createElement('div');
+        btnRow.style.cssText = 'display:flex; flex-wrap:wrap; gap:0.5rem; justify-content:center;';
+        COLORS.forEach((c) => {
+          const b = document.createElement('button');
+          b.textContent = c.name;
+          b.style.cssText = `
+            background: ${c.hex};
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 0.6rem 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.95rem;
+          `;
+          b.addEventListener('click', () => handleAnswer(c.name));
+          btnRow.appendChild(b);
+        });
+        stage.appendChild(btnRow);
+
+        const progress = document.createElement('div');
+        progress.style.cssText = 'color:#6f8da3; font-size:0.85rem; margin-top:0.5rem;';
+        progress.textContent = `Trial ${trialIndex + 1} / ${totalTrials}`;
+        stage.appendChild(progress);
+
+        trialStart = performance.now();
+        accepting = true;
+      }
+
+      function handleAnswer(colorName) {
+        if (!accepting) return;
+        accepting = false;
+        const rt = performance.now() - trialStart;
+
+        if (colorName === currentTrial.ink.name) {
+          if (currentTrial.congruent) congRT.push(rt);
+          else inconRT.push(rt);
+        } else {
+          // Incorrect — flash red border but still count with a penalty
+          if (currentTrial.congruent) congRT.push(rt + 500);
+          else inconRT.push(rt + 500);
+        }
+
+        trialIndex++;
+        if (trialIndex < totalTrials) {
+          setTimeout(showTrial, 200);
+        } else {
+          finish();
+        }
+      }
+
+      function finish() {
+        const mean = (a) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+        const cm = mean(congRT);
+        const im = mean(inconRT);
+        congMeanEl.textContent = cm !== null ? Math.round(cm) + ' ms' : '—';
+        inconMeanEl.textContent = im !== null ? Math.round(im) + ' ms' : '—';
+        if (cm !== null && im !== null) {
+          const eff = Math.round(im - cm);
+          effectEl.textContent = (eff >= 0 ? '+' : '') + eff + ' ms';
+        } else {
+          effectEl.textContent = '—';
+        }
+
+        stage.innerHTML = `
+          <div style="font-size:2rem; font-weight:700; color:#0b2b3f;">Done!</div>
+          <div style="color:#4f6f86;">Congruent mean: ${cm !== null ? Math.round(cm) : '—'} ms</div>
+          <div style="color:#4f6f86;">Incongruent mean: ${im !== null ? Math.round(im) : '—'} ms</div>
+          <div style="color:#2c7aa0; font-weight:600; margin-top:0.5rem;">
+            ${cm !== null && im !== null ? 'Stroop effect: ' + Math.round(im - cm) + ' ms' : ''}
+          </div>
+        `;
+      }
+
+      function reset() {
+        congRT.length = 0;
+        inconRT.length = 0;
+        trialIndex = 0;
+        accepting = false;
+        congMeanEl.textContent = '—';
+        inconMeanEl.textContent = '—';
+        effectEl.textContent = '—';
+        stage.innerHTML = '<div style="color:#4f6f86; font-size:0.95rem;">Click "Start" to begin</div>';
+      }
+
+      function start() {
+        reset();
+        totalTrials = parseInt(nTrialsInput.value, 10) || 20;
+        trialIndex = 0;
+        showTrial();
+      }
+
+      startBtn.addEventListener('click', start);
+      resetBtn.addEventListener('click', reset);
+    })();
+  </script>
+</body>
+</html>

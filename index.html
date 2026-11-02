@@ -28,7 +28,7 @@
     <!-- Results / search bar area -->
     <div class="results-bar" id="resultsBar">
       <i class="fas fa-flask"></i>
-      <span>Results</span> <span id="resultCount">22</span> simulations available · ready to explore
+      <span>Results</span> <span id="resultCount">0</span> simulations available · ready to explore
     </div>
 
     <!-- Subjects section -->
@@ -40,15 +40,15 @@
       <button class="subject-pill" data-category="Physics"><i class="fas fa-atom"></i> Physics</button>
       <button class="subject-pill" data-category="Chemistry"><i class="fas fa-flask"></i> Chemistry</button>
       <button class="subject-pill" data-category="Biology"><i class="fas fa-dna"></i> Biology</button>
-      <button class="subject-pill" data-category="Earth & Space"><i class="fas fa-globe"></i> Earth & Space</button>
+      <button class="subject-pill" data-category="Earth &amp; Space"><i class="fas fa-globe"></i> Earth &amp; Space</button>
       <button class="subject-pill" data-category="Computer Science"><i class="fas fa-laptop-code"></i> Computer Science</button>
       <button class="subject-pill" data-category="Data Science"><i class="fas fa-chart-bar"></i> Data Science</button>
       <button class="subject-pill" data-category="Social Science"><i class="fas fa-users"></i> Social Science</button>
       <button class="subject-pill" data-category="Mathematics"><i class="fas fa-square-root-alt"></i> Mathematics</button>
-      <button class="subject-pill" data-category="Finance & Economics"><i class="fas fa-coins"></i> Finance & Economics</button>
+      <button class="subject-pill" data-category="Finance &amp; Economics"><i class="fas fa-coins"></i> Finance &amp; Economics</button>
       <button class="subject-pill" data-category="Engineering"><i class="fas fa-cogs"></i> Engineering</button>
-      <button class="subject-pill" data-category="Music & Acoustics"><i class="fas fa-music"></i> Music & Acoustics</button>
-      <button class="subject-pill" data-category="Climate & Sustainability"><i class="fas fa-leaf"></i> Climate & Sustainability</button>
+      <button class="subject-pill" data-category="Music &amp; Acoustics"><i class="fas fa-music"></i> Music &amp; Acoustics</button>
+      <button class="subject-pill" data-category="Climate &amp; Sustainability"><i class="fas fa-leaf"></i> Climate &amp; Sustainability</button>
       <button class="subject-pill" data-category="Psychology"><i class="fas fa-brain"></i> Psychology</button>
       <button class="subject-pill" data-category="Cognitive Science"><i class="fas fa-eye"></i> Cognitive Science</button>
     </div>
@@ -68,7 +68,7 @@
     <!-- ALL sim cards live inside this grid -->
     <div class="sims-grid" id="simsGrid">
 
-      <!-- 1. Physics / Electric Field -->
+      <!-- ===== Physics ===== -->
       <div class="sim-card" data-sim-id="electric-field" data-category="Physics">
         <div class="sim-subject-tag"><i class="fas fa-atom"></i> Physics</div>
         <h3>Electric Field &amp; Charges</h3>
@@ -79,7 +79,17 @@
         </div>
       </div>
 
-      <!-- 2. Chemistry / Acid-Base Titration -->
+      <div class="sim-card" data-sim-id="projectile-motion" data-category="Physics">
+        <div class="sim-subject-tag"><i class="fas fa-atom"></i> Physics</div>
+        <h3>Projectile Motion</h3>
+        <p>Fire a projectile with adjustable speed, angle, and gravity. Watch the parabolic path trace out and see range, max height, and flight time update live.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/projectile-motion.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <!-- ===== Chemistry ===== -->
       <div class="sim-card" data-sim-id="acid-base-titration" data-category="Chemistry">
         <div class="sim-subject-tag"><i class="fas fa-flask"></i> Chemistry 🧪 Lab</div>
         <h3>Acid-Base Titration</h3>
@@ -90,7 +100,17 @@
         </div>
       </div>
 
-      <!-- 3. Biology / DNA -->
+      <div class="sim-card" data-sim-id="periodic-table" data-category="Chemistry">
+        <div class="sim-subject-tag"><i class="fas fa-flask"></i> Chemistry</div>
+        <h3>Periodic Table Explorer</h3>
+        <p>Browse an interactive periodic table. Click any element to see its atomic number, mass, group, period, and category — colour-coded by family.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/periodic-table.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <!-- ===== Biology ===== -->
       <div class="sim-card" data-sim-id="dna-transcription" data-category="Biology">
         <div class="sim-subject-tag"><i class="fas fa-dna"></i> Biology</div>
         <h3>DNA Transcription &amp; Translation</h3>
@@ -101,7 +121,6 @@
         </div>
       </div>
 
-            <!-- Biology: Cell Evolution Lab -->
       <div class="sim-card" data-sim-id="cell-evolution" data-category="Biology">
         <div class="sim-subject-tag"><i class="fas fa-dna"></i> Biology · Lab</div>
         <h3>Cell Evolution Lab</h3>
@@ -112,7 +131,17 @@
         </div>
       </div>
 
-      <!-- 4. Earth & Space / Moon Phases -->
+      <div class="sim-card" data-sim-id="punnett-square" data-category="Biology">
+        <div class="sim-subject-tag"><i class="fas fa-dna"></i> Biology</div>
+        <h3>Punnett Square &amp; Genetics</h3>
+        <p>Enter two parent genotypes and instantly see the Punnett square, the genotype ratios, and the dominant/recessive phenotype breakdown.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/punnett-square.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <!-- ===== Earth & Space ===== -->
       <div class="sim-card" data-sim-id="moon-phases" data-category="Earth &amp; Space">
         <div class="sim-subject-tag"><i class="fas fa-globe"></i> Earth &amp; Space 🧪 Lab</div>
         <h3>Moon Phases</h3>
@@ -123,7 +152,17 @@
         </div>
       </div>
 
-      <!-- 5. Computer Science / Logic Gates -->
+      <div class="sim-card" data-sim-id="solar-system" data-category="Earth &amp; Space">
+        <div class="sim-subject-tag"><i class="fas fa-globe"></i> Earth &amp; Space</div>
+        <h3>Solar System Orbits</h3>
+        <p>Watch all eight planets orbit the Sun at their real relative periods. Speed up time to see Mercury whip around while Neptune barely moves.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/solar-system.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <!-- ===== Computer Science ===== -->
       <div class="sim-card" data-sim-id="logic-gates" data-category="Computer Science">
         <div class="sim-subject-tag"><i class="fas fa-laptop-code"></i> Computer Science</div>
         <h3>Logic Gates &amp; Circuits</h3>
@@ -134,179 +173,362 @@
         </div>
       </div>
 
-      <!-- 6. Data Science / Bayes -->
-      <div class="sim-card" data-sim-id="bayes-theorem" data-category="Data Science">
-        <div class="sim-subject-tag"><i class="fas fa-chart-bar"></i> Data Science</div>
-        <h3>Bayes' Theorem</h3>
-        <p>Watch the classic medical-test paradox: even an accurate test can give mostly false positives when the disease is rare. Drag prevalence, sensitivity, and specificity to see the posterior live.</p>
-        <div class="card-footer">
-          <i class="far fa-star star-icon" title="Star this simulation"></i>
-          <span class="open-link">Open sim <i class="fas fa-arrow-right"></i></span>
-        </div>
-      </div>
-
-      <!-- 7. Social Science / Schelling -->
-      <div class="sim-card" data-sim-id="schelling-segregation" data-category="Social Science">
-        <div class="sim-subject-tag"><i class="fas fa-users"></i> Social Science</div>
-        <h3>Schelling's Segregation Model</h3>
-        <p>Place two groups on a grid where each only wants a small fraction of similar neighbors. Watch surprising large-scale segregation emerge from gentle individual preferences.</p>
-        <div class="card-footer">
-          <i class="far fa-star star-icon" title="Star this simulation"></i>
-          <span class="open-link">Open sim <i class="fas fa-arrow-right"></i></span>
-        </div>
-      </div>
-
-      <!-- 8. Mathematics / Mandelbrot -->
-      <div class="sim-card" data-sim-id="mandelbrot-set" data-category="Mathematics">
-        <div class="sim-subject-tag"><i class="fas fa-square-root-alt"></i> Mathematics</div>
-        <h3>Mandelbrot Set</h3>
-        <p>z_{n+1} = z_n² + c. For each point c in the plane, ask: does this stay bounded as we iterate? The answer paints one of mathematics' most famous fractals. Click anywhere to zoom in — there's infinite detail at every scale.</p>
-        <div class="card-footer">
-          <i class="far fa-star star-icon" title="Star this simulation"></i>
-          <span class="open-link">Open sim <i class="fas fa-arrow-right"></i></span>
-        </div>
-      </div>
-
-      <!-- 9. Finance / Compound Interest -->
-      <div class="sim-card" data-sim-id="compound-interest" data-category="Finance &amp; Economics">
-        <div class="sim-subject-tag"><i class="fas fa-coins"></i> Finance &amp; Economics 🧪 Lab</div>
-        <h3>Compound Interest</h3>
-        <p>"The most powerful force in the universe" — apocryphally attributed to Einstein. Slide rate, time, and starting principal, optionally add monthly contributions, and watch compound and simple interest pull apart.</p>
-        <div class="card-footer">
-          <i class="far fa-star star-icon" title="Star this simulation"></i>
-          <span class="open-link">Open sim <i class="fas fa-arrow-right"></i></span>
-        </div>
-      </div>
-
-      <!-- 10. Engineering / Truss -->
-      <div class="sim-card" data-sim-id="truss-analyzer" data-category="Engineering">
-        <div class="sim-subject-tag"><i class="fas fa-cogs"></i> Engineering</div>
-        <h3>Truss Analyzer</h3>
-        <p>A pin-jointed truss bridge under a moving load. Each member is colored by its internal force — red is tension, blue is compression. Drag the load car along the deck and watch the force pattern change. The internal forces come from method-of-joints equilibrium.</p>
-        <div class="card-footer">
-          <i class="far fa-star star-icon" title="Star this simulation"></i>
-          <span class="open-link">Open sim <i class="fas fa-arrow-right"></i></span>
-        </div>
-      </div>
-
-      <!-- 11. Music & Acoustics / Beat Frequencies -->
-      <div class="sim-card" data-sim-id="beat-frequencies" data-category="Music &amp; Acoustics">
-        <div class="sim-subject-tag"><i class="fas fa-music"></i> Music &amp; Acoustics</div>
-        <h3>Beat Frequencies</h3>
-        <p>Two close pure tones — when added, they produce a slow amplitude beat at the difference frequency. Adjust the two pitches and watch the envelope wow in and out. Click Play to also hear it: musicians use this exact phenomenon to tune by ear.</p>
-        <div class="card-footer">
-          <i class="far fa-star star-icon" title="Star this simulation"></i>
-          <span class="open-link">Open sim <i class="fas fa-arrow-right"></i></span>
-        </div>
-      </div>
-
-      <!-- 12. Climate / Carbon Cycle -->
-      <div class="sim-card" data-sim-id="carbon-cycle" data-category="Climate &amp; Sustainability">
-        <div class="sim-subject-tag"><i class="fas fa-leaf"></i> Climate &amp; Sustainability 🧪 Lab</div>
-        <h3>Carbon Cycle</h3>
-        <p>Carbon flows between four reservoirs — atmosphere, surface ocean, deep ocean, and land biosphere — driven by photosynthesis, respiration, ocean exchange, and human emissions. Drag the emission rate and watch each pool evolve over a century. The atmospheric pool is what drives global temperature.</p>
-        <div class="card-footer">
-          <i class="far fa-star star-icon" title="Star this simulation"></i>
-          <span class="open-link">Open sim <i class="fas fa-arrow-right"></i></span>
-        </div>
-      </div>
-
-      <!-- 13. Psychology / Stroop -->
-      <div class="sim-card" data-sim-id="stroop-test" data-category="Psychology">
-        <div class="sim-subject-tag"><i class="fas fa-brain"></i> Psychology</div>
-        <h3>Stroop Test</h3>
-        <p>Color words printed in mismatched ink — name the INK color, not the word. The classic Stroop effect: when word and color disagree, your brain takes longer to suppress reading. Run timed trials and watch your reaction time double on incongruent stimuli.</p>
-        <div class="card-footer">
-          <i class="far fa-star star-icon" title="Star this simulation"></i>
-          <span class="open-link">Open sim <i class="fas fa-arrow-right"></i></span>
-        </div>
-      </div>
-
-      <!-- 14. Cognitive Science / Optical Illusions -->
-      <div class="sim-card" data-sim-id="optical-illusions" data-category="Cognitive Science">
-        <div class="sim-subject-tag"><i class="fas fa-eye"></i> Cognitive Science</div>
-        <h3>Optical Illusions Gallery</h3>
-        <p>Six classic illusions where your brain insists on the wrong answer even after you measure: Müller-Lyer, Ponzo, Café Wall, Hering, Ebbinghaus, and Checker Shadow. Toggle the "rulers" overlay to confirm — the lines really are equal.</p>
-        <div class="card-footer">
-          <i class="far fa-star star-icon" title="Star this simulation"></i>
-          <span class="open-link">Open sim <i class="fas fa-arrow-right"></i></span>
-        </div>
-      </div>
-
-      <!-- 15. Physics: Projectile Motion -->
-      <div class="sim-card" data-sim-id="projectile-motion" data-category="Physics">
-        <div class="sim-subject-tag"><i class="fas fa-atom"></i> Physics</div>
-        <h3>Projectile Motion</h3>
-        <p>Fire a projectile with adjustable speed, angle, and gravity. Watch the parabolic path trace out and see range, max height, and flight time update live.</p>
-        <div class="card-footer">
-          <i class="far fa-star star-icon" title="Star this simulation"></i>
-          <span class="open-link">Open sim <i class="fas fa-arrow-right"></i></span>
-        </div>
-      </div>
-
-      <!-- 16. Chemistry: Periodic Table -->
-      <div class="sim-card" data-sim-id="periodic-table" data-category="Chemistry">
-        <div class="sim-subject-tag"><i class="fas fa-flask"></i> Chemistry</div>
-        <h3>Periodic Table Explorer</h3>
-        <p>Browse an interactive periodic table. Click any element to see its atomic number, mass, group, period, and category — colour-coded by family.</p>
-        <div class="card-footer">
-          <i class="far fa-star star-icon" title="Star this simulation"></i>
-          <span class="open-link">Open sim <i class="fas fa-arrow-right"></i></span>
-        </div>
-      </div>
-
-      <!-- 17. Biology: Punnett Square -->
-      <div class="sim-card" data-sim-id="punnett-square" data-category="Biology">
-        <div class="sim-subject-tag"><i class="fas fa-dna"></i> Biology</div>
-        <h3>Punnett Square &amp; Genetics</h3>
-        <p>Enter two parent genotypes and instantly see the Punnett square, the genotype ratios, and the dominant/recessive phenotype breakdown.</p>
-        <div class="card-footer">
-          <i class="far fa-star star-icon" title="Star this simulation"></i>
-          <span class="open-link">Open sim <i class="fas fa-arrow-right"></i></span>
-        </div>
-      </div>
-
-      <!-- 18. Earth & Space: Solar System -->
-      <div class="sim-card" data-sim-id="solar-system" data-category="Earth &amp; Space">
-        <div class="sim-subject-tag"><i class="fas fa-globe"></i> Earth &amp; Space</div>
-        <h3>Solar System Orbits</h3>
-        <p>Watch all eight planets orbit the Sun at their real relative periods. Speed up time to see Mercury whip around while Neptune barely moves.</p>
-        <div class="card-footer">
-          <i class="far fa-star star-icon" title="Star this simulation"></i>
-          <span class="open-link">Open sim <i class="fas fa-arrow-right"></i></span>
-        </div>
-      </div>
-
-      <!-- 19. Computer Science: Binary Converter -->
       <div class="sim-card" data-sim-id="binary-converter" data-category="Computer Science">
         <div class="sim-subject-tag"><i class="fas fa-laptop-code"></i> Computer Science</div>
         <h3>Binary &amp; Number Bases</h3>
         <p>Type a decimal number (0–255) and see its 8-bit binary, hexadecimal, and octal representations. Click any bit to toggle it and watch the value update.</p>
         <div class="card-footer">
           <i class="far fa-star star-icon" title="Star this simulation"></i>
-          <span class="open-link">Open sim <i class="fas fa-arrow-right"></i></span>
+          <a class="open-link" href="sims/binary-converter.html">Open sim <i class="fas fa-arrow-right"></i></a>
         </div>
       </div>
 
-      <!-- 20. Data Science: Linear Regression -->
+      <!-- ===== Data Science ===== -->
+      <div class="sim-card" data-sim-id="bayes-theorem" data-category="Data Science">
+        <div class="sim-subject-tag"><i class="fas fa-chart-bar"></i> Data Science</div>
+        <h3>Bayes' Theorem</h3>
+        <p>Watch the classic medical-test paradox: even an accurate test can give mostly false positives when the disease is rare. Drag prevalence, sensitivity, and specificity to see the posterior live.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/bayes-theorem.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
       <div class="sim-card" data-sim-id="linear-regression" data-category="Data Science">
         <div class="sim-subject-tag"><i class="fas fa-chart-bar"></i> Data Science</div>
         <h3>Linear Regression</h3>
         <p>Generate noisy data and see the best-fit line computed live, with residuals shown as dashed lines. Add points by clicking anywhere on the canvas.</p>
         <div class="card-footer">
           <i class="far fa-star star-icon" title="Star this simulation"></i>
-          <span class="open-link">Open sim <i class="fas fa-arrow-right"></i></span>
+          <a class="open-link" href="sims/linear-regression.html">Open sim <i class="fas fa-arrow-right"></i></a>
         </div>
       </div>
 
-      <!-- 21. Social Science: Predator-Prey -->
+      <!-- ===== Social Science ===== -->
+      <div class="sim-card" data-sim-id="schelling-segregation" data-category="Social Science">
+        <div class="sim-subject-tag"><i class="fas fa-users"></i> Social Science</div>
+        <h3>Schelling's Segregation Model</h3>
+        <p>Place two groups on a grid where each only wants a small fraction of similar neighbors. Watch surprising large-scale segregation emerge from gentle individual preferences.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/schelling-segregation.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
       <div class="sim-card" data-sim-id="predator-prey" data-category="Social Science">
         <div class="sim-subject-tag"><i class="fas fa-users"></i> Social Science</div>
         <h3>Predator–Prey Dynamics</h3>
         <p>The Lotka–Volterra equations in action. Adjust prey growth, predation rate, and predator death to see how population cycles shift. A classic model in ecology.</p>
         <div class="card-footer">
           <i class="far fa-star star-icon" title="Star this simulation"></i>
-          <span class="open-link">Open sim <i class="fas fa-arrow-right"></i></span>
+          <a class="open-link" href="sims/predator-prey.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <!-- ===== Mathematics ===== -->
+      <div class="sim-card" data-sim-id="mandelbrot-set" data-category="Mathematics">
+        <div class="sim-subject-tag"><i class="fas fa-square-root-alt"></i> Mathematics</div>
+        <h3>Mandelbrot Set</h3>
+        <p>z_{n+1} = z_n² + c. For each point c in the plane, ask: does this stay bounded as we iterate? The answer paints one of mathematics' most famous fractals. Click anywhere to zoom in — there's infinite detail at every scale.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/mandelbrot-set.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <div class="sim-card" data-sim-id="geometry-lab" data-category="Mathematics">
+        <div class="sim-subject-tag"><i class="fas fa-square-root-alt"></i> Mathematics</div>
+        <h3>Geometry Lab</h3>
+        <p>Six 3D polyhedra — cube, tetrahedron, octahedron, dodecahedron, icosahedron, and triangular prism — that you can rotate, zoom, and measure. Use the distance, angle, and cut-plane tools to explore every vertex and edge.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/geometry-lab.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <!-- ===== Finance & Economics ===== -->
+      <div class="sim-card" data-sim-id="compound-interest" data-category="Finance &amp; Economics">
+        <div class="sim-subject-tag"><i class="fas fa-coins"></i> Finance &amp; Economics 🧪 Lab</div>
+        <h3>Compound Interest</h3>
+        <p>"The most powerful force in the universe" — apocryphally attributed to Einstein. Slide rate, time, and starting principal, optionally add monthly contributions, and watch compound and simple interest pull apart.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/compound-interest.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <div class="sim-card" data-sim-id="economy-game" data-category="Finance &amp; Economics">
+        <div class="sim-subject-tag"><i class="fas fa-coins"></i> Finance &amp; Economics 🧪 Lab</div>
+        <h3>City Ledger</h3>
+        <p>Run a household in a live simulated economy. Buy a house with a mortgage, save at the bank, invest in the stock market, watch inflation eat your cash, and plan for retirement. Every year that passes changes prices, wages, and returns. No sliders — just choices.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/economy-game.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <!-- ===== Engineering ===== -->
+      <div class="sim-card" data-sim-id="truss-analyzer" data-category="Engineering">
+        <div class="sim-subject-tag"><i class="fas fa-cogs"></i> Engineering</div>
+        <h3>Truss Analyzer</h3>
+        <p>A pin-jointed truss bridge under a moving load. Each member is colored by its internal force — red is tension, blue is compression. Drag the load car along the deck and watch the force pattern change. The internal forces come from method-of-joints equilibrium.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/truss-analyzer.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <div class="sim-card" data-sim-id="engineering-lab" data-category="Engineering">
+        <div class="sim-subject-tag"><i class="fas fa-cogs"></i> Engineering</div>
+        <h3>Engineering Lab</h3>
+        <p>Five interactive labs in one: build and stress-test a truss, drag loads across beams while watching shear and moment diagrams, wire up a live circuit, mesh gears to trade speed for torque, and trace projectile arcs under Earth or Moon gravity. Everything updates in real time.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/engineering-lab.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <!-- ===== Music & Acoustics ===== -->
+      <div class="sim-card" data-sim-id="beat-frequencies" data-category="Music &amp; Acoustics">
+        <div class="sim-subject-tag"><i class="fas fa-music"></i> Music &amp; Acoustics</div>
+        <h3>Beat Frequencies</h3>
+        <p>Two close pure tones — when added, they produce a slow amplitude beat at the difference frequency. Adjust the two pitches and watch the envelope wow in and out. Click Play to also hear it: musicians use this exact phenomenon to tune by ear.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/beat-frequencies.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <div class="sim-card" data-sim-id="harmonic-series" data-category="Music &amp; Acoustics">
+        <div class="sim-subject-tag"><i class="fas fa-music"></i> Music &amp; Acoustics</div>
+        <h3>Harmonic Series</h3>
+        <p>Every pitched note is really a stack of harmonics — integer multiples of a fundamental. Toggle individual harmonics on and off and hear how a pure tone becomes a trumpet, a violin, or a clarinet depending on which overtones dominate.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/harmonic-series.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <div class="sim-card" data-sim-id="standing-waves" data-category="Music &amp; Acoustics">
+        <div class="sim-subject-tag"><i class="fas fa-music"></i> Music &amp; Acoustics</div>
+        <h3>Standing Waves</h3>
+        <p>A guitar string fixed at both ends only vibrates at certain frequencies — the harmonics. Change tension, length, and harmonic number and watch the nodes and antinodes move. This is why strings sound the way they do.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/standing-waves.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <div class="sim-card" data-sim-id="equal-temperament" data-category="Music &amp; Acoustics">
+        <div class="sim-subject-tag"><i class="fas fa-music"></i> Music &amp; Acoustics</div>
+        <h3>Equal Temperament</h3>
+        <p>Why is a piano slightly out of tune with itself? Compare just intonation (pure ratios like 3:2) with equal temperament (twelfth root of 2). The small errors are what let you play in every key.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/equal-temperament.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <div class="sim-card" data-sim-id="fourier-synthesis" data-category="Music &amp; Acoustics">
+        <div class="sim-subject-tag"><i class="fas fa-music"></i> Music &amp; Acoustics</div>
+        <h3>Fourier Synthesis of Instruments</h3>
+        <p>Any periodic waveform — the sound of a violin, oboe, or synth — is a sum of sine waves. Add harmonics with different amplitudes and hear the timbre shift from pure tone to something that sounds like a real instrument.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/fourier-synthesis.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <div class="sim-card" data-sim-id="doppler-effect" data-category="Music &amp; Acoustics">
+        <div class="sim-subject-tag"><i class="fas fa-music"></i> Music &amp; Acoustics</div>
+        <h3>Doppler Effect</h3>
+        <p>An ambulance siren sounds higher as it approaches and lower as it recedes. Move a source past a listener and watch the sound waves bunch up in front and stretch behind — the same effect that lets police radar measure speed.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/doppler-effect.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <!-- ===== Climate & Sustainability ===== -->
+      <div class="sim-card" data-sim-id="carbon-cycle" data-category="Climate &amp; Sustainability">
+        <div class="sim-subject-tag"><i class="fas fa-leaf"></i> Climate &amp; Sustainability 🧪 Lab</div>
+        <h3>Carbon Cycle</h3>
+        <p>Carbon flows between four reservoirs — atmosphere, surface ocean, deep ocean, and land biosphere — driven by photosynthesis, respiration, ocean exchange, and human emissions. Drag the emission rate and watch each pool evolve over a century. The atmospheric pool is what drives global temperature.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/carbon-cycle.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <div class="sim-card" data-sim-id="greenhouse-effect" data-category="Climate &amp; Sustainability">
+        <div class="sim-subject-tag"><i class="fas fa-leaf"></i> Climate &amp; Sustainability</div>
+        <h3>Greenhouse Effect</h3>
+        <p>Sunlight comes in; infrared goes out. Greenhouse gases trap some of that outgoing heat. Change CO₂ concentration and see how the planet's energy balance shifts — and why a few hundred parts per million matters so much.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/greenhouse-effect.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <div class="sim-card" data-sim-id="ice-albedo-feedback" data-category="Climate &amp; Sustainability">
+        <div class="sim-subject-tag"><i class="fas fa-leaf"></i> Climate &amp; Sustainability</div>
+        <h3>Ice-Albedo Feedback</h3>
+        <p>White ice reflects sunlight; dark ocean absorbs it. Warm the planet a little and ice melts, which makes the surface darker, which makes it warm faster. See the runaway feedback loop in action.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/ice-albedo-feedback.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <div class="sim-card" data-sim-id="sea-level-rise" data-category="Climate &amp; Sustainability">
+        <div class="sim-subject-tag"><i class="fas fa-leaf"></i> Climate &amp; Sustainability</div>
+        <h3>Sea Level Rise</h3>
+        <p>Two processes drive sea level: water expands as it warms, and glaciers add meltwater. Toggle each contribution and watch how a coastline changes over the next century. The difference between 1 °C and 3 °C of warming is enormous.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/sea-level-rise.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <div class="sim-card" data-sim-id="energy-mix" data-category="Climate &amp; Sustainability">
+        <div class="sim-subject-tag"><i class="fas fa-leaf"></i> Climate &amp; Sustainability</div>
+        <h3>Energy Mix</h3>
+        <p>Build a power grid: choose how much comes from coal, gas, nuclear, solar, wind, and hydro. Each source has a different carbon cost and price. Try to hit a 2035 emissions target without breaking the bank.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/energy-mix.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <div class="sim-card" data-sim-id="keeling-curve" data-category="Climate &amp; Sustainability">
+        <div class="sim-subject-tag"><i class="fas fa-leaf"></i> Climate &amp; Sustainability</div>
+        <h3>Keeling Curve</h3>
+        <p>Since 1958, CO₂ has been measured continuously at Mauna Loa, Hawaii. The famous "sawtooth" curve climbs relentlessly but wiggles every year as the Northern Hemisphere breathes in and out. See the data and the seasonality.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/keeling-curve.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <!-- ===== Psychology ===== -->
+      <div class="sim-card" data-sim-id="stroop-test" data-category="Psychology">
+        <div class="sim-subject-tag"><i class="fas fa-brain"></i> Psychology</div>
+        <h3>Stroop Test</h3>
+        <p>Color words printed in mismatched ink — name the INK color, not the word. The classic Stroop effect: when word and color disagree, your brain takes longer to suppress reading. Run timed trials and watch your reaction time double on incongruent stimuli.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/stroop-test.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <div class="sim-card" data-sim-id="reaction-time" data-category="Psychology">
+        <div class="sim-subject-tag"><i class="fas fa-brain"></i> Psychology</div>
+        <h3>Reaction Time</h3>
+        <p>Click as soon as the screen turns green. Measure your simple reaction time over dozens of trials and see how it compares to the human average (~250 ms). Watch for the outlier trials where you anticipated too early.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/reaction-time.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <div class="sim-card" data-sim-id="memory-span" data-category="Psychology">
+        <div class="sim-subject-tag"><i class="fas fa-brain"></i> Psychology</div>
+        <h3>Memory Span</h3>
+        <p>Digits flash one at a time. Repeat them back in order (forward span) or reversed (backward span). Most adults hold 7 ± 2 digits forward and 5 ± 1 backward. Find your own limit.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/memory-span.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <div class="sim-card" data-sim-id="implicit-association" data-category="Psychology">
+        <div class="sim-subject-tag"><i class="fas fa-brain"></i> Psychology</div>
+        <h3>Implicit Association Demo</h3>
+        <p>Sort words and images into categories as fast as you can. Compare your speed when categories are "matched" vs "crossed" — the IAT design used to study implicit associations. A demonstration, not a diagnosis.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/implicit-association.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <div class="sim-card" data-sim-id="illusion-test" data-category="Psychology">
+        <div class="sim-subject-tag"><i class="fas fa-brain"></i> Psychology</div>
+        <h3>Visual Illusions Test</h3>
+        <p>Adjust a line to match the length of another, then find out how far off you were. Test yourself on Müller-Lyer, Ponzo, and Ebbinghaus illusions — and see how much your brain insists on the wrong answer.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/illusion-test.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <div class="sim-card" data-sim-id="classical-conditioning" data-category="Psychology">
+        <div class="sim-subject-tag"><i class="fas fa-brain"></i> Psychology</div>
+        <h3>Classical Conditioning</h3>
+        <p>Pavlov's dog, but you run the experiment. Pair a neutral cue (a light) with a reward (food) and watch the conditioned response build up. Then remove the reward and see how quickly it extinguishes.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/classical-conditioning.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <!-- ===== Cognitive Science ===== -->
+      <div class="sim-card" data-sim-id="optical-illusions" data-category="Cognitive Science">
+        <div class="sim-subject-tag"><i class="fas fa-eye"></i> Cognitive Science</div>
+        <h3>Optical Illusions Gallery</h3>
+        <p>Six classic illusions where your brain insists on the wrong answer even after you measure: Müller-Lyer, Ponzo, Café Wall, Hering, Ebbinghaus, and Checker Shadow. Toggle the "rulers" overlay to confirm — the lines really are equal.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/optical-illusions.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <div class="sim-card" data-sim-id="change-blindness" data-category="Cognitive Science">
+        <div class="sim-subject-tag"><i class="fas fa-eye"></i> Cognitive Science</div>
+        <h3>Change Blindness</h3>
+        <p>Two scenes flicker back and forth. One small thing changes — can you spot it? Most people are surprisingly bad at this, because attention is narrower than it feels. Find the change, then see how obvious it was all along.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/change-blindness.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <div class="sim-card" data-sim-id="mental-rotation" data-category="Cognitive Science">
+        <div class="sim-subject-tag"><i class="fas fa-eye"></i> Cognitive Science</div>
+        <h3>Mental Rotation</h3>
+        <p>Two 3D shapes appear side by side. Are they the same object seen from a different angle, or a mirror-image impostor? Shepard &amp; Metzler found that reaction time rises linearly with rotation angle — your brain really is spinning the shape.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/mental-rotation.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <div class="sim-card" data-sim-id="dual-n-back" data-category="Cognitive Science">
+        <div class="sim-subject-tag"><i class="fas fa-eye"></i> Cognitive Science</div>
+        <h3>Dual N-Back</h3>
+        <p>The famous working-memory training task: track both a shape and a sound, and press "match" when either repeats from N steps ago. N=2 is easy. N=3 is hard. It's the cognitive equivalent of a treadmill.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/dual-n-back.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <div class="sim-card" data-sim-id="attentional-blink" data-category="Cognitive Science">
+        <div class="sim-subject-tag"><i class="fas fa-eye"></i> Cognitive Science</div>
+        <h3>Attentional Blink</h3>
+        <p>Letters flash in rapid succession. Spot the white target letter, then try to spot a second target shortly after. In the ~300–500 ms window after the first, the second is often missed entirely — attention is still "blinking."</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/attentional-blink.html">Open sim <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <div class="sim-card" data-sim-id="mcgurk-effect" data-category="Cognitive Science">
+        <div class="sim-subject-tag"><i class="fas fa-eye"></i> Cognitive Science</div>
+        <h3>McGurk Effect</h3>
+        <p>Hear one syllable, see another mouth shape — and your brain fuses them into a third sound that was never played. Switch audio and video independently and discover that you don't hear with your ears alone.</p>
+        <div class="card-footer">
+          <i class="far fa-star star-icon" title="Star this simulation"></i>
+          <a class="open-link" href="sims/mcgurk-effect.html">Open sim <i class="fas fa-arrow-right"></i></a>
         </div>
       </div>
 

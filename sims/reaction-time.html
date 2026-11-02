@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reaction Time — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Reaction Time</h1>
+      <div class="sim-meta">Psychology · Perception &amp; Action</div>
+    </div>
+
+    <div class="sim-description">
+      Click as soon as the screen turns green. Measure your simple reaction time over dozens of trials and see how it compares to the human average (~250 ms). Watch for the outlier trials where you anticipated too early.
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="canvas" width="820" height="360"></canvas>
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>&nbsp;</label>
+        <div class="btn-row">
+          <button class="btn" id="start">Start</button>
+          <button class="btn secondary" id="reset">Reset</button>
+        </div>
+      </div>
+      <div class="control">
+        <label>&nbsp;</label>
+        <div class="stat" style="background:#f8fafc; padding:0.6rem 1rem; border-radius:8px; border:1px solid #e2edf5;">
+          <span class="stat-value" id="instruction" style="font-size:0.95rem;">Press Start</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">Last</span><span class="stat-value" id="last">—</span></div>
+      <div class="stat"><span class="stat-label">Mean</span><span class="stat-value" id="mean">—</span></div>
+      <div class="stat"><span class="stat-label">Best</span><span class="stat-value" id="best">—</span></div>
+      <div class="stat"><span class="stat-label">Trials</span><span class="stat-value" id="count">0</span></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const startBtn = document.getElementById('start');
+      const resetBtn = document.getElementById('reset');
+      const instructionEl = document.getElementById('instruction');
+      const lastEl = document.getElementById('last');
+      const meanEl = document.getElementById('mean');
+      const bestEl = document.getElementById('best');
+      const countEl = document.getElementById('count');
+
+      const MAX_TRIALS = 10;
+      let rts = [];
+      let state = 'idle'; // 'idle' | 'waiting' | 'ready' | 'done'
+      let readyTime = 0;
+      let timeoutHandle = null;
+
+      function draw(color, text) {
+        const w = canvas.width, h = canvas.height;
+        ctx.fillStyle = color;
+        ctx.fillRect(0, 0, w, h);
+        if (text) {
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 28px system-ui';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(text, w / 2, h / 2);
+        }
+      }
+
+      function updateStats() {
+        countEl.textContent = rts.length;
+        if (rts.length === 0) {
+          lastEl.textContent = '—';
+          meanEl.textContent = '—';
+          bestEl.textContent = '—';
+          return;
+        }
+        lastEl.textContent = Math.round(rts[rts.length - 1]) + ' ms';
+        meanEl.textContent = Math.round(rts.reduce((a, b) => a + b, 0) / rts.length) + ' ms';
+        bestEl.textContent = Math.round(Math.min(...rts)) + ' ms';
+      }
+
+      function nextTrial() {
+        if (rts.length >= MAX_TRIALS) {
+          state = 'done';
+          draw('#0b2b3f', 'Done! Press Reset');
+          instructionEl.textContent = 'Finished. Mean: ' + Math.round(rts.reduce((a, b) => a + b, 0) / rts.length) + ' ms';
+          return;
+        }
+        state = 'waiting';
+        draw('#c0392b', 'Wait for green…');
+        instructionEl.textContent = 'Click when green';
+        const delay = 1000 + Math.random() * 2500;
+        timeoutHandle = setTimeout(() => {
+          state = 'ready';
+          readyTime = performance.now();
+          draw('#5a8a4a', 'CLICK!');
+        }, delay);
+      }
+
+      function handleClick() {
+        if (state === 'idle' || state === 'done') {
+          return;
+        }
+        if (state === 'waiting') {
+          // Anticipated too early
+          clearTimeout(timeoutHandle);
+          state = 'idle';
+          draw('#c0392b', 'Too early!');
+          instructionEl.textContent = 'Too early — try again';
+          return;
+        }
+        if (state === 'ready') {
+          const rt = performance.now() - readyTime;
+          rts.push(rt);
+          updateStats();
+          draw('#2c7aa0', Math.round(rt) + ' ms');
+          state = 'idle';
+          setTimeout(nextTrial, 800);
+        }
+      }
+
+      canvas.addEventListener('click', handleClick);
+
+      startBtn.addEventListener('click', () => {
+        if (timeoutHandle) clearTimeout(timeoutHandle);
+        rts = [];
+        updateStats();
+        nextTrial();
+      });
+
+      resetBtn.addEventListener('click', () => {
+        if (timeoutHandle) clearTimeout(timeoutHandle);
+        rts = [];
+        state = 'idle';
+        updateStats();
+        draw('#f0f4f8', 'Press Start');
+        instructionEl.textContent = 'Press Start';
+      });
+
+      draw('#f0f4f8', 'Press Start');
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dual N-Back — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Dual N-Back</h1>
+      <div class="sim-meta">Cognitive Science · Working Memory Training</div>
+    </div>
+
+    <div class="sim-description">
+      Track both a shape and a sound. Press "Match" when either repeats from <strong>N steps ago</strong>. N=2 is easy. N=3 is hard. It's the cognitive equivalent of a treadmill.
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="canvas" width="820" height="400"></canvas>
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>N level: <span id="nLabel">2</span></label>
+        <input type="range" id="nLevel" min="1" max="4" value="2" step="1">
+      </div>
+      <div class="control">
+        <label>Trial speed: <span id="speedLabel">3.0 s</span></label>
+        <input type="range" id="speed" min="1" max="5" value="3" step="0.5">
+      </div>
+      <div class="control">
+        <label>&nbsp;</label>
+        <div class="btn-row">
+          <button class="btn" id="start">Start</button>
+          <button class="btn secondary" id="stop">Stop</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">Shape matches</span><span class="stat-value" id="shapeHits">0 / 0</span></div>
+      <div class="stat"><span class="stat-label">Sound matches</span><span class="stat-value" id="soundHits">0 / 0</span></div>
+      <div class="stat"><span class="stat-label">Trial</span><span class="stat-value" id="trial">—</span></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const nInput = document.getElementById('nLevel');
+      const nLabel = document.getElementById('nLabel');
+      const speedInput = document.getElementById('speed');
+      const speedLabel = document.getElementById('speedLabel');
+      const startBtn = document.getElementById('start');
+      const stopBtn = document.getElementById('stop');
+      const shapeHitsEl = document.getElementById('shapeHits');
+      const soundHitsEl = document.getElementById('soundHits');
+      const trialEl = document.getElementById('trial');
+
+      // 3x3 grid of positions
+      const POSITIONS = [
+        { col: 0, row: 0 }, { col: 1, row: 0 }, { col: 2, row: 0 },
+        { col: 0, row: 1 }, { col: 1, row: 1 }, { col: 2, row: 1 },
+        { col: 0, row: 2 }, { col: 1, row: 2 }, { col: 2, row: 2 },
+      ];
+      // Letter "sounds" (we'll flash a letter to stand in for an audio cue)
+      const LETTERS = ['A', 'E', 'I', 'O', 'U'];
+
+      let n = 2;
+      let speed = 3.0;
+      let sequence = []; // { position: 0..8, letter: 0..4 }
+      let current = -1;
+      let running = false;
+      let timer = null;
+
+      let shapeMatches = 0;
+      let shapeCorrect = 0;
+      let soundMatches = 0;
+      let soundCorrect = 0;
+
+      let userPressedShape = false;
+      let userPressedSound = false;
+      let audioCtx = null;
+
+      function playTone(freq) {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.value = 0.08;
+        osc.connect(gain).connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.25);
+      }
+
+      function makeTrial(isMatch) {
+        const last = sequence[sequence.length - 1];
+        if (isMatch && last) {
+          return { ...last };
+        }
+        // Random, but ensure it's not accidentally a match
+        let position, letter;
+        do {
+          position = Math.floor(Math.random() * 9);
+          letter = Math.floor(Math.random() * 5);
+        } while (
+          last &&
+          position === last.position &&
+          letter === last.letter
+        );
+        return { position, letter };
+      }
+
+      function generateSequence() {
+        sequence = [];
+        // First n trials are non-matching (need warmup)
+        for (let i = 0; i < n; i++) {
+          const position = Math.floor(Math.random() * 9);
+          const letter = Math.floor(Math.random() * 5);
+          sequence.push({ position, letter });
+        }
+        // Then trials with occasional matches
+        const totalExtra = 20;
+        for (let i = 0; i < totalExtra; i++) {
+          const isMatch = Math.random() < 0.25;
+          sequence.push(makeTrial(isMatch));
+        }
+      }
+
+      function draw() {
+        const w = canvas.width, h = canvas.height;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+
+        if (current < 0 || current >= sequence.length) {
+          ctx.fillStyle = '#6f8da3';
+          ctx.font = '16px system-ui';
+          ctx.textAlign = 'center';
+          ctx.fillText(running ? 'Warming up…' : 'Press Start', w / 2, h / 2);
+          return;
+        }
+
+        const trial = sequence[current];
+        const pos = POSITIONS[trial.position];
+
+        // Draw 3x3 grid
+        const gridSize = 240;
+        const cell = gridSize / 3;
+        const startX = (w - gridSize) / 2;
+        const startY = (h - gridSize) / 2 - 20;
+
+        for (let r = 0; r < 3; r++) {
+          for (let c = 0; c < 3; c++) {
+            const x = startX + c * cell;
+            const y = startY + r * cell;
+            const isActive = r === pos.row && c === pos.col;
+            ctx.fillStyle = isActive ? '#2c7aa0' : '#f0f4f8';
+            ctx.fillRect(x + 2, y + 2, cell - 4, cell - 4);
+            ctx.strokeStyle = '#cfdde9';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(x + 2, y + 2, cell - 4, cell - 4);
+          }
+        }
+
+        // Show letter as a "sound" cue
+        ctx.fillStyle = '#0b2b3f';
+        ctx.font = 'bold 32px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('♪ ' + LETTERS[trial.letter], w / 2, h - 50);
+
+        // Buttons (draw as visual state)
+        const btnY = h - 30;
+        ctx.fillStyle = userPressedShape ? '#c76b3b' : '#e4f0f9';
+        ctx.fillRect(w / 2 - 160, btnY - 15, 140, 30);
+        ctx.fillStyle = userPressedShape ? '#ffffff' : '#1b4a6b';
+        ctx.font = 'bold 13px system-ui';
+        ctx.fillText('A = Shape match', w / 2 - 90, btnY + 4);
+
+        ctx.fillStyle = userPressedSound ? '#c76b3b' : '#e4f0f9';
+        ctx.fillRect(w / 2 + 20, btnY - 15, 140, 30);
+        ctx.fillStyle = userPressedSound ? '#ffffff' : '#1b4a6b';
+        ctx.fillText('L = Sound match', w / 2 + 90, btnY + 4);
+
+        // Trial counter
+        ctx.fillStyle = '#6f8da3';
+        ctx.font = '12px system-ui';
+        ctx.textAlign = 'left';
+        ctx.fillText(`Trial ${current + 1} / ${sequence.length} · N=${n}`, 20, 30);
+      }
+
+      function evaluateMatches() {
+        if (current < n) return;
+        const trial = sequence[current];
+        const back = sequence[current - n];
+
+        const shapeMatch = trial.position === back.position;
+        const soundMatch = trial.letter === back.letter;
+
+        if (shapeMatch) {
+          shapeMatches++;
+          if (userPressedShape) shapeCorrect++;
+        }
+        if (soundMatch) {
+          soundMatches++;
+          if (userPressedSound) soundCorrect++;
+        }
+
+        shapeHitsEl.textContent = shapeCorrect + ' / ' + shapeMatches;
+        soundHitsEl.textContent = soundCorrect + ' / ' + soundMatches;
+      }
+
+      function nextTrial() {
+        // Evaluate previous
+        if (current >= 0) evaluateMatches();
+
+        current++;
+        userPressedShape = false;
+        userPressedSound = false;
+        trialEl.textContent = current + 1;
+        draw();
+        playTone(440 + sequence[current].letter * 80);
+
+        if (current >= sequence.length) {
+          stop();
+          return;
+        }
+
+        timer = setTimeout(nextTrial, speed * 1000);
+      }
+
+      function start() {
+        if (running) return;
+        running = true;
+        current = -1;
+        shapeMatches = shapeCorrect = soundMatches = soundCorrect = 0;
+        shapeHitsEl.textContent = '0 / 0';
+        soundHitsEl.textContent = '0 / 0';
+        n = parseInt(nInput.value, 10);
+        speed = parseFloat(speedInput.value);
+        generateSequence();
+        nextTrial();
+      }
+
+      function stop() {
+        running = false;
+        if (timer) clearTimeout(timer);
+        current = -1;
+        draw();
+      }
+
+      nInput.addEventListener('input', () => {
+        nLabel.textContent = nInput.value;
+      });
+      speedInput.addEventListener('input', () => {
+        speedLabel.textContent = parseFloat(speedInput.value).toFixed(1) + ' s';
+      });
+
+      startBtn.addEventListener('click', start);
+      stopBtn.addEventListener('click', stop);
+
+      window.addEventListener('keydown', (e) => {
+        if (!running) return;
+        if (e.key === 'a' || e.key === 'A') {
+          if (!userPressedShape) {
+            userPressedShape = true;
+            draw();
+          }
+        }
+        if (e.key === 'l' || e.key === 'L') {
+          if (!userPressedSound) {
+            userPressedSound = true;
+            draw();
+          }
+        }
+      });
+
+      nLabel.textContent = nInput.value;
+      speedLabel.textContent = parseFloat(speedInput.value).toFixed(1) + ' s';
+      draw();
+    })();
+  </script>
+</body>
+</html>

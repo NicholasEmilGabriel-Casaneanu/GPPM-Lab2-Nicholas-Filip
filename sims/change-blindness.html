@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Change Blindness — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Change Blindness</h1>
+      <div class="sim-meta">Cognitive Science · Attention &amp; Awareness</div>
+    </div>
+
+    <div class="sim-description">
+      Two scenes flicker back and forth. One small thing changes — can you spot it? Most people are surprisingly bad at this, because attention is narrower than it feels. Find the change, then see how obvious it was all along.
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="canvas" width="820" height="420"></canvas>
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>Scene</label>
+        <select id="scene">
+          <option value="1" selected>Scene 1</option>
+          <option value="2">Scene 2</option>
+          <option value="3">Scene 3</option>
+        </select>
+      </div>
+      <div class="control">
+        <label>Flicker speed: <span id="speedLabel">Medium</span></label>
+        <input type="range" id="speed" min="1" max="5" value="3" step="1">
+      </div>
+      <div class="control">
+        <label>&nbsp;</label>
+        <div class="btn-row">
+          <button class="btn" id="reveal">Reveal change</button>
+          <button class="btn secondary" id="reset">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">Status</span><span class="stat-value" id="status">Watching…</span></div>
+      <div class="stat"><span class="stat-label">Flicker count</span><span class="stat-value" id="count">0</span></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const sceneSel = document.getElementById('scene');
+      const speedInput = document.getElementById('speed');
+      const speedLabel = document.getElementById('speedLabel');
+      const revealBtn = document.getElementById('reveal');
+      const resetBtn = document.getElementById('reset');
+      const statusEl = document.getElementById('status');
+      const countEl = document.getElementById('count');
+
+      let phase = 'A';
+      let flickerCount = 0;
+      let animHandle = null;
+      let lastTime = 0;
+      let revealed = false;
+      let running = true;
+
+      const speedNames = ['Very slow', 'Slow', 'Medium', 'Fast', 'Very fast'];
+      const speedDelays = [2000, 1400, 900, 500, 250];
+
+      // Scene A and B differ in one small thing
+      function drawScene(sceneId, isB) {
+        const w = canvas.width, h = canvas.height;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+
+        if (sceneId === '1') drawPark(w, h, isB);
+        else if (sceneId === '2') drawBeach(w, h, isB);
+        else drawCity(w, h, isB);
+      }
+
+      function drawPark(w, h, isB) {
+        // Sky
+        ctx.fillStyle = '#87ceeb';
+        ctx.fillRect(0, 0, w, h * 0.7);
+        // Grass
+        ctx.fillStyle = '#5a8a4a';
+        ctx.fillRect(0, h * 0.7, w, h * 0.3);
+
+        // Sun
+        ctx.fillStyle = '#f5b342';
+        ctx.beginPath();
+        ctx.arc(100, 80, 40, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Trees
+        drawTree(200, h * 0.7, 60);
+        drawTree(650, h * 0.7, 80);
+
+        // Bench
+        ctx.fillStyle = '#8a5a2a';
+        ctx.fillRect(350, h * 0.62, 120, 12);
+        ctx.fillRect(360, h * 0.7, 10, 30);
+        ctx.fillRect(450, h * 0.7, 10, 30);
+        ctx.fillRect(350, h * 0.55, 120, 10);
+
+        // Birds
+        ctx.strokeStyle = '#0b2b3f';
+        ctx.lineWidth = 2;
+        drawBird(400, 100, isB);
+        drawBird(480, 140, false);
+
+        // The CHANGE: cloud appears or disappears
+        if (!isB) {
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(500, 70, 25, 0, Math.PI * 2);
+          ctx.arc(535, 70, 30, 0, Math.PI * 2);
+          ctx.arc(570, 70, 25, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        if (revealed && !isB) {
+          ctx.strokeStyle = '#c0392b';
+          ctx.lineWidth = 4;
+          ctx.strokeRect(470, 40, 130, 60);
+        }
+      }
+
+      function drawTree(x, groundY, size) {
+        ctx.fillStyle = '#6b4a2a';
+        ctx.fillRect(x - 8, groundY - size * 0.6, 16, size * 0.6);
+        ctx.fillStyle = '#3a6a2a';
+        ctx.beginPath();
+        ctx.arc(x, groundY - size * 0.7, size * 0.7, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      function drawBird(x, y, isB) {
+        ctx.beginPath();
+        if (isB) {
+          // Bird position shifted by 100px
+          ctx.moveTo(x + 100, y);
+          ctx.quadraticCurveTo(x + 110, y - 10, x + 120, y);
+          ctx.quadraticCurveTo(x + 110, y - 5, x + 100, y);
+          ctx.stroke();
+        } else {
+          ctx.moveTo(x, y);
+          ctx.quadraticCurveTo(x + 10, y - 10, x + 20, y);
+          ctx.quadraticCurveTo(x + 10, y - 5, x, y);
+          ctx.stroke();
+        }
+      }
+
+      function drawBeach(w, h, isB) {
+        // Sky
+        const skyGrad = ctx.createLinearGradient(0, 0, 0, h * 0.5);
+        skyGrad.addColorStop(0, '#87ceeb');
+        skyGrad.addColorStop(1, '#ffe4b5');
+        ctx.fillStyle = skyGrad;
+        ctx.fillRect(0, 0, w, h * 0.5);
+
+        // Sea
+        ctx.fillStyle = '#2c7aa0';
+        ctx.fillRect(0, h * 0.5, w, h * 0.25);
+
+        // Sand
+        ctx.fillStyle = '#e0c080';
+        ctx.fillRect(0, h * 0.75, w, h * 0.25);
+
+        // Sun
+        ctx.fillStyle = '#f5b342';
+        ctx.beginPath();
+        ctx.arc(650, 100, 45, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Palm tree
+        ctx.fillStyle = '#6b4a2a';
+        ctx.fillRect(150, h * 0.5, 12, 100);
+        ctx.fillStyle = '#3a6a2a';
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * Math.PI * 2;
+          ctx.beginPath();
+          ctx.ellipse(156 + Math.cos(a) * 40, h * 0.5 + Math.sin(a) * 20, 45, 12, a, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Umbrella
+        ctx.fillStyle = isB ? '#c0392b' : '#c0392b';
+        ctx.beginPath();
+        ctx.moveTo(550, h * 0.7);
+        ctx.lineTo(450, h * 0.7);
+        ctx.quadraticCurveTo(500, h * 0.55, 550, h * 0.7);
+        ctx.fill();
+        ctx.fillStyle = '#6b4a2a';
+        ctx.fillRect(498, h * 0.7, 4, 40);
+
+        // Beach ball
+        const ballX = isB ? 700 : 750;
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(ballX, h * 0.85, 20, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#c0392b';
+        ctx.beginPath();
+        ctx.arc(ballX - 8, h * 0.85, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#2c7aa0';
+        ctx.beginPath();
+        ctx.arc(ballX + 6, h * 0.83, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (revealed) {
+          ctx.strokeStyle = '#c0392b';
+          ctx.lineWidth = 4;
+          ctx.strokeRect(700, h * 0.75, 60, 60);
+        }
+      }
+
+      function drawCity(w, h, isB) {
+        // Sky
+        const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
+        skyGrad.addColorStop(0, '#ff9a6b');
+        skyGrad.addColorStop(1, '#ffd89b');
+        ctx.fillStyle = skyGrad;
+        ctx.fillRect(0, 0, w, h);
+
+        // Buildings
+        const buildings = [
+          { x: 50, w: 100, h: 250, color: '#4a5c6b' },
+          { x: 170, w: 80, h: 200, color: '#5a6a7a' },
+          { x: 270, w: 120, h: 300, color: '#3a4a5a' },
+          { x: 410, w: 90, h: 220, color: '#4a5c6b' },
+          { x: 520, w: 110, h: 280, color: '#5a6a7a' },
+          { x: 650, w: 100, h: 240, color: '#3a4a5a' },
+        ];
+
+        buildings.forEach((b) => {
+          ctx.fillStyle = b.color;
+          ctx.fillRect(b.x, h - b.h, b.w, b.h);
+          // Windows
+          ctx.fillStyle = '#f5b342';
+          for (let yy = h - b.h + 20; yy < h - 20; yy += 30) {
+            for (let xx = b.x + 15; xx < b.x + b.w - 15; xx += 25) {
+              // Skip one window on the middle building when isB
+              if (isB && b === buildings[2] && yy === h - b.h + 80 && xx === b.x + 65) continue;
+              ctx.fillRect(xx, yy, 10, 12);
+            }
+          }
+        });
+
+        // Sun/moon
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(720, 80, 30, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (revealed) {
+          ctx.strokeStyle = '#c0392b';
+          ctx.lineWidth = 4;
+          ctx.strokeRect(320, 200, 40, 50);
+        }
+      }
+
+      function tick(now) {
+        if (!lastTime) lastTime = now;
+        const dt = now - lastTime;
+
+        const delay = speedDelays[parseInt(speedInput.value, 10) - 1];
+        if (dt > delay) {
+          phase = phase === 'A' ? 'B' : 'A';
+          flickerCount++;
+          countEl.textContent = flickerCount;
+          lastTime = now;
+          drawScene(sceneSel.value, phase === 'B');
+        }
+
+        if (running) animHandle = requestAnimationFrame(tick);
+      }
+
+      function reset() {
+        if (animHandle) cancelAnimationFrame(animHandle);
+        phase = 'A';
+        flickerCount = 0;
+        lastTime = 0;
+        revealed = false;
+        running = true;
+        countEl.textContent = '0';
+        statusEl.textContent = 'Watching…';
+        drawScene(sceneSel.value, false);
+        animHandle = requestAnimationFrame(tick);
+      }
+
+      speedInput.addEventListener('input', () => {
+        speedLabel.textContent = speedNames[parseInt(speedInput.value, 10) - 1];
+      });
+
+      sceneSel.addEventListener('change', reset);
+      revealBtn.addEventListener('click', () => {
+        revealed = true;
+        running = false;
+        drawScene(sceneSel.value, false);
+        statusEl.textContent = 'Revealed!';
+      });
+      resetBtn.addEventListener('click', reset);
+
+      speedLabel.textContent = speedNames[parseInt(speedInput.value, 10) - 1];
+      reset();
+    })();
+  </script>
+</body>
+</html>

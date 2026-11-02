@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Optical Illusions Gallery — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Optical Illusions Gallery</h1>
+      <div class="sim-meta">Cognitive Science · Visual Perception</div>
+    </div>
+
+    <div class="sim-description">
+      Six classic illusions where your brain insists on the wrong answer even after you measure. Toggle the "rulers" overlay to confirm — the lines really are equal.
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="canvas" width="820" height="520"></canvas>
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>Illusion</label>
+        <select id="illusion">
+          <option value="muller" selected>Müller-Lyer</option>
+          <option value="ponzo">Ponzo</option>
+          <option value="cafe">Café Wall</option>
+          <option value="hering">Hering</option>
+          <option value="ebbinghaus">Ebbinghaus</option>
+          <option value="checker">Checker Shadow</option>
+        </select>
+      </div>
+      <div class="control">
+        <label>&nbsp;</label>
+        <div class="btn-row">
+          <button class="btn secondary" id="toggle">Show rulers</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">Illusion</span><span class="stat-value" id="name">Müller-Lyer</span></div>
+      <div class="stat"><span class="stat-label">Effect</span><span class="stat-value" id="effect">Lines look unequal</span></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const illusionSel = document.getElementById('illusion');
+      const toggleBtn = document.getElementById('toggle');
+      const nameEl = document.getElementById('name');
+      const effectEl = document.getElementById('effect');
+
+      let showRulers = false;
+
+      const INFO = {
+        muller: { name: 'Müller-Lyer', effect: 'Middle line looks longer than outer' },
+        ponzo: { name: 'Ponzo', effect: 'Upper line looks longer' },
+        cafe: { name: 'Café Wall', effect: 'Parallel lines look slanted' },
+        hering: { name: 'Hering', effect: 'Straight lines look curved' },
+        ebbinghaus: { name: 'Ebbinghaus', effect: 'Right centre looks smaller' },
+        checker: { name: 'Checker Shadow', effect: 'A and B are the same shade' },
+      };
+
+      function draw() {
+        const w = canvas.width, h = canvas.height;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+
+        const illusion = illusionSel.value;
+        nameEl.textContent = INFO[illusion].name;
+        effectEl.textContent = INFO[illusion].effect;
+
+        if (illusion === 'muller') drawMuller(w, h);
+        else if (illusion === 'ponzo') drawPonzo(w, h);
+        else if (illusion === 'cafe') drawCafe(w, h);
+        else if (illusion === 'hering') drawHering(w, h);
+        else if (illusion === 'ebbinghaus') drawEbbinghaus(w, h);
+        else drawChecker(w, h);
+
+        if (showRulers) drawRulers(illusion, w, h);
+      }
+
+      function drawMuller(w, h) {
+        // Top: arrows out
+        const len = 220;
+        const topY = 140;
+        const botY = 340;
+        const cx = w / 2;
+
+        ctx.strokeStyle = '#0b2b3f';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(cx - len / 2, topY);
+        ctx.lineTo(cx + len / 2, topY);
+        ctx.stroke();
+        // Outward arrows
+        drawHead(cx - len / 2, topY, -1, 0);
+        drawHead(cx + len / 2, topY, 1, 0);
+
+        // Bottom: arrows in
+        ctx.beginPath();
+        ctx.moveTo(cx - len / 2, botY);
+        ctx.lineTo(cx + len / 2, botY);
+        ctx.stroke();
+        drawHead(cx - len / 2, botY, 1, 0);
+        drawHead(cx + len / 2, botY, -1, 0);
+
+        ctx.fillStyle = '#6f8da3';
+        ctx.font = '13px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('Which line is longer?', cx, 60);
+      }
+
+      function drawHead(x, y, dx, dy) {
+        const len = 18;
+        const angle = Math.PI / 5;
+        for (let sign of [-1, 1]) {
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(
+            x + Math.cos(sign * angle) * len * (dx || 1) * (sign === 1 ? 1 : 1),
+            y + Math.sin(sign * angle) * len * (dx < 0 ? 1 : 1) * (dx < 0 ? 1 : 1)
+          );
+          ctx.stroke();
+        }
+        // Simpler: draw two lines forming arrowhead
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + dx * len, y - len * 0.6);
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + dx * len, y + len * 0.6);
+        ctx.stroke();
+      }
+
+      function drawPonzo(w, h) {
+        // Converging "railway tracks"
+        const vanishX = w / 2, vanishY = 80;
+        ctx.strokeStyle = '#8ba9c0';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(vanishX, vanishY);
+        ctx.lineTo(80, h - 60);
+        ctx.moveTo(vanishX, vanishY);
+        ctx.lineTo(w - 80, h - 60);
+        ctx.stroke();
+
+        // Cross ties
+        for (let i = 1; i <= 8; i++) {
+          const t = i / 9;
+          const y = vanishY + (h - 60 - vanishY) * t;
+          const leftX = vanishX + (80 - vanishX) * t;
+          const rightX = vanishX + (w - 80 - vanishX) * t;
+          ctx.strokeStyle = '#cfdde9';
+          ctx.beginPath();
+          ctx.moveTo(leftX, y);
+          ctx.lineTo(rightX, y);
+          ctx.stroke();
+        }
+
+        // Two horizontal bars — same length
+        const barLen = 200;
+        const x1 = w / 2 - barLen / 2;
+        const y1 = 220;
+        const y2 = 380;
+        ctx.strokeStyle = '#c76b3b';
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x1 + barLen, y1);
+        ctx.moveTo(x1, y2);
+        ctx.lineTo(x1 + barLen, y2);
+        ctx.stroke();
+
+        ctx.fillStyle = '#6f8da3';
+        ctx.font = '13px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('Which red bar is longer?', w / 2, 40);
+      }
+
+      function drawCafe(w, h) {
+        // Alternating rows of black and white squares, offset
+        const size = 40;
+        const rows = 8;
+        const cols = 12;
+        const startX = (w - cols * size) / 2;
+        const startY = (h - rows * size) / 2;
+
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            const offset = (r % 2 === 0) ? 0 : size / 2;
+            const x = startX + c * size + offset;
+            const y = startY + r * size;
+            ctx.fillStyle = (r % 2 === 0) === (c % 2 === 0) ? '#1b4a6b' : '#ffffff';
+            ctx.fillRect(x, y, size, size);
+            ctx.strokeStyle = '#cfdde9';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(x, y, size, size);
+          }
+        }
+
+        // Horizontal reference lines
+        ctx.strokeStyle = '#c76b3b';
+        ctx.lineWidth = 2;
+        for (let r = 0; r <= rows; r += 2) {
+          const y = startY + r * size;
+          ctx.beginPath();
+          ctx.moveTo(startX, y);
+          ctx.lineTo(startX + cols * size, y);
+          ctx.stroke();
+        }
+
+        ctx.fillStyle = '#6f8da3';
+        ctx.font = '13px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('Are the horizontal lines parallel?', w / 2, 30);
+      }
+
+      function drawHering(w, h) {
+        // Two vertical lines with radiating spokes from centre
+        const cx = w / 2, cy = h / 2;
+        const radius = 180;
+
+        // Spokes
+        ctx.strokeStyle = '#8ba9c0';
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 24; i++) {
+          const a = (i / 24) * Math.PI * 2;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(cx + Math.cos(a) * radius, cy + Math.sin(a) * radius);
+          ctx.stroke();
+        }
+
+        // Vertical parallel lines
+        ctx.strokeStyle = '#c76b3b';
+        ctx.lineWidth = 4;
+        const lineY1 = 80, lineY2 = h - 80;
+        ctx.beginPath();
+        ctx.moveTo(cx - 70, lineY1);
+        ctx.lineTo(cx - 70, lineY2);
+        ctx.moveTo(cx + 70, lineY1);
+        ctx.lineTo(cx + 70, lineY2);
+        ctx.stroke();
+
+        ctx.fillStyle = '#6f8da3';
+        ctx.font = '13px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('Are the two red lines straight and parallel?', cx, 40);
+      }
+
+      function drawEbbinghaus(w, h) {
+        const cy = h / 2;
+        const leftCx = w * 0.3;
+        const rightCx = w * 0.7;
+
+        // Left: central circle surrounded by big circles
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * Math.PI * 2;
+          const x = leftCx + Math.cos(a) * 120;
+          const y = cy + Math.sin(a) * 120;
+          ctx.fillStyle = '#e4f0f9';
+          ctx.strokeStyle = '#8ba9c0';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(x, y, 55, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        }
+        ctx.fillStyle = '#c76b3b';
+        ctx.beginPath();
+        ctx.arc(leftCx, cy, 40, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Right: central circle surrounded by small circles
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * Math.PI * 2;
+          const x = rightCx + Math.cos(a) * 120;
+          const y = cy + Math.sin(a) * 120;
+          ctx.fillStyle = '#e4f0f9';
+          ctx.strokeStyle = '#8ba9c0';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(x, y, 18, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        }
+        ctx.fillStyle = '#c76b3b';
+        ctx.beginPath();
+        ctx.arc(rightCx, cy, 40, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#6f8da3';
+        ctx.font = '13px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('Are the two red circles the same size?', w / 2, 50);
+      }
+
+      function drawChecker(w, h) {
+        const size = 50;
+        const rows = 8;
+        const cols = 12;
+        const startX = (w - cols * size) / 2;
+        const startY = (h - rows * size) / 2;
+
+        // Checkerboard
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            const x = startX + c * size;
+            const y = startY + r * size;
+            ctx.fillStyle = ((r + c) % 2 === 0) ? '#5a8a4a' : '#2a4a2a';
+            ctx.fillRect(x, y, size, size);
+          }
+        }
+
+        // Shadow region (rough ellipse)
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        ctx.beginPath();
+        ctx.ellipse(startX + cols * size * 0.7, startY + rows * size * 0.5, 200, 120, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Highlight A (light square)
+        const aX = startX + 3 * size;
+        const aY = startY + 2 * size;
+        // Highlight B (dark square in shadow)
+        const bX = startX + 8 * size;
+        const bY = startY + 5 * size;
+
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(aX, aY, size, size);
+        ctx.strokeRect(bX, bY, size, size);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 16px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('A', aX + size / 2, aY + size / 2 + 6);
+        ctx.fillText('B', bX + size / 2, bY + size / 2 + 6);
+
+        ctx.fillStyle = '#6f8da3';
+        ctx.font = '13px system-ui';
+        ctx.fillText('Are squares A and B the same shade?', w / 2, 30);
+      }
+
+      function drawRulers(illusion, w, h) {
+        ctx.strokeStyle = '#f5b342';
+        ctx.setLineDash([6, 4]);
+        ctx.lineWidth = 2;
+
+        if (illusion === 'muller') {
+          const cx = w / 2;
+          ctx.beginPath();
+          ctx.moveTo(cx - 110, 140);
+          ctx.lineTo(cx - 110, 340);
+          ctx.moveTo(cx + 110, 140);
+          ctx.lineTo(cx + 110, 340);
+          ctx.stroke();
+        } else if (illusion === 'ponzo') {
+          const barLen = 200;
+          const x1 = w / 2 - barLen / 2;
+          ctx.beginPath();
+          ctx.moveTo(x1, 220);
+          ctx.lineTo(x1, 380);
+          ctx.moveTo(x1 + barLen, 220);
+          ctx.lineTo(x1 + barLen, 380);
+          ctx.stroke();
+        } else if (illusion === 'cafe') {
+          // Draw a vertical grid overlay showing alignment
+          const size = 40;
+          const rows = 8;
+          const cols = 12;
+          const startX = (w - cols * size) / 2;
+          const startY = (h - rows * size) / 2;
+          ctx.beginPath();
+          for (let c = 0; c <= cols; c += 2) {
+            const x = startX + c * size;
+            ctx.moveTo(x, startY);
+            ctx.lineTo(x, startY + rows * size);
+          }
+          ctx.stroke();
+        } else if (illusion === 'hering') {
+          // Straight verticals
+          ctx.beginPath();
+          ctx.moveTo(w / 2 - 70, 60);
+          ctx.lineTo(w / 2 - 70, h - 60);
+          ctx.moveTo(w / 2 + 70, 60);
+          ctx.lineTo(w / 2 + 70, h - 60);
+          ctx.stroke();
+        } else if (illusion === 'ebbinghaus') {
+          // Circle outlines at both centres
+          ctx.beginPath();
+          ctx.arc(w * 0.3, h / 2, 40, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(w * 0.7, h / 2, 40, 0, Math.PI * 2);
+          ctx.stroke();
+        } else if (illusion === 'checker') {
+          // Connect A and B with a bar showing same shade
+          const size = 50;
+          const rows = 8;
+          const cols = 12;
+          const startX = (w - cols * size) / 2;
+          const startY = (h - rows * size) / 2;
+          const aX = startX + 3 * size + size / 2;
+          const aY = startY + 2 * size + size / 2;
+          const bX = startX + 8 * size + size / 2;
+          const bY = startY + 5 * size + size / 2;
+          // Draw a solid bridge connecting them in "true" colour
+          ctx.strokeStyle = '#6f8da3';
+          ctx.lineWidth = 20;
+          ctx.setLineDash([]);
+          ctx.beginPath();
+          ctx.moveTo(aX, aY);
+          ctx.lineTo(bX, bY);
+          ctx.stroke();
+        }
+
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#f5b342';
+        ctx.font = 'bold 12px system-ui';
+        ctx.textAlign = 'right';
+        ctx.fillText('Rulers ON', w - 20, 20);
+      }
+
+      illusionSel.addEventListener('change', draw);
+      toggleBtn.addEventListener('click', () => {
+        showRulers = !showRulers;
+        toggleBtn.textContent = showRulers ? 'Hide rulers' : 'Show rulers';
+        draw();
+      });
+
+      draw();
+    })();
+  </script>
+</body>
+</html>

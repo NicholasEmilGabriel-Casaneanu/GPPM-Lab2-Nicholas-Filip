@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mental Rotation — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Mental Rotation</h1>
+      <div class="sim-meta">Cognitive Science · Spatial Reasoning</div>
+    </div>
+
+    <div class="sim-description">
+      Two 3D shapes appear side by side. Are they the same object seen from a different angle, or a mirror-image impostor? Shepard &amp; Metzler found that reaction time rises linearly with rotation angle — your brain really is spinning the shape.
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="canvas" width="820" height="400"></canvas>
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>&nbsp;</label>
+        <div class="btn-row">
+          <button class="btn" id="same">Same (S)</button>
+          <button class="btn secondary" id="different">Different (D)</button>
+        </div>
+      </div>
+      <div class="control">
+        <label>&nbsp;</label>
+        <div class="btn-row">
+          <button class="btn secondary" id="newTrial">New trial</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">Trial</span><span class="stat-value" id="trial">1</span></div>
+      <div class="stat"><span class="stat-label">Correct</span><span class="stat-value" id="correct">0</span></div>
+      <div class="stat"><span class="stat-label">Last RT</span><span class="stat-value" id="rt">—</span></div>
+      <div class="stat"><span class="stat-label">Rotation angle</span><span class="stat-value" id="angle">—</span></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const sameBtn = document.getElementById('same');
+      const diffBtn = document.getElementById('different');
+      const newBtn = document.getElementById('newTrial');
+      const trialEl = document.getElementById('trial');
+      const correctEl = document.getElementById('correct');
+      const rtEl = document.getElementById('rt');
+      const angleEl = document.getElementById('angle');
+
+      // Base shape: 3D L-shape made of cubes
+      // Coordinates (x, y, z) in grid units
+      const BASE_SHAPE = [
+        [0,0,0], [1,0,0], [2,0,0],
+        [0,1,0],
+        [0,2,0],
+      ];
+
+      let trialNum = 1;
+      let correctCount = 0;
+      let currentTrial = null;
+      let trialStart = 0;
+      let accepting = false;
+
+      function makeTrial() {
+        const angle = Math.floor(Math.random() * 8) * 45; // 0..315 in 45° steps
+        const isSame = Math.random() < 0.5;
+        return {
+          angle,
+          isSame,
+          mirrored: !isSame,
+        };
+      }
+
+      function project(point, angleDeg, mirror) {
+        let [x, y, z] = point;
+        if (mirror) x = -x; // mirror across y-axis
+        const a = (angleDeg * Math.PI) / 180;
+        const rx = x * Math.cos(a) - z * Math.sin(a);
+        const rz = x * Math.sin(a) + z * Math.cos(a);
+        // Isometric-ish projection
+        const projX = (rx - rz) * 0.866;
+        const projY = y - (rx + rz) * 0.5;
+        return { x: projX, y: projY };
+      }
+
+      function drawShape(cx, cy, angle, mirror, color) {
+        // Simple isometric cube drawing for each point in the shape
+        const scale = 38;
+        const points = BASE_SHAPE.map((p) => project(p, angle, mirror));
+
+        // Sort back-to-front for proper overlap
+        const withIdx = points.map((p, i) => ({ p, i, depth: BASE_SHAPE[i][1] + project(BASE_SHAPE[i], angle, mirror).y }));
+        withIdx.sort((a, b) => a.p.y - b.p.y);
+
+        withIdx.forEach(({ p }) => {
+          drawCube(cx + p.x * scale, cy + p.y * scale, scale * 0.5, color);
+        });
+      }
+
+      function drawCube(cx, cy, s, color) {
+        // Top face
+        ctx.fillStyle = shade(color, 1.2);
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - s * 0.6);
+        ctx.lineTo(cx + s, cy - s * 0.3);
+        ctx.lineTo(cx, cy);
+        ctx.lineTo(cx - s, cy - s * 0.3);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#0b2b3f';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Left face
+        ctx.fillStyle = shade(color, 0.8);
+        ctx.beginPath();
+        ctx.moveTo(cx - s, cy - s * 0.3);
+        ctx.lineTo(cx, cy);
+        ctx.lineTo(cx, cy + s * 0.6);
+        ctx.lineTo(cx - s, cy + s * 0.3);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Right face
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(cx + s, cy - s * 0.3);
+        ctx.lineTo(cx, cy);
+        ctx.lineTo(cx, cy + s * 0.6);
+        ctx.lineTo(cx + s, cy + s * 0.3);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      }
+
+      function shade(hex, factor) {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        const clamp = (v) => Math.max(0, Math.min(255, Math.round(v * factor)));
+        return `rgb(${clamp(r)}, ${clamp(g)}, ${clamp(b)})`;
+      }
+
+      function draw() {
+        const w = canvas.width, h = canvas.height;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+
+        const leftCx = w * 0.3;
+        const rightCx = w * 0.7;
+        const cy = h / 2;
+
+        // Reference: base shape at 0°, not mirrored
+        drawShape(leftCx, cy, 0, false, '#2c7aa0');
+
+        if (currentTrial) {
+          drawShape(rightCx, cy, currentTrial.angle, currentTrial.mirrored, '#f5b342');
+          angleEl.textContent = currentTrial.angle + '°';
+        }
+
+        // Labels
+        ctx.fillStyle = '#6f8da3';
+        ctx.font = '12px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('Reference', leftCx, h - 20);
+        ctx.fillText('Target', rightCx, h - 20);
+      }
+
+      function newTrial() {
+        currentTrial = makeTrial();
+        trialStart = performance.now();
+        accepting = true;
+        rtEl.textContent = '—';
+        trialEl.textContent = trialNum;
+        draw();
+      }
+
+      function answer(userSaysSame) {
+        if (!accepting) return;
+        accepting = false;
+        const rt = performance.now() - trialStart;
+        const correct = userSaysSame === currentTrial.isSame;
+        if (correct) correctCount++;
+
+        correctEl.textContent = correctCount;
+        rtEl.textContent = Math.round(rt) + ' ms';
+
+        // Show feedback briefly
+        ctx.fillStyle = correct ? 'rgba(90, 138, 74, 0.8)' : 'rgba(192, 57, 43, 0.8)';
+        ctx.fillRect(0, 0, canvas.width, 40);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 16px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText(correct ? '✓ Correct' : '✗ Wrong — it was ' + (currentTrial.isSame ? 'the same' : 'mirrored'), canvas.width / 2, 26);
+
+        trialNum++;
+        setTimeout(() => {
+          newTrial();
+        }, 1200);
+      }
+
+      sameBtn.addEventListener('click', () => answer(true));
+      diffBtn.addEventListener('click', () => answer(false));
+      newBtn.addEventListener('click', () => {
+        trialNum = 1;
+        correctCount = 0;
+        correctEl.textContent = '0';
+        newTrial();
+      });
+
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 's' || e.key === 'S') sameBtn.click();
+        if (e.key === 'd' || e.key === 'D') diffBtn.click();
+      });
+
+      newTrial();
+    })();
+  </script>
+</body>
+</html>

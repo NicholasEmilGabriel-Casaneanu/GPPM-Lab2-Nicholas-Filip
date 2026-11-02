@@ -1,0 +1,2894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>City Ledger — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="sim-theme.css">
+  <style>
+    .ledger { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+
+    /* HUD */
+    .ledger-hud {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 0.55rem;
+      background: white;
+      border-radius: 16px;
+      border: 1px solid #e2edf5;
+      padding: 0.85rem 1rem;
+      box-shadow: 0 4px 12px -8px rgba(0, 20, 30, 0.08);
+    }
+    .hud-card {
+      background: #f8fafc;
+      border-radius: 10px;
+      padding: 0.45rem 0.65rem;
+      border: 1px solid #eef4fa;
+    }
+    .hud-card .hc-label {
+      font-size: 0.58rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #6f8da3;
+      font-weight: 600;
+    }
+    .hud-card .hc-value {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #0b2b3f;
+      font-variant-numeric: tabular-nums;
+      margin-top: 1px;
+    }
+    .hud-card.good .hc-value { color: #5a8a4a; }
+    .hud-card.warn .hc-value { color: #c76b3b; }
+    .hud-card.bad .hc-value { color: #c0392b; }
+    .hud-card.debt .hc-value { color: #c0392b; }
+
+    /* Warnings banner */
+    .warning-banner {
+      background: linear-gradient(135deg, #c0392b, #8b0000);
+      color: white;
+      padding: 0.7rem 1rem;
+      border-radius: 12px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      box-shadow: 0 6px 16px -8px rgba(192, 57, 43, 0.6);
+      animation: warnPulse 2s ease-in-out infinite;
+    }
+    @keyframes warnPulse {
+      0%, 100% { box-shadow: 0 6px 16px -8px rgba(192,57,43,0.6); }
+      50% { box-shadow: 0 6px 20px -4px rgba(192,57,43,0.9); }
+    }
+    .warning-banner i { font-size: 1.1rem; }
+    .warning-banner.is-hidden { display: none; }
+
+    /* Town */
+    .town {
+      position: relative;
+      background: linear-gradient(to bottom, #87ceeb 0%, #b3ddf2 45%, #a5cfe5 55%, #5a8a4a 55%, #4a7a3a 100%);
+      border-radius: 20px;
+      overflow: hidden;
+      min-height: 400px;
+      box-shadow: 0 20px 40px -20px rgba(16, 70, 100, 0.4);
+      user-select: none;
+    }
+    .town-skyline {
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-around;
+      height: 400px;
+      padding: 0 2rem;
+    }
+    .building {
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: transform 0.2s ease;
+      padding-bottom: 60px;
+    }
+    .building:hover { transform: translateY(-6px); }
+    .building:hover .building-label { background: #2c7aa0; color: white; }
+    .building svg { display: block; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2)); transition: filter 0.2s ease; }
+    .building:hover svg { filter: drop-shadow(0 8px 12px rgba(0,0,0,0.3)); }
+    .building-label {
+      margin-top: 6px;
+      background: white;
+      color: #1b4a6b;
+      padding: 0.25rem 0.7rem;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .sun {
+      position: absolute;
+      top: 20px; right: 30px;
+      width: 60px; height: 60px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #fff8a0 0%, #f5b342 60%, #e09a20 100%);
+      box-shadow: 0 0 40px rgba(245,179,66,0.5);
+    }
+    .cloud {
+      position: absolute;
+      background: white;
+      border-radius: 50px;
+      opacity: 0.9;
+    }
+    .cloud::before, .cloud::after {
+      content: ''; position: absolute; background: white; border-radius: 50%;
+    }
+    .cloud-1 { top: 50px; left: 10%; width: 80px; height: 26px; animation: drift 60s linear infinite; }
+    .cloud-1::before { width: 40px; height: 40px; top: -15px; left: 10px; }
+    .cloud-1::after { width: 30px; height: 30px; top: -10px; right: 10px; }
+    .cloud-2 { top: 90px; left: 40%; width: 60px; height: 20px; animation: drift 45s linear infinite reverse; }
+    .cloud-2::before { width: 30px; height: 30px; top: -12px; left: 8px; }
+    @keyframes drift { from { transform: translateX(-100px); } to { transform: translateX(calc(100vw + 100px)); } }
+
+    .time-strip {
+      position: absolute;
+      top: 12px; left: 12px; right: 12px;
+      display: flex; justify-content: space-between; align-items: center;
+      pointer-events: none;
+    }
+    .time-pill {
+      background: rgba(11,43,63,0.85);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      color: white;
+      padding: 0.4rem 0.85rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      border: 1px solid rgba(255,255,255,0.15);
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      pointer-events: auto;
+    }
+    .time-pill i { color: #f5b342; }
+
+    .advance-btn {
+      position: absolute;
+      bottom: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #2c7aa0;
+      color: white;
+      border: none;
+      padding: 0.7rem 1.5rem;
+      border-radius: 30px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 6px 20px -6px rgba(44,122,160,0.6);
+      display: flex; align-items: center; gap: 0.5rem;
+      transition: all 0.15s ease;
+      z-index: 5;
+    }
+    .advance-btn:hover { background: #1b4a6b; transform: translateX(-50%) translateY(-2px); }
+    .advance-btn.pulse { animation: advPulse 2s ease-in-out infinite; }
+    @keyframes advPulse {
+      0%, 100% { box-shadow: 0 6px 20px -6px rgba(44,122,160,0.6); }
+      50% { box-shadow: 0 6px 24px -2px rgba(44,122,160,0.9); }
+    }
+
+    /* Casino */
+    .casino-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.4rem;
+      margin-bottom: 1rem;
+    }
+    .casino-tab {
+      padding: 0.55rem 0.4rem;
+      border-radius: 10px;
+      border: 1.5px solid #cfdde9;
+      background: #f8fafc;
+      color: #1b4a6b;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s ease;
+    }
+    .casino-tab:hover { border-color: #8db3d0; background: #eef4fa; }
+    .casino-tab.is-active {
+      background: #8a5ac7;
+      border-color: #8a5ac7;
+      color: white;
+      box-shadow: 0 4px 12px -4px rgba(138,90,199,0.5);
+    }
+
+    .casino-stage {
+      background: linear-gradient(135deg, #1b1b3f, #2c1b4f);
+      border-radius: 14px;
+      padding: 1.4rem;
+      text-align: center;
+      color: white;
+      margin-bottom: 1rem;
+    }
+    .casino-stage .cs-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #b9b3d4;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    /* Slots */
+    .slot-reels {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin: 1rem 0;
+    }
+    .slot-reel {
+      width: 64px;
+      height: 84px;
+      background: white;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.4rem;
+      box-shadow: inset 0 -4px 0 rgba(0,0,0,0.15), 0 4px 12px rgba(0,0,0,0.3);
+      border: 2px solid #cfdde9;
+    }
+    .slot-reel.spinning {
+      animation: slotSpin 0.12s linear infinite;
+    }
+    @keyframes slotSpin {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+      100% { transform: translateY(0); }
+    }
+
+    /* Roulette */
+    .roulette-wheel {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      margin: 0.8rem auto;
+      background: conic-gradient(
+        #2c7aa0 0deg 9.73deg, #c0392b 9.73deg 19.46deg,
+        #2c7aa0 19.46deg 29.19deg, #c0392b 29.19deg 38.92deg,
+        #2c7aa0 38.92deg 48.65deg, #c0392b 48.65deg 58.38deg,
+        #2c7aa0 58.38deg 68.11deg, #c0392b 68.11deg 77.84deg,
+        #2c7aa0 77.84deg 87.57deg, #c0392b 87.57deg 97.3deg,
+        #2c7aa0 97.3deg 107.03deg, #c0392b 107.03deg 116.76deg,
+        #2c7aa0 116.76deg 126.49deg, #c0392b 126.49deg 136.22deg,
+        #2c7aa0 136.22deg 145.95deg, #c0392b 145.95deg 155.68deg,
+        #2c7aa0 155.68deg 165.41deg, #c0392b 165.41deg 175.14deg,
+        #2c7aa0 175.14deg 184.87deg, #c0392b 184.87deg 194.6deg,
+        #2c7aa0 194.6deg 204.33deg, #c0392b 204.33deg 214.06deg,
+        #2c7aa0 214.06deg 223.79deg, #c0392b 223.79deg 233.52deg,
+        #2c7aa0 233.52deg 243.25deg, #c0392b 243.25deg 252.98deg,
+        #2c7aa0 252.98deg 262.71deg, #c0392b 262.71deg 272.44deg,
+        #2c7aa0 272.44deg 282.17deg, #c0392b 282.17deg 291.9deg,
+        #2c7aa0 291.9deg 301.63deg, #c0392b 301.63deg 311.36deg,
+        #2c7aa0 311.36deg 321.09deg, #c0392b 321.09deg 330.82deg,
+        #2c7aa0 330.82deg 340.55deg, #c0392b 340.55deg 350.28deg,
+        #2c7aa0 350.28deg 360deg
+      );
+      box-shadow: 0 0 0 4px #f5b342, 0 8px 24px rgba(0,0,0,0.4);
+      position: relative;
+      transition: transform 3s cubic-bezier(0.17, 0.67, 0.16, 1);
+    }
+    .roulette-wheel::after {
+      content: '';
+      position: absolute;
+      inset: 30%;
+      background: #1b1b3f;
+      border-radius: 50%;
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.6);
+    }
+    .roulette-wheel.spinning {
+      transform: rotate(1080deg);
+    }
+    .roulette-result {
+      display: inline-block;
+      background: white;
+      color: #0b2b3f;
+      padding: 0.5rem 1.2rem;
+      border-radius: 30px;
+      font-size: 1.1rem;
+      font-weight: 800;
+      margin-top: 0.5rem;
+      min-width: 60px;
+    }
+
+    /* Poker */
+    .poker-hand {
+      display: flex;
+      justify-content: center;
+      gap: 0.4rem;
+      margin: 1rem 0;
+      flex-wrap: wrap;
+    }
+    .poker-card {
+      width: 54px;
+      height: 76px;
+      border-radius: 8px;
+      background: white;
+      color: #0b2b3f;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border: 2px solid transparent;
+      position: relative;
+      user-select: none;
+    }
+    .poker-card.red { color: #c0392b; }
+    .poker-card.held {
+      border-color: #f5b342;
+      transform: translateY(-6px);
+      box-shadow: 0 8px 16px rgba(245,179,66,0.4);
+    }
+    .poker-card .pc-rank { font-size: 1.1rem; line-height: 1; }
+    .poker-card .pc-suit { font-size: 1.4rem; line-height: 1; }
+    .poker-card .pc-held-badge {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      background: #f5b342;
+      color: #0b2b3f;
+      font-size: 0.55rem;
+      font-weight: 800;
+      padding: 2px 4px;
+      border-radius: 4px;
+      letter-spacing: 0.03em;
+    }
+    .poker-result {
+      background: rgba(255,255,255,0.1);
+      padding: 0.5rem 0.9rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+      display: inline-block;
+    }
+
+    .casino-actions {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+    .casino-actions button {
+      background: #f5b342;
+      color: #0b2b3f;
+      border: none;
+      padding: 0.7rem 1.4rem;
+      border-radius: 30px;
+      font-size: 0.9rem;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .casino-actions button:hover { background: #e09a20; transform: translateY(-2px); }
+    .casino-actions button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .casino-bet {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .casino-bet label { font-size: 0.78rem; color: #b9b3d4; font-weight: 600; }
+    .casino-bet button {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white;
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 700;
+      font-family: inherit;
+    }
+    .casino-bet button:hover { background: rgba(255,255,255,0.3); }
+    .casino-bet .bet-amount {
+      color: #f5b342;
+      font-size: 1.1rem;
+      font-weight: 800;
+      min-width: 70px;
+      text-align: center;
+    }
+
+    .casino-warn {
+      background: rgba(192,57,43,0.2);
+      border: 1px solid rgba(192,57,43,0.5);
+      border-radius: 8px;
+      padding: 0.6rem 0.9rem;
+      font-size: 0.78rem;
+      color: #f8d4d4;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(11,43,63,0.7);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      padding: 1rem;
+    }
+    .modal-overlay.is-open { opacity: 1; pointer-events: auto; }
+    .modal {
+      background: white;
+      border-radius: 20px;
+      max-width: 620px;
+      width: 100%;
+      max-height: 88vh;
+      overflow: hidden;
+      display: flex; flex-direction: column;
+      box-shadow: 0 24px 60px -12px rgba(0,0,0,0.5);
+      transform: scale(0.92);
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .modal-overlay.is-open .modal { transform: scale(1); }
+    .modal.wide { max-width: 740px; }
+    .modal-head {
+      padding: 1.1rem 1.4rem;
+      background: linear-gradient(135deg, #2c7aa0, #1b4a6b);
+      color: white;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .modal-head.danger { background: linear-gradient(135deg, #c0392b, #8b0000); }
+    .modal-head.good { background: linear-gradient(135deg, #5a8a4a, #3a6a2a); }
+    .modal-head h2 { font-size: 1.15rem; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 0.5rem; }
+    .modal-head h2 i { color: #f5b342; }
+    .modal-close {
+      background: rgba(255,255,255,0.15);
+      border: none; color: white;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      cursor: pointer; font-size: 1rem;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s ease;
+      font-family: inherit;
+    }
+    .modal-close:hover { background: rgba(255,255,255,0.3); }
+    .modal-close.is-disabled { display: none; }
+    .modal-body {
+      padding: 1.25rem 1.4rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .modal-foot {
+      padding: 1rem 1.4rem;
+      background: #f8fafc;
+      border-top: 1px solid #eef4fa;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .item-list { display: flex; flex-direction: column; gap: 0.6rem; }
+    .item {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 0.75rem;
+      align-items: center;
+      padding: 0.8rem 1rem;
+      background: #f8fafc;
+      border: 1.5px solid #eef4fa;
+      border-radius: 12px;
+      transition: all 0.15s ease;
+    }
+    .item:hover { border-color: #8db3d0; background: white; transform: translateX(3px); }
+    .item.is-disabled { opacity: 0.5; pointer-events: none; }
+    .item.is-urgent { border-color: #c0392b; background: #fef5f4; }
+    .item .item-icon {
+      width: 44px; height: 44px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #e4f0f9, #cfdde9);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+      color: #1b4a6b;
+    }
+    .item.is-urgent .item-icon { background: linear-gradient(135deg, #f8d4d4, #e8b0b0); color: #8b0000; }
+    .item .item-body h4 { font-size: 0.9rem; font-weight: 700; color: #0b2b3f; margin: 0 0 2px 0; }
+    .item .item-body p { font-size: 0.75rem; color: #6f8da3; margin: 0; line-height: 1.4; }
+    .item .item-action { display: flex; flex-direction: column; align-items: flex-end; gap: 0.25rem; }
+    .item .item-price { font-size: 0.88rem; font-weight: 700; color: #1b4a6b; font-variant-numeric: tabular-nums; }
+    .item .item-price.up { color: #c0392b; }
+    .item .item-price.down { color: #5a8a4a; }
+    .item button {
+      background: #2c7aa0;
+      color: white;
+      border: none;
+      padding: 0.4rem 0.9rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s ease;
+    }
+    .item button:hover { background: #1b4a6b; }
+    .item button.sell { background: #c76b3b; }
+    .item button.sell:hover { background: #a5522a; }
+    .item button.warn { background: #c0392b; }
+    .item button.warn:hover { background: #8b0000; }
+
+    .big-amount { text-align: center; padding: 1rem 0; }
+    .big-amount .ba-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #6f8da3;
+      font-weight: 600;
+    }
+    .big-amount .ba-value {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #0b2b3f;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.1;
+      margin-top: 0.2rem;
+    }
+    .big-amount .ba-value.debt { color: #c0392b; }
+    .big-amount .ba-sub { font-size: 0.8rem; color: #6f8da3; margin-top: 0.3rem; }
+
+    /* Event card */
+    .event-card { text-align: center; padding: 0.5rem 0 1rem; }
+    .event-card .event-icon {
+      font-size: 3rem;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+    .event-card h3 {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: #0b2b3f;
+      margin: 0 0 0.5rem 0;
+    }
+    .event-card p {
+      font-size: 0.9rem;
+      color: #4a5c6b;
+      line-height: 1.55;
+      margin: 0 0 1.25rem 0;
+    }
+    .event-choices {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      text-align: left;
+    }
+    .event-choice {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: #f8fafc;
+      border: 2px solid #eef4fa;
+      border-radius: 12px;
+      padding: 0.85rem 1rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: inherit;
+      text-align: left;
+    }
+    .event-choice:hover { border-color: #2c7aa0; background: #f0f7fe; transform: translateY(-1px); }
+    .event-choice.is-locked { opacity: 0.5; pointer-events: none; }
+    .event-choice .ec-icon {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #2c7aa0, #1b4a6b);
+      display: flex; align-items: center; justify-content: center;
+      color: white;
+      flex-shrink: 0;
+      font-size: 1rem;
+    }
+    .event-choice .ec-body { flex: 1; }
+    .event-choice .ec-body h4 { font-size: 0.88rem; font-weight: 700; color: #0b2b3f; margin: 0 0 2px 0; }
+    .event-choice .ec-body p { font-size: 0.75rem; color: #6f8da3; margin: 0; line-height: 1.4; }
+    .event-choice .ec-cost {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #1b4a6b;
+      white-space: nowrap;
+    }
+    .event-choice .ec-cost.gain { color: #5a8a4a; }
+    .event-choice .ec-cost.loss { color: #c0392b; }
+
+    /* Bill */
+    .bill {
+      background: #fefefe;
+      border: 1px solid #e2edf5;
+      border-radius: 12px;
+      padding: 1.2rem 1.4rem;
+      font-variant-numeric: tabular-nums;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 0.82rem;
+    }
+    .bill-title {
+      text-align: center;
+      font-family: system-ui, sans-serif;
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #0b2b3f;
+      margin-bottom: 0.2rem;
+    }
+    .bill-title.danger { color: #c0392b; }
+    .bill-subtitle {
+      text-align: center;
+      font-family: system-ui, sans-serif;
+      font-size: 0.72rem;
+      color: #6f8da3;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+      padding-bottom: 0.8rem;
+      border-bottom: 1px dashed #cfdde9;
+    }
+    .bill-section {
+      font-family: system-ui, sans-serif;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #2c7aa0;
+      margin: 1rem 0 0.4rem;
+    }
+    .bill-section.danger { color: #c0392b; }
+    .bill-section:first-of-type { margin-top: 0; }
+    .bill-line {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.32rem 0;
+      color: #2c4a5f;
+    }
+    .bill-line .bl-label { color: #4a5c6b; }
+    .bill-line .bl-value { font-weight: 600; color: #0b2b3f; }
+    .bill-line.total {
+      border-top: 2px solid #0b2b3f;
+      margin-top: 0.5rem;
+      padding-top: 0.5rem;
+      font-weight: 800;
+      font-size: 0.92rem;
+    }
+    .bill-line.total .bl-label { color: #0b2b3f; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.78rem; }
+    .bill-line.total.danger { border-color: #c0392b; }
+    .bill-line.total.danger .bl-value { color: #c0392b; }
+    .bill-line .delta {
+      font-size: 0.7rem;
+      margin-left: 0.4rem;
+      font-weight: 600;
+    }
+    .bill-line .delta.up { color: #c0392b; }
+    .bill-line .delta.down { color: #5a8a4a; }
+    .bill-line.gain .bl-value { color: #5a8a4a; }
+    .bill-line.loss .bl-value { color: #c0392b; }
+    .bill-line.urgent .bl-label { color: #c0392b; font-weight: 700; }
+    .bill-line.urgent .bl-value { color: #c0392b; }
+
+    .bill-note {
+      font-family: system-ui, sans-serif;
+      font-size: 0.72rem;
+      color: #6f8da3;
+      text-align: center;
+      margin-top: 1rem;
+      padding-top: 0.8rem;
+      border-top: 1px dashed #cfdde9;
+      font-style: italic;
+    }
+
+    /* Bills allocation UI */
+    .bill-summary {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 1rem 1.2rem;
+      border: 1px solid #eef4fa;
+      margin-bottom: 1rem;
+    }
+    .bill-summary h4 {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #6f8da3;
+      margin: 0 0 0.6rem 0;
+    }
+    .bill-total {
+      display: flex;
+      justify-content: space-between;
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #0b2b3f;
+      padding-top: 0.6rem;
+      border-top: 1.5px solid #cfdde9;
+      margin-top: 0.6rem;
+    }
+    .bill-total.overdue { color: #c0392b; }
+    .cash-available {
+      font-size: 0.82rem;
+      color: #4a5c6b;
+      margin-bottom: 0.75rem;
+      padding: 0.6rem 0.8rem;
+      background: #e4f0f9;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .cash-available strong { color: #0b2b3f; }
+    .cash-available.warn { background: #fef5f4; color: #8b0000; }
+    .cash-available.warn strong { color: #8b0000; }
+
+    /* Toast */
+    .game-toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      background: #0b2b3f;
+      color: white;
+      padding: 0.7rem 1.2rem;
+      border-radius: 30px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 200;
+      display: flex; align-items: center; gap: 0.5rem;
+      border: 2px solid #2c7aa0;
+      max-width: 90vw;
+    }
+    .game-toast.is-shown { transform: translateX(-50%) translateY(0); }
+    .game-toast.good { border-color: #5a8a4a; }
+    .game-toast.bad { border-color: #c0392b; }
+
+    /* Year log */
+    .year-log {
+      background: white;
+      border-radius: 16px;
+      border: 1px solid #e2edf5;
+      padding: 1rem 1.15rem;
+      box-shadow: 0 4px 12px -8px rgba(0,20,30,0.08);
+      max-height: 220px;
+      overflow-y: auto;
+    }
+    .year-log h4 {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #6f8da3;
+      margin-bottom: 0.7rem;
+      display: flex; align-items: center; gap: 0.4rem;
+      position: sticky; top: 0;
+      background: white;
+      padding-bottom: 0.5rem;
+    }
+    .year-log h4 i { color: #2c7aa0; }
+    .log-entry {
+      font-size: 0.78rem;
+      padding: 0.3rem 0;
+      color: #4a5c6b;
+      line-height: 1.5;
+      display: flex; gap: 0.5rem;
+      animation: logIn 0.3s ease;
+    }
+    @keyframes logIn { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: translateX(0); } }
+    .log-entry .le-year {
+      color: #6f8da3;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      flex-shrink: 0;
+      min-width: 28px;
+    }
+    .log-entry.good .le-text { color: #5a8a4a; }
+    .log-entry.bad .le-text { color: #c0392b; }
+    .log-entry.info .le-text { color: #1b6b93; }
+    .log-entry.event .le-text { color: #8a5ac7; font-weight: 600; }
+    .log-entry.warning .le-text { color: #c76b3b; font-weight: 600; }
+
+    .bar { height: 6px; background: #eef4fa; border-radius: 4px; overflow: hidden; margin-top: 4px; }
+    .bar .bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #2c7aa0, #5a8a4a);
+      border-radius: 4px;
+      transition: width 0.4s ease;
+    }
+
+    /* Start / setup */
+    .start-screen {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg, #0b2b3f, #1b4a6b);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 300;
+      padding: 1rem;
+      transition: opacity 0.4s ease;
+      overflow-y: auto;
+    }
+    .start-screen.is-hidden { opacity: 0; pointer-events: none; }
+    .start-card {
+      background: white;
+      border-radius: 20px;
+      max-width: 560px;
+      width: 100%;
+      padding: 2rem;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+      margin: auto;
+    }
+    .start-card h1 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #0b2b3f;
+      margin: 0 0 0.3rem 0;
+      letter-spacing: -0.5px;
+    }
+    .start-card .tag {
+      color: #c0392b;
+      font-weight: 700;
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+    .start-card > p {
+      font-size: 0.88rem;
+      color: #4a5c6b;
+      line-height: 1.55;
+      margin: 0 0 1rem 0;
+    }
+    .start-card .warn-text {
+      background: #fef5f4;
+      border-left: 3px solid #c0392b;
+      padding: 0.7rem 0.9rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      color: #8b0000;
+      line-height: 1.5;
+      margin: 0 0 1.5rem 0;
+    }
+
+    .setup-group { margin-bottom: 1rem; }
+    .setup-group label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #6f8da3;
+      margin-bottom: 0.4rem;
+    }
+    .setup-options {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+      gap: 0.4rem;
+    }
+    .setup-btn {
+      padding: 0.55rem 0.4rem;
+      border-radius: 10px;
+      border: 1.5px solid #cfdde9;
+      background: #f8fafc;
+      color: #1b4a6b;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s ease;
+      text-align: center;
+    }
+    .setup-btn:hover { border-color: #8db3d0; background: #eef4fa; }
+    .setup-btn.is-active {
+      background: #2c7aa0;
+      border-color: #2c7aa0;
+      color: white;
+      box-shadow: 0 4px 12px -4px rgba(44,122,160,0.5);
+    }
+
+    .start-btn {
+      width: 100%;
+      background: #c0392b;
+      color: white;
+      border: none;
+      padding: 0.9rem 2rem;
+      border-radius: 30px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 8px 20px -8px rgba(192,57,43,0.6);
+      transition: all 0.15s ease;
+      margin-top: 0.5rem;
+    }
+    .start-btn:hover { background: #8b0000; transform: translateY(-2px); }
+
+    @media (max-width: 700px) {
+      .town-skyline { padding: 0 0.5rem; height: 320px; }
+      .building svg { width: 70px; height: auto; }
+      .building-label { font-size: 0.65rem; padding: 0.2rem 0.5rem; }
+      .modal { max-height: 92vh; }
+      .bill { font-size: 0.76rem; padding: 1rem; }
+      .slot-reel { width: 52px; height: 70px; font-size: 1.9rem; }
+      .poker-card { width: 44px; height: 64px; }
+      .poker-card .pc-rank { font-size: 0.9rem; }
+      .poker-card .pc-suit { font-size: 1.1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>City Ledger</h1>
+      <div class="sim-meta">Finance &amp; Economics · A Harsh Life Simulator</div>
+    </div>
+
+    <div class="sim-description">
+      This is not a friendly autopilot. You must pay your own bills, protect your own savings from inflation, keep your possessions maintained, and survive random disasters. Bad decisions compound. Bankruptcies are permanent. Every choice leaves a hidden mark — and the casino is always waiting.
+    </div>
+
+    <div class="ledger">
+      <div class="warning-banner is-hidden" id="warningBanner">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span id="warningText">Warning text</span>
+      </div>
+
+      <div class="ledger-hud" id="hud"></div>
+
+      <div class="town">
+        <div class="sun"></div>
+        <div class="cloud cloud-1"></div>
+        <div class="cloud cloud-2"></div>
+
+        <div class="time-strip">
+          <div class="time-pill"><i class="fas fa-clock"></i> <span id="timeYear">Year 1</span></div>
+          <div class="time-pill"><i class="fas fa-calendar-alt"></i> <span id="timeAge">Age 25</span></div>
+        </div>
+
+        <div class="town-skyline" id="townSkyline"></div>
+
+        <button class="advance-btn pulse" id="advanceBtn">
+          <i class="fas fa-forward"></i> Next Year
+        </button>
+      </div>
+
+      <div class="year-log" id="yearLog">
+        <h4><i class="fas fa-scroll"></i> Year log</h4>
+        <div id="logEntries"></div>
+      </div>
+    </div>
+
+    <div class="insight-panel">
+      <h4><i class="fas fa-lightbulb"></i> How this works</h4>
+      <p>
+        <strong>Bills come due at the start of each year.</strong> Your salary for the year is deposited first, then bills are subtracted. You only need enough cash on hand to cover the gap — but if you're short, you take an emergency loan at 20% APR and unpaid balances compound.
+      </p>
+      <p>
+        <strong>Cash decays.</strong> Money sitting in your wallet loses value to inflation every year. The bank pays interest (inflation + 0.5–3%), so anything not invested or saved actively loses you money.
+      </p>
+      <p>
+        <strong>Possessions cost money.</strong> A house needs property tax and maintenance. A car needs insurance, fuel, and occasional repairs. Miss a payment and you'll lose the asset — or worse.
+      </p>
+      <p>
+        <strong>Emergencies draw from savings.</strong> Medical bills, car repairs, and home emergencies will pull from your cash first, then your savings, and only borrow as a last resort. Save actively — it's your emergency fund.
+      </p>
+      <p>
+        <strong>The casino is real.</strong> Slots, roulette, and Jacks-or-Better video poker. You can win big — but the house edge is real and compounded by psychology. Gambling increases your hidden "risk-taker" trait, which makes your stock market returns more volatile. Play too long and you'll be revealed at retirement as a <em>compulsive gambler</em>.
+      </p>
+      <p>
+        <strong>Bankruptcy is real.</strong> If your net worth drops below −$5,000, the game ends. No restart from within.
+      </p>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modal">
+      <div class="modal-head" id="modalHead">
+        <h2 id="modalTitle"></h2>
+        <button class="modal-close" id="modalClose"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-foot" id="modalFoot"></div>
+    </div>
+  </div>
+
+  <div class="game-toast" id="gameToast"></div>
+
+  <!-- Setup -->
+  <div class="start-screen" id="startScreen">
+    <div class="start-card">
+      <div class="tag">Harsh economy · Realistic</div>
+      <h1>City Ledger</h1>
+      <p>Design your starting life. Every choice shapes the years ahead. This is not a friendly simulation — bad decisions compound, and you can go bankrupt.</p>
+      <div class="warn-text">
+        <strong>You will fail if you don't manage money.</strong> Bills are due every year. Cash loses value to inflation. Possessions cost money to keep. If your net worth drops below −$5,000, the game ends.
+      </div>
+
+      <div class="setup-group">
+        <label>Starting age</label>
+        <div class="setup-options" data-group="age">
+          <button class="setup-btn" data-value="22">22</button>
+          <button class="setup-btn is-active" data-value="25">25</button>
+          <button class="setup-btn" data-value="30">30</button>
+          <button class="setup-btn" data-value="35">35</button>
+        </div>
+      </div>
+
+      <div class="setup-group">
+        <label>Family size</label>
+        <div class="setup-options" data-group="family">
+          <button class="setup-btn" data-value="1">Just you</button>
+          <button class="setup-btn is-active" data-value="2">+ partner</button>
+          <button class="setup-btn" data-value="3">+ 1 child</button>
+          <button class="setup-btn" data-value="4">+ 2 kids</button>
+        </div>
+      </div>
+
+      <div class="setup-group">
+        <label>Starting income</label>
+        <div class="setup-options" data-group="income">
+          <button class="setup-btn" data-value="35000">$35k</button>
+          <button class="setup-btn is-active" data-value="55000">$55k</button>
+          <button class="setup-btn" data-value="85000">$85k</button>
+          <button class="setup-btn" data-value="120000">$120k</button>
+        </div>
+      </div>
+
+      <div class="setup-group">
+        <label>Retirement goal</label>
+        <div class="setup-options" data-group="goal">
+          <button class="setup-btn" data-value="500000">$500k</button>
+          <button class="setup-btn" data-value="1000000">$1M</button>
+          <button class="setup-btn is-active" data-value="1500000">$1.5M</button>
+          <button class="setup-btn" data-value="3000000">$3M</button>
+        </div>
+      </div>
+
+      <button class="start-btn" id="startBtn">Begin — and try to survive <i class="fas fa-arrow-right"></i></button>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ============================================================
+      //  DOM
+      // ============================================================
+      const hudEl = document.getElementById('hud');
+      const skylineEl = document.getElementById('townSkyline');
+      const timeYearEl = document.getElementById('timeYear');
+      const timeAgeEl = document.getElementById('timeAge');
+      const advanceBtn = document.getElementById('advanceBtn');
+      const yearLogEl = document.getElementById('logEntries');
+      const modalOverlay = document.getElementById('modalOverlay');
+      const modal = document.getElementById('modal');
+      const modalHead = document.getElementById('modalHead');
+      const modalTitle = document.getElementById('modalTitle');
+      const modalBody = document.getElementById('modalBody');
+      const modalFoot = document.getElementById('modalFoot');
+      const modalClose = document.getElementById('modalClose');
+      const gameToast = document.getElementById('gameToast');
+      const startScreen = document.getElementById('startScreen');
+      const startBtn = document.getElementById('startBtn');
+      const warningBanner = document.getElementById('warningBanner');
+      const warningText = document.getElementById('warningText');
+
+      // ============================================================
+      //  Utility
+      // ============================================================
+      function fmtMoney(n, decimals = 0) {
+        if (Math.abs(n) < 1) return '$0';
+        const sign = n < 0 ? '-' : '';
+        return sign + '$' + Math.abs(n).toLocaleString('en-US', {
+          maximumFractionDigits: decimals,
+          minimumFractionDigits: decimals,
+        });
+      }
+      function fmtPct(n, decimals = 1) { return (n * 100).toFixed(decimals) + '%'; }
+      function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+      function chance(p) { return Math.random() < p; }
+      function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+      // ============================================================
+      //  State
+      // ============================================================
+      const state = {
+        started: false,
+        gameOver: false,
+
+        startAge: 25,
+        age: 25,
+        year: 1,
+        familySize: 2,
+        goal: 1500000,
+
+        cash: 5000,
+        salary: 55000,
+        baseSalary: 55000,
+        jobTitle: 'Junior Analyst',
+        yearsAtJob: 0,
+        promotionChance: 0.10,
+        unemployedUntilYear: 0,
+
+        savings: 0,
+        savingsRate: 0.035,
+
+        shares: 0,
+        sharePrice: 100,
+        sharePriceStart: 100,
+
+        house: null,
+        car: null,
+        emergencyLoan: 0,
+
+        inflation: 0.03,
+        mortgageRate: 0.06,
+
+        pendingBills: null,
+        prevSnapshot: null,
+
+        traits: {
+          riskTaker: 0,
+          debtCount: 0,
+          healthConscious: false,
+          thrifty: 0,
+          homeownerYears: 0,
+          diversificationStartYear: null,
+          conservativeYears: 0,
+          unemployedYears: 0,
+          lucky: 0,
+          promotedTimes: 0,
+          downsized: false,
+          gambledTotal: 0,
+          gambleNet: 0,
+          gamblerFlag: false,
+        },
+
+        log: [],
+        netWorthHistory: [],
+        groceryPrices: { bread: 3, milk: 4, eggs: 5, rice: 6, coffee: 8 },
+        eventsThisYear: [],
+      };
+
+      const STARTING_GROCERY = { bread: 3, milk: 4, eggs: 5, rice: 6, coffee: 8 };
+
+      const SETUP = { age: 25, family: 2, income: 55000, goal: 1500000 };
+
+      // ============================================================
+      //  Net worth
+      // ============================================================
+      function getHouseEquity() {
+        if (!state.house) return 0;
+        return state.house.value - (state.house.mortgage ? state.house.mortgage.balance : 0);
+      }
+      function getPortfolioValue() { return state.shares * state.sharePrice; }
+      function getNetWorth() {
+        return state.cash + state.savings + getPortfolioValue()
+             + getHouseEquity()
+             + (state.car ? state.car.value : 0)
+             - state.emergencyLoan;
+      }
+      function getTaxRate() {
+        if (state.salary < 40000) return 0.10;
+        if (state.salary < 80000) return 0.18;
+        if (state.salary < 150000) return 0.24;
+        return 0.30;
+      }
+      function getLivingCost() {
+        const base = 18000, household = 4000;
+        return (state.familySize * base + household) * Math.pow(1 + state.inflation, state.year - 1);
+      }
+      function getPropertyTax() {
+        if (!state.house) return 0;
+        return state.house.value * 0.012;
+      }
+      function getMaintenanceCost() {
+        if (!state.house) return 0;
+        const base = state.house.value * 0.005;
+        if (chance(0.15)) return base + 3000 + Math.random() * 5000;
+        return base;
+      }
+      function getCarInsurance() {
+        if (!state.car) return 0;
+        return state.car.insured ? 1800 : 0;
+      }
+      function getCarFuel() {
+        if (!state.car) return 0;
+        return 1500;
+      }
+      function getCarRepair() {
+        if (!state.car) return 0;
+        if (chance(0.20)) return 800 + Math.random() * 1700;
+        return 0;
+      }
+
+      // ============================================================
+      //  Log
+      // ============================================================
+      function addLog(text, kind = 'info') {
+        state.log.push({ year: state.year, age: state.age, text, kind });
+        if (state.log.length > 80) state.log.shift();
+        renderLog();
+      }
+      function renderLog() {
+        yearLogEl.innerHTML = '';
+        const recent = state.log.slice(-40).reverse();
+        recent.forEach((entry) => {
+          const div = document.createElement('div');
+          div.className = 'log-entry ' + entry.kind;
+          div.innerHTML = `<span class="le-year">${entry.age}</span><span class="le-text">${entry.text}</span>`;
+          yearLogEl.appendChild(div);
+        });
+      }
+
+      // ============================================================
+      //  Toast
+      // ============================================================
+      let toastTimer = null;
+      function toast(msg, kind = '') {
+        gameToast.textContent = msg;
+        gameToast.className = 'game-toast is-shown ' + kind;
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => gameToast.classList.remove('is-shown'), 2400);
+      }
+
+      // ============================================================
+      //  Shared payment helper: cash → savings → borrow
+      // ============================================================
+      function payFromCashThenSavings(amount, opts = {}) {
+        const { markHealth = false } = opts;
+        let remaining = amount;
+        let fromCash = 0, fromSavings = 0, borrowed = 0;
+
+        if (state.cash >= remaining) {
+          fromCash = remaining;
+          state.cash -= remaining;
+          remaining = 0;
+        } else {
+          fromCash = state.cash;
+          remaining -= state.cash;
+          state.cash = 0;
+        }
+
+        if (remaining > 0 && state.savings >= remaining) {
+          fromSavings = remaining;
+          state.savings -= remaining;
+          remaining = 0;
+        } else if (remaining > 0) {
+          fromSavings = state.savings;
+          remaining -= state.savings;
+          state.savings = 0;
+        }
+
+        if (remaining > 0) {
+          borrowed = remaining;
+          state.emergencyLoan += remaining;
+          state.traits.debtCount++;
+        }
+
+        if (markHealth) state.traits.healthConscious = true;
+
+        const parts = [];
+        if (fromCash > 0) parts.push(`${fmtMoney(fromCash)} from cash`);
+        if (fromSavings > 0) parts.push(`${fmtMoney(fromSavings)} from savings`);
+        if (borrowed > 0) parts.push(`borrowed ${fmtMoney(borrowed)} at 20%`);
+        return parts.join(', ') || 'No payment made';
+      }
+
+      // ============================================================
+      //  Buildings
+      // ============================================================
+      const BUILDINGS = [
+        { id: 'bank', label: 'Bank', svg: `<svg width="90" height="110" viewBox="0 0 90 110"><rect x="8" y="40" width="74" height="60" fill="#cfdde9" stroke="#0b2b3f" stroke-width="2"/><rect x="4" y="35" width="82" height="10" fill="#8db3d0" stroke="#0b2b3f" stroke-width="2"/><polygon points="45,8 4,35 86,35" fill="#8db3d0" stroke="#0b2b3f" stroke-width="2"/><rect x="20" y="55" width="10" height="35" fill="#2c7aa0"/><rect x="40" y="55" width="10" height="35" fill="#2c7aa0"/><rect x="60" y="55" width="10" height="35" fill="#2c7aa0"/><text x="45" y="30" text-anchor="middle" font-size="12" font-weight="bold" fill="#fff" font-family="serif">$</text></svg>` },
+        { id: 'mortgage', label: 'Mortgage', svg: `<svg width="90" height="110" viewBox="0 0 90 110"><rect x="15" y="45" width="60" height="55" fill="#f5d5b8" stroke="#0b2b3f" stroke-width="2"/><polygon points="45,10 8,45 82,45" fill="#c76b3b" stroke="#0b2b3f" stroke-width="2"/><rect x="35" y="65" width="20" height="35" fill="#8b5a2b" stroke="#0b2b3f" stroke-width="1.5"/><rect x="22" y="55" width="10" height="12" fill="#87ceeb" stroke="#0b2b3f" stroke-width="1.5"/><rect x="58" y="55" width="10" height="12" fill="#87ceeb" stroke="#0b2b3f" stroke-width="1.5"/></svg>` },
+        { id: 'broker', label: 'Broker', svg: `<svg width="90" height="110" viewBox="0 0 90 110"><rect x="8" y="40" width="74" height="60" fill="#cfdde9" stroke="#0b2b3f" stroke-width="2"/><rect x="4" y="35" width="82" height="10" fill="#5a8a4a" stroke="#0b2b3f" stroke-width="2"/><polyline points="15,85 30,70 45,75 60,50 75,55" fill="none" stroke="#c76b3b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="30" cy="70" r="2.5" fill="#c76b3b"/><circle cx="45" cy="75" r="2.5" fill="#c76b3b"/><circle cx="60" cy="50" r="2.5" fill="#c76b3b"/><rect x="20" y="95" width="50" height="5" fill="#2c7aa0"/></svg>` },
+        { id: 'casino', label: 'Casino', svg: `<svg width="90" height="110" viewBox="0 0 90 110"><rect x="8" y="40" width="74" height="60" fill="#2c1b4f" stroke="#0b2b3f" stroke-width="2"/><polygon points="45,8 4,40 86,40" fill="#8a5ac7" stroke="#0b2b3f" stroke-width="2"/><circle cx="45" cy="30" r="10" fill="#f5b342" stroke="#0b2b3f" stroke-width="2"/><text x="45" y="35" text-anchor="middle" font-size="11" font-weight="bold" fill="#0b2b3f">$</text><rect x="20" y="55" width="14" height="14" fill="#f5b342" rx="2"/><rect x="38" y="55" width="14" height="14" fill="#c0392b" rx="2"/><rect x="56" y="55" width="14" height="14" fill="#f5b342" rx="2"/><circle cx="30" cy="85" r="4" fill="#5a8a4a"/><circle cx="45" cy="85" r="4" fill="#c0392b"/><circle cx="60" cy="85" r="4" fill="#2c7aa0"/></svg>` },
+        { id: 'shop', label: 'Grocer', svg: `<svg width="90" height="110" viewBox="0 0 90 110"><rect x="10" y="45" width="70" height="55" fill="#f5d5b8" stroke="#0b2b3f" stroke-width="2"/><rect x="6" y="35" width="78" height="14" fill="#c76b3b" stroke="#0b2b3f" stroke-width="2"/><rect x="20" y="58" width="14" height="20" fill="#87ceeb" stroke="#0b2b3f" stroke-width="1.5"/><rect x="38" y="58" width="14" height="20" fill="#87ceeb" stroke="#0b2b3f" stroke-width="1.5"/><rect x="56" y="58" width="14" height="20" fill="#87ceeb" stroke="#0b2b3f" stroke-width="1.5"/><rect x="25" y="85" width="40" height="15" fill="#8b5a2b" stroke="#0b2b3f" stroke-width="1.5"/><text x="45" y="30" text-anchor="middle" font-size="10" font-weight="bold" fill="#fff">GROCERY</text></svg>` },
+        { id: 'retire', label: 'Retire', svg: `<svg width="90" height="110" viewBox="0 0 90 110"><rect x="10" y="50" width="70" height="50" fill="#cfdde9" stroke="#0b2b3f" stroke-width="2"/><polygon points="10,50 45,25 80,50" fill="#2c7aa0" stroke="#0b2b3f" stroke-width="2"/><rect x="35" y="65" width="20" height="35" fill="#8b5a2b" stroke="#0b2b3f" stroke-width="1.5"/><circle cx="72" cy="20" r="8" fill="#f5b342" stroke="#0b2b3f" stroke-width="1.5"/><line x1="72" y1="8" x2="72" y2="32" stroke="#0b2b3f" stroke-width="1.5"/><line x1="60" y1="20" x2="84" y2="20" stroke="#0b2b3f" stroke-width="1.5"/></svg>` },
+      ];
+
+      function renderTown() {
+        skylineEl.innerHTML = '';
+        BUILDINGS.forEach((b) => {
+          const div = document.createElement('div');
+          div.className = 'building';
+          div.dataset.building = b.id;
+          div.innerHTML = `${b.svg}<div class="building-label">${b.label}</div>`;
+          div.addEventListener('click', () => openBuilding(b.id));
+          skylineEl.appendChild(div);
+        });
+      }
+
+      // ============================================================
+      //  HUD & warnings
+      // ============================================================
+      function renderHUD() {
+        const nw = getNetWorth();
+        const retirementPct = clamp(nw / state.goal, 0, 1);
+        const cards = [
+          { label: 'Cash', value: fmtMoney(state.cash) },
+          { label: 'Savings', value: fmtMoney(state.savings) },
+          { label: 'Portfolio', value: fmtMoney(getPortfolioValue()) },
+          { label: 'Home', value: fmtMoney(getHouseEquity()) },
+          { label: 'Car', value: state.car ? fmtMoney(state.car.value) : '—' },
+          { label: 'Debt', value: state.emergencyLoan > 0 ? fmtMoney(state.emergencyLoan) : '—', kind: state.emergencyLoan > 0 ? 'bad' : '' },
+          { label: 'Net worth', value: fmtMoney(nw), kind: nw > state.goal ? 'good' : nw < 50000 ? 'bad' : nw < 200000 ? 'warn' : '' },
+          { label: 'Goal', value: fmtPct(retirementPct), kind: retirementPct > 0.66 ? 'good' : 'warn' },
+        ];
+        hudEl.innerHTML = cards.map((c) => `
+          <div class="hud-card ${c.kind || ''}">
+            <div class="hc-label">${c.label}</div>
+            <div class="hc-value">${c.value}</div>
+          </div>
+        `).join('');
+        timeYearEl.textContent = 'Year ' + state.year;
+        timeAgeEl.textContent = 'Age ' + state.age;
+
+        const warnings = [];
+        if (state.cash < 1000) warnings.push({ text: 'Low cash — emergencies will draw from savings or force debt.', kind: 'bad' });
+        if (state.emergencyLoan > 0) warnings.push({ text: `Emergency debt ${fmtMoney(state.emergencyLoan)} at 20% APR — pay it off!`, kind: 'bad' });
+        if (nw < 0) warnings.push({ text: `Net worth is NEGATIVE (${fmtMoney(nw)}). Bankruptcy at −$5,000.`, kind: 'bad' });
+        if (state.car && !state.car.insured) warnings.push({ text: 'Car uninsured — a crash will be catastrophic.', kind: 'warn' });
+        if (state.house && state.house.condition < 0.5) warnings.push({ text: 'House in poor condition. Sell or repair soon.', kind: 'warn' });
+
+        if (warnings.length > 0) {
+          warningText.textContent = warnings[0].text;
+          warningBanner.classList.remove('is-hidden');
+        } else {
+          warningBanner.classList.add('is-hidden');
+        }
+      }
+
+      // ============================================================
+      //  Modal
+      // ============================================================
+      function openModal(title, icon, bodyHTML, footHTML, opts = {}) {
+        modalTitle.innerHTML = `<i class="fas fa-${icon}"></i> ${title}`;
+        modalBody.innerHTML = bodyHTML;
+        modalFoot.innerHTML = footHTML || '';
+        modal.classList.toggle('wide', !!opts.wide);
+        modalHead.className = 'modal-head' + (opts.danger ? ' danger' : opts.good ? ' good' : '');
+        modalClose.classList.toggle('is-disabled', !!opts.noClose);
+        modalOverlay.classList.add('is-open');
+      }
+      function closeModal() { modalOverlay.classList.remove('is-open'); }
+      modalClose.addEventListener('click', () => { if (!state.gameOver) closeModal(); });
+      modalOverlay.addEventListener('click', (e) => {
+        if (e.target === modalOverlay && !state.gameOver) closeModal();
+      });
+
+      // ============================================================
+      //  Building router
+      // ============================================================
+      function openBuilding(id) {
+        if (state.gameOver) return;
+        if (modalOverlay.classList.contains('is-open')) return;
+        if (id === 'bank') return openBank();
+        if (id === 'mortgage') return openMortgage();
+        if (id === 'broker') return openBroker();
+        if (id === 'casino') return openCasino();
+        if (id === 'shop') return openShop();
+        if (id === 'retire') return openRetire();
+      }
+
+      // ---------- Bank ----------
+      function openBank() {
+        const loanPayoff = Math.min(state.cash, state.emergencyLoan);
+        const body = `
+          <div class="big-amount">
+            <div class="ba-label">Savings account</div>
+            <div class="ba-value">${fmtMoney(state.savings)}</div>
+            <div class="ba-sub">${fmtPct(state.savingsRate, 2)} APY · Cash: ${fmtMoney(state.cash)}</div>
+          </div>
+          ${state.emergencyLoan > 0 ? `
+            <div class="cash-available warn">
+              <span>Emergency debt</span>
+              <strong>${fmtMoney(state.emergencyLoan)} @ 20% APR</strong>
+            </div>
+          ` : ''}
+          <div class="item-list">
+            <div class="item">
+              <div class="item-icon"><i class="fas fa-piggy-bank"></i></div>
+              <div class="item-body"><h4>Deposit $1,000</h4><p>Move cash into savings.</p></div>
+              <div class="item-action"><button data-action="deposit">Deposit</button></div>
+            </div>
+            <div class="item">
+              <div class="item-icon"><i class="fas fa-hand-holding-usd"></i></div>
+              <div class="item-body"><h4>Withdraw $1,000</h4><p>Move savings back to cash.</p></div>
+              <div class="item-action"><button data-action="withdraw" class="sell">Withdraw</button></div>
+            </div>
+            <div class="item">
+              <div class="item-icon"><i class="fas fa-coins"></i></div>
+              <div class="item-body"><h4>Deposit all cash</h4><p>Protect every dollar from inflation.</p></div>
+              <div class="item-action"><button data-action="depositAll">All in</button></div>
+            </div>
+            ${state.emergencyLoan > 0 ? `
+              <div class="item is-urgent">
+                <div class="item-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                <div class="item-body"><h4>Pay off emergency debt</h4><p>Stop the 20% interest bleeding.</p></div>
+                <div class="item-action"><button data-action="payLoan" class="warn">Pay ${fmtMoney(loanPayoff)}</button></div>
+              </div>
+            ` : ''}
+          </div>
+        `;
+        openModal('Bank', 'university', body, `<div style="color:#6f8da3;font-size:0.75rem;">Banks pay interest. Cash does not — and inflation eats it.</div>`);
+        modalBody.querySelectorAll('button[data-action]').forEach((b) => {
+          b.addEventListener('click', () => bankAction(b.dataset.action));
+        });
+      }
+      function bankAction(action) {
+        if (action === 'deposit') {
+          const amt = Math.min(1000, state.cash);
+          if (amt <= 0) return toast('No cash', 'bad');
+          state.cash -= amt; state.savings += amt;
+          addLog(`Deposited ${fmtMoney(amt)}.`, 'info');
+        } else if (action === 'withdraw') {
+          const amt = Math.min(1000, state.savings);
+          if (amt <= 0) return toast('No savings', 'bad');
+          state.savings -= amt; state.cash += amt;
+          addLog(`Withdrew ${fmtMoney(amt)}.`, 'info');
+        } else if (action === 'depositAll') {
+          if (state.cash <= 0) return toast('No cash', 'bad');
+          addLog(`Deposited ${fmtMoney(state.cash)}.`, 'info');
+          state.savings += state.cash; state.cash = 0;
+        } else if (action === 'payLoan') {
+          const amt = Math.min(state.cash, state.emergencyLoan);
+          if (amt <= 0) return toast('No cash', 'bad');
+          state.cash -= amt;
+          state.emergencyLoan -= amt;
+          addLog(`Paid off ${fmtMoney(amt)} of emergency debt.`, 'good');
+        }
+        renderHUD(); openBank();
+      }
+
+      // ---------- Mortgage ----------
+      function openMortgage() {
+        if (state.house) {
+          const h = state.house;
+          const m = h.mortgage;
+          const body = `
+            <div class="big-amount">
+              <div class="ba-label">Your home</div>
+              <div class="ba-value">${fmtMoney(h.value)}</div>
+              <div class="ba-sub">Equity: ${fmtMoney(getHouseEquity())} · Condition: ${(h.condition * 100).toFixed(0)}%</div>
+            </div>
+            <div class="item-list">
+              <div class="item">
+                <div class="item-icon"><i class="fas fa-percentage"></i></div>
+                <div class="item-body"><h4>Mortgage balance</h4><p>${fmtMoney(m.balance)} · ${m.remainingMonths} mo · ${fmtPct(m.rate, 2)} APR</p></div>
+              </div>
+              <div class="item">
+                <div class="item-icon"><i class="fas fa-money-bill-wave"></i></div>
+                <div class="item-body"><h4>Prepay 12 months</h4><p>${fmtMoney(m.payment * 12)}</p></div>
+                <div class="item-action"><button data-action="prepay">Prepay</button></div>
+              </div>
+              <div class="item">
+                <div class="item-icon"><i class="fas fa-tools"></i></div>
+                <div class="item-body"><h4>Repair house</h4><p>Restore condition to 100%. Costs $8,000.</p></div>
+                <div class="item-action"><button data-action="repair" ${state.cash < 8000 ? 'disabled' : ''}>Repair</button></div>
+              </div>
+              <div class="item">
+                <div class="item-icon"><i class="fas fa-tag"></i></div>
+                <div class="item-body"><h4>Sell house</h4><p>Take equity − 6% closing costs</p></div>
+                <div class="item-action"><button data-action="sell" class="sell">Sell</button></div>
+              </div>
+            </div>
+          `;
+          openModal('Your Home', 'home', body, `<div style="color:#6f8da3;font-size:0.75rem;">Condition affects resale value and triggers repair events.</div>`);
+          modalBody.querySelectorAll('button[data-action]').forEach((b) => {
+            b.addEventListener('click', () => mortgageAction(b.dataset.action));
+          });
+          return;
+        }
+
+        const options = [
+          { name: 'Starter home', value: 180000, desc: 'Modest 1-bed', condition: 0.9 },
+          { name: 'Family home', value: 350000, desc: '3-bed, near schools', condition: 1.0 },
+          { name: 'Dream home', value: 700000, desc: '4-bed, pool', condition: 1.0 },
+        ];
+        const body = `
+          <div style="font-size:0.85rem;color:#4a5c6b;margin-bottom:1rem;">
+            Down payment 20%. Mortgage rate ${fmtPct(state.mortgageRate, 2)} (30-year).
+            <strong>Owning a home means yearly property tax + maintenance.</strong>
+          </div>
+          <div class="item-list">
+            ${options.map((o) => {
+              const down = o.value * 0.2;
+              const canAfford = state.cash >= down;
+              return `
+                <div class="item ${canAfford ? '' : 'is-disabled'}">
+                  <div class="item-icon"><i class="fas fa-home"></i></div>
+                  <div class="item-body"><h4>${o.name}</h4><p>${o.desc} · Down ${fmtMoney(down)} · Tax ${fmtMoney(o.value * 0.012)}/yr</p></div>
+                  <div class="item-action">
+                    <div class="item-price">${fmtMoney(o.value)}</div>
+                    <button data-house="${o.value}" data-cond="${o.condition}" ${canAfford ? '' : 'disabled'}>Buy</button>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `;
+        openModal('Mortgage Office', 'home', body, `<div style="color:#6f8da3;font-size:0.75rem;">20% down · 30-year fixed at ${fmtPct(state.mortgageRate, 2)}.</div>`);
+        modalBody.querySelectorAll('button[data-house]').forEach((b) => {
+          b.addEventListener('click', () => buyHouse(parseFloat(b.dataset.house), parseFloat(b.dataset.cond)));
+        });
+      }
+      function buyHouse(value, condition) {
+        const down = value * 0.2;
+        if (state.cash < down) return toast('Not enough cash', 'bad');
+        state.cash -= down;
+        const rate = state.mortgageRate;
+        const principal = value - down;
+        const n = 360, r = rate / 12;
+        const payment = (principal * r) / (1 - Math.pow(1 + r, -n));
+        state.house = {
+          value, condition,
+          mortgage: { balance: principal, payment, rate, remainingMonths: n, totalInterest: 0 },
+        };
+        addLog(`Bought a home for ${fmtMoney(value)}. Down ${fmtMoney(down)}.`, 'good');
+        toast(`You bought a home!`, 'good');
+        closeModal(); renderHUD();
+      }
+      function mortgageAction(action) {
+        if (!state.house) return;
+        if (action === 'prepay') {
+          const m = state.house.mortgage;
+          const total = m.payment * 12;
+          if (state.cash < total) return toast('Not enough cash', 'bad');
+          state.cash -= total;
+          for (let i = 0; i < 12; i++) {
+            if (m.balance <= 0) break;
+            const interest = m.balance * (m.rate / 12);
+            const principal = Math.min(m.balance, m.payment - interest);
+            m.balance -= principal;
+            m.totalInterest += interest;
+            m.remainingMonths--;
+          }
+          addLog(`Prepaid 12 months.`, 'good');
+          renderHUD(); openMortgage();
+        } else if (action === 'repair') {
+          if (state.cash < 8000) return toast('Not enough cash', 'bad');
+          state.cash -= 8000;
+          state.house.condition = 1.0;
+          addLog(`Repaired house for $8,000.`, 'good');
+          renderHUD(); openMortgage();
+        } else if (action === 'sell') {
+          const closing = state.house.value * 0.06;
+          const net = state.house.value - closing - (state.house.mortgage ? state.house.mortgage.balance : 0);
+          state.cash += net;
+          addLog(`Sold house for ${fmtMoney(net)} net.`, 'info');
+          toast(`Sold, kept ${fmtMoney(net)}`);
+          state.house = null;
+          renderHUD(); closeModal();
+        }
+      }
+
+      // ---------- Broker ----------
+      function openBroker() {
+        const portfolio = getPortfolioValue();
+        const priceDelta = ((state.sharePrice / state.sharePriceStart) - 1) * 100;
+        const body = `
+          <div class="big-amount">
+            <div class="ba-label">Portfolio</div>
+            <div class="ba-value">${fmtMoney(portfolio)}</div>
+            <div class="ba-sub">${state.shares} shares @ ${fmtMoney(state.sharePrice, 2)} (${priceDelta >= 0 ? '+' : ''}${priceDelta.toFixed(0)}% vs Y1)</div>
+          </div>
+          <div class="item-list">
+            <div class="item"><div class="item-icon"><i class="fas fa-arrow-down"></i></div><div class="item-body"><h4>Buy 10 shares</h4><p>Cost ${fmtMoney(state.sharePrice * 10)}</p></div><div class="item-action"><button data-action="buy">Buy</button></div></div>
+            <div class="item"><div class="item-icon"><i class="fas fa-arrow-up"></i></div><div class="item-body"><h4>Sell 10 shares</h4><p>Own ${state.shares}</p></div><div class="item-action"><button data-action="sell" class="sell">Sell</button></div></div>
+            <div class="item"><div class="item-icon"><i class="fas fa-bolt"></i></div><div class="item-body"><h4>Buy max</h4><p>Invest all cash</p></div><div class="item-action"><button data-action="buyMax">All in</button></div></div>
+          </div>
+        `;
+        openModal('Stock Broker', 'chart-line', body, `<div style="color:#6f8da3;font-size:0.75rem;">Returns are volatile — some years are −25%, some +30%.</div>`);
+        modalBody.querySelectorAll('button[data-action]').forEach((b) => {
+          b.addEventListener('click', () => brokerAction(b.dataset.action));
+        });
+      }
+      function brokerAction(action) {
+        const price = state.sharePrice;
+        if (action === 'buy') {
+          const cost = price * 10;
+          if (state.cash < cost) return toast('Not enough cash', 'bad');
+          state.cash -= cost; state.shares += 10;
+          state.traits.riskTaker++;
+          addLog(`Bought 10 shares @ ${fmtMoney(price, 2)}.`, 'info');
+        } else if (action === 'sell') {
+          if (state.shares < 10) return toast('Not enough shares', 'bad');
+          state.shares -= 10; state.cash += price * 10;
+          addLog(`Sold 10 shares @ ${fmtMoney(price, 2)}.`, 'info');
+        } else if (action === 'buyMax') {
+          const n = Math.floor(state.cash / price);
+          if (n === 0) return toast('Not enough cash', 'bad');
+          state.cash -= n * price; state.shares += n;
+          state.traits.riskTaker += n;
+          addLog(`Bought ${n} shares.`, 'info');
+        }
+        renderHUD(); openBroker();
+      }
+
+      // ---------- Shop ----------
+      function openShop() {
+        const items = Object.keys(state.groceryPrices).map((k) => {
+          const p = state.groceryPrices[k];
+          const startP = STARTING_GROCERY[k];
+          const diff = ((p / startP) - 1) * 100;
+          const priceClass = diff > 5 ? 'up' : diff < -5 ? 'down' : '';
+          const emoji = { bread: '🍞', milk: '🥛', eggs: '🥚', rice: '🍚', coffee: '☕' }[k];
+          return `
+            <div class="item">
+              <div class="item-icon">${emoji}</div>
+              <div class="item-body"><h4>${k.charAt(0).toUpperCase() + k.slice(1)}</h4><p>${diff >= 0 ? '+' : ''}${diff.toFixed(0)}% vs Y1</p></div>
+              <div class="item-action">
+                <div class="item-price ${priceClass}">${fmtMoney(p, 2)}</div>
+                <button data-buy="${k}" ${state.cash < p ? 'disabled' : ''}>Buy</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+        const body = `
+          <div style="font-size:0.85rem;color:#4a5c6b;margin-bottom:1rem;">Prices rise with inflation. This is what happens to your cash's buying power.</div>
+          <div class="item-list">${items}</div>
+        `;
+        openModal('Grocery Store', 'shopping-cart', body, `<div style="color:#6f8da3;font-size:0.75rem;">Cash: ${fmtMoney(state.cash)}</div>`);
+        modalBody.querySelectorAll('button[data-buy]').forEach((b) => {
+          b.addEventListener('click', () => {
+            const k = b.dataset.buy;
+            const p = state.groceryPrices[k];
+            if (state.cash < p) return toast('No cash', 'bad');
+            state.cash -= p;
+            renderHUD(); openShop();
+          });
+        });
+      }
+
+      // ---------- Casino ----------
+      const CASINO_STATE = {
+        tab: 'slots',
+        bet: 50,
+        slotsResult: ['🍒', '🍒', '🍒'],
+        slotsSpinning: false,
+        rouletteChoice: { type: 'color', value: 'red' },
+        rouletteResult: null,
+        rouletteSpinning: false,
+        pokerHand: [],
+        pokerHeld: [false, false, false, false, false],
+        pokerStage: 'idle',
+        pokerResult: '',
+      };
+
+      const SLOT_SYMBOLS = ['🍒', '🔔', '7️⃣', '💎', '🍋', '⭐'];
+      const SLOT_PAYOUTS = { '🍒': 5, '🔔': 10, '7️⃣': 25, '💎': 50, '🍋': 4, '⭐': 8 };
+
+      const RED_NUMBERS = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
+
+      const CARD_RANKS = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+      const CARD_SUITS = ['♠','♥','♦','♣'];
+      const POKER_PAYTABLE = {
+        'royal-flush': 250,
+        'straight-flush': 50,
+        'four-kind': 25,
+        'full-house': 9,
+        'flush': 6,
+        'straight': 4,
+        'three-kind': 3,
+        'two-pair': 2,
+        'jacks-or-better': 1,
+        'nothing': 0,
+      };
+
+      function openCasino() {
+        renderCasino();
+      }
+
+      function renderCasino() {
+        const body = `
+          <div class="casino-warn">
+            ⚠ The house always wins in the long run. Play for fun, not to get rich.
+          </div>
+          <div class="casino-tabs">
+            <button class="casino-tab ${CASINO_STATE.tab === 'slots' ? 'is-active' : ''}" data-tab="slots">🎰 Slots</button>
+            <button class="casino-tab ${CASINO_STATE.tab === 'roulette' ? 'is-active' : ''}" data-tab="roulette">🎡 Roulette</button>
+            <button class="casino-tab ${CASINO_STATE.tab === 'poker' ? 'is-active' : ''}" data-tab="poker">🃏 Poker</button>
+          </div>
+          <div class="casino-stage">
+            ${CASINO_STATE.tab === 'slots' ? renderSlots() : ''}
+            ${CASINO_STATE.tab === 'roulette' ? renderRoulette() : ''}
+            ${CASINO_STATE.tab === 'poker' ? renderPoker() : ''}
+          </div>
+          <div style="font-size:0.78rem;color:#6f8da3;text-align:center;">
+            Cash: <strong>${fmtMoney(state.cash)}</strong> · Savings: <strong>${fmtMoney(state.savings)}</strong>
+          </div>
+        `;
+        openModal('Casino', 'dice', body,
+          `<div style="color:#6f8da3;font-size:0.75rem;">You must have cash on hand to bet. Savings cannot be gambled directly.</div>`
+        );
+
+        modalBody.querySelectorAll('.casino-tab').forEach((b) => {
+          b.addEventListener('click', () => {
+            CASINO_STATE.tab = b.dataset.tab;
+            renderCasino();
+          });
+        });
+
+        modalBody.querySelectorAll('[data-casino-action]').forEach((b) => {
+          b.addEventListener('click', () => casinoAction(b.dataset.casinoAction));
+        });
+        modalBody.querySelectorAll('[data-bet-change]').forEach((b) => {
+          b.addEventListener('click', () => {
+            const delta = parseInt(b.dataset.betChange, 10);
+            CASINO_STATE.bet = clamp(CASINO_STATE.bet + delta, 10, 500);
+            renderCasino();
+          });
+        });
+        modalBody.querySelectorAll('[data-roulette-choice]').forEach((b) => {
+          b.addEventListener('click', () => {
+            const parts = b.dataset.rouletteChoice.split(':');
+            CASINO_STATE.rouletteChoice = { type: parts[0], value: parts[1] };
+            renderCasino();
+          });
+        });
+        modalBody.querySelectorAll('[data-poker-hold]').forEach((c) => {
+          c.addEventListener('click', () => {
+            if (CASINO_STATE.pokerStage !== 'holding') return;
+            const idx = parseInt(c.dataset.pokerHold, 10);
+            CASINO_STATE.pokerHeld[idx] = !CASINO_STATE.pokerHeld[idx];
+            renderCasino();
+          });
+        });
+      }
+
+      function renderBetSelector() {
+        return `
+          <div class="casino-bet">
+            <label>Bet</label>
+            <button data-bet-change="-10">−</button>
+            <span class="bet-amount">${fmtMoney(CASINO_STATE.bet)}</span>
+            <button data-bet-change="10">+</button>
+          </div>
+        `;
+      }
+
+      // ---- Slots ----
+      function renderSlots() {
+        return `
+          <div class="cs-label">Lucky Sevens</div>
+          <div class="slot-reels">
+            ${CASINO_STATE.slotsResult.map((s) =>
+              `<div class="slot-reel ${CASINO_STATE.slotsSpinning ? 'spinning' : ''}">${s}</div>`
+            ).join('')}
+          </div>
+          <div style="font-size:0.78rem;color:#b9b3d4;">
+            🍒×5 · 🔔×10 · ⭐×8 · 🍋×4 · 7️⃣×25 · 💎×50 · 2 matching ×2
+          </div>
+          ${renderBetSelector()}
+          <div class="casino-actions">
+            <button data-casino-action="spinSlots" ${CASINO_STATE.slotsSpinning ? 'disabled' : ''}>
+              <i class="fas fa-sync"></i> Spin
+            </button>
+          </div>
+        `;
+      }
+
+      function spinSlots() {
+        if (CASINO_STATE.slotsSpinning) return;
+        if (state.cash < CASINO_STATE.bet) { toast('Not enough cash', 'bad'); return; }
+        state.cash -= CASINO_STATE.bet;
+        state.traits.riskTaker += 1;
+        CASINO_STATE.slotsSpinning = true;
+
+        const finalResult = [pick(SLOT_SYMBOLS), pick(SLOT_SYMBOLS), pick(SLOT_SYMBOLS)];
+
+        let count = 0;
+        const spins = 15;
+        const spinInterval = setInterval(() => {
+          CASINO_STATE.slotsResult = [pick(SLOT_SYMBOLS), pick(SLOT_SYMBOLS), pick(SLOT_SYMBOLS)];
+          count++;
+          if (count >= spins) {
+            clearInterval(spinInterval);
+            CASINO_STATE.slotsResult = finalResult;
+            CASINO_STATE.slotsSpinning = false;
+            handleSlotPayout(finalResult);
+          } else {
+            renderCasino();
+          }
+        }, 80);
+      }
+
+      function handleSlotPayout(result) {
+        const [a, b, c] = result;
+        let payout = 0;
+        let message = 'No match — you lose';
+
+        if (a === b && b === c) {
+          payout = CASINO_STATE.bet * (SLOT_PAYOUTS[a] || 2);
+          message = `Three ${a}! +${fmtMoney(payout)}`;
+        } else if (a === b || b === c || a === c) {
+          payout = CASINO_STATE.bet * 2;
+          const pairSym = a === b ? a : (b === c ? b : a);
+          message = `Pair of ${pairSym}! +${fmtMoney(payout)}`;
+        }
+
+        if (payout > 0) {
+          state.cash += payout;
+          if (payout >= CASINO_STATE.bet * 5) state.traits.lucky += 1;
+          addLog(`Casino slots: ${message}`, 'good');
+          toast(message, 'good');
+        } else {
+          addLog(`Casino slots: ${message} (−${fmtMoney(CASINO_STATE.bet)})`, 'bad');
+          toast(message, 'bad');
+        }
+
+        trackGambling(CASINO_STATE.bet, payout);
+        renderHUD();
+        renderCasino();
+      }
+
+      // ---- Roulette ----
+      function renderRoulette() {
+        const choice = CASINO_STATE.rouletteChoice;
+        const result = CASINO_STATE.rouletteResult;
+        return `
+          <div class="cs-label">European Roulette</div>
+          <div class="roulette-wheel ${CASINO_STATE.rouletteSpinning ? 'spinning' : ''}"></div>
+          <div class="roulette-result">${result !== null ? result : '—'}</div>
+          <div style="font-size:0.72rem;color:#b9b3d4;margin:0.6rem 0;">Pick a bet</div>
+          <div class="casino-tabs" style="grid-template-columns:repeat(3, 1fr);gap:0.3rem;">
+            <button class="casino-tab ${choice.type === 'color' && choice.value === 'red' ? 'is-active' : ''}"
+                    data-roulette-choice="color:red">Red</button>
+            <button class="casino-tab ${choice.type === 'color' && choice.value === 'black' ? 'is-active' : ''}"
+                    data-roulette-choice="color:black">Black</button>
+            <button class="casino-tab ${choice.type === 'number' ? 'is-active' : ''}"
+                    data-roulette-choice="number:7">Number 7</button>
+          </div>
+          <div style="font-size:0.72rem;color:#b9b3d4;margin-top:0.3rem;">
+            Color pays 1:1 · Number pays 35:1
+          </div>
+          ${renderBetSelector()}
+          <div class="casino-actions">
+            <button data-casino-action="spinRoulette" ${CASINO_STATE.rouletteSpinning ? 'disabled' : ''}>
+              <i class="fas fa-sync"></i> Spin wheel
+            </button>
+          </div>
+        `;
+      }
+
+      function spinRoulette() {
+        if (CASINO_STATE.rouletteSpinning) return;
+        if (state.cash < CASINO_STATE.bet) { toast('Not enough cash', 'bad'); return; }
+        state.cash -= CASINO_STATE.bet;
+        state.traits.riskTaker += 1;
+        CASINO_STATE.rouletteSpinning = true;
+        CASINO_STATE.rouletteResult = null;
+        renderCasino();
+
+        setTimeout(() => {
+          const n = Math.floor(Math.random() * 37);
+          CASINO_STATE.rouletteResult = n;
+          CASINO_STATE.rouletteSpinning = false;
+
+          const choice = CASINO_STATE.rouletteChoice;
+          let won = false;
+          let payout = 0;
+          if (choice.type === 'color') {
+            const isRed = n !== 0 && RED_NUMBERS.has(n);
+            const isBlack = n !== 0 && !RED_NUMBERS.has(n);
+            if (choice.value === 'red' && isRed) { won = true; payout = CASINO_STATE.bet * 2; }
+            if (choice.value === 'black' && isBlack) { won = true; payout = CASINO_STATE.bet * 2; }
+          } else if (choice.type === 'number') {
+            if (n === parseInt(choice.value, 10)) { won = true; payout = CASINO_STATE.bet * 36; }
+          }
+
+          if (won) {
+            state.cash += payout;
+            if (payout >= CASINO_STATE.bet * 10) state.traits.lucky += 1;
+            addLog(`Roulette: ${n} — won ${fmtMoney(payout)}`, 'good');
+            toast(`You won ${fmtMoney(payout)}!`, 'good');
+          } else {
+            addLog(`Roulette: ${n} — lost ${fmtMoney(CASINO_STATE.bet)}`, 'bad');
+            toast(`Lost ${fmtMoney(CASINO_STATE.bet)}`, 'bad');
+          }
+
+          trackGambling(CASINO_STATE.bet, payout);
+          renderHUD();
+          renderCasino();
+        }, 3000);
+      }
+
+      // ---- Poker ----
+      function makeDeck() {
+        const deck = [];
+        for (const r of CARD_RANKS) for (const s of CARD_SUITS) deck.push({ rank: r, suit: s });
+        for (let i = deck.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [deck[i], deck[j]] = [deck[j], deck[i]];
+        }
+        return deck;
+      }
+
+      function renderPoker() {
+        if (CASINO_STATE.pokerStage === 'idle') {
+          return `
+            <div class="cs-label">Jacks or Better</div>
+            <div style="font-size:0.85rem;color:#b9b3d4;line-height:1.5;padding:1.5rem 0;">
+              Place a bet, deal five cards, choose which to hold, and draw.
+              Pairs of Jacks or better pay out — better hands pay more.
+            </div>
+            ${renderBetSelector()}
+            <div class="casino-actions">
+              <button data-casino-action="dealPoker" ${state.cash < CASINO_STATE.bet ? 'disabled' : ''}>
+                <i class="fas fa-cards"></i> Deal
+              </button>
+            </div>
+          `;
+        }
+
+        const hand = CASINO_STATE.pokerHand;
+        const held = CASINO_STATE.pokerHeld;
+        return `
+          <div class="cs-label">Jacks or Better</div>
+          <div class="poker-hand">
+            ${hand.map((card, i) => `
+              <div class="poker-card ${card.suit === '♥' || card.suit === '♦' ? 'red' : ''} ${held[i] ? 'held' : ''}"
+                   data-poker-hold="${i}">
+                <span class="pc-rank">${card.rank}</span>
+                <span class="pc-suit">${card.suit}</span>
+                ${held[i] ? '<span class="pc-held-badge">HOLD</span>' : ''}
+              </div>
+            `).join('')}
+          </div>
+          ${CASINO_STATE.pokerStage === 'result'
+            ? `<div class="poker-result">${CASINO_STATE.pokerResult}</div>`
+            : `<div style="font-size:0.78rem;color:#b9b3d4;margin:0.5rem 0;">Click cards to hold · then draw</div>`
+          }
+          ${CASINO_STATE.pokerStage === 'holding' ? `
+            <div class="casino-actions">
+              <button data-casino-action="drawPoker"><i class="fas fa-sync"></i> Draw</button>
+            </div>
+          ` : `
+            <div class="casino-actions">
+              <button data-casino-action="resetPoker"><i class="fas fa-redo"></i> Play again</button>
+            </div>
+          `}
+        `;
+      }
+
+      function dealPoker() {
+        if (state.cash < CASINO_STATE.bet) { toast('Not enough cash', 'bad'); return; }
+        state.cash -= CASINO_STATE.bet;
+        state.traits.riskTaker += 1;
+        const deck = makeDeck();
+        CASINO_STATE.pokerHand = deck.slice(0, 5);
+        CASINO_STATE.pokerHeld = [false, false, false, false, false];
+        CASINO_STATE.pokerStage = 'holding';
+        CASINO_STATE.pokerResult = '';
+        renderHUD();
+        renderCasino();
+      }
+
+      function drawPoker() {
+        const held = CASINO_STATE.pokerHeld;
+        const deck = makeDeck();
+        let deckIdx = 0;
+        for (let i = 0; i < 5; i++) {
+          if (!held[i]) CASINO_STATE.pokerHand[i] = deck[deckIdx++];
+        }
+        CASINO_STATE.pokerStage = 'result';
+        const result = evaluatePokerHand(CASINO_STATE.pokerHand);
+        CASINO_STATE.pokerResult = result.label;
+        const multiplier = POKER_PAYTABLE[result.key] || 0;
+        const payout = multiplier * CASINO_STATE.bet;
+        if (payout > 0) {
+          state.cash += payout;
+          if (multiplier >= 25) state.traits.lucky += 1;
+          addLog(`Poker: ${result.label} — won ${fmtMoney(payout)}`, 'good');
+          toast(`You won ${fmtMoney(payout)}!`, 'good');
+        } else {
+          addLog(`Poker: ${result.label} — lost ${fmtMoney(CASINO_STATE.bet)}`, 'bad');
+          toast(`Lost ${fmtMoney(CASINO_STATE.bet)}`, 'bad');
+        }
+        trackGambling(CASINO_STATE.bet, payout);
+        renderHUD();
+        renderCasino();
+      }
+
+      function resetPoker() {
+        CASINO_STATE.pokerStage = 'idle';
+        CASINO_STATE.pokerHand = [];
+        CASINO_STATE.pokerHeld = [false, false, false, false, false];
+        CASINO_STATE.pokerResult = '';
+        renderCasino();
+      }
+
+      function evaluatePokerHand(hand) {
+        const ranks = hand.map((c) => CARD_RANKS.indexOf(c.rank));
+        const suits = hand.map((c) => c.suit);
+        const counts = {};
+        ranks.forEach((r) => counts[r] = (counts[r] || 0) + 1);
+        const countsArr = Object.values(counts).sort((a, b) => b - a);
+        const isFlush = suits.every((s) => s === suits[0]);
+        const sortedUnique = [...new Set(ranks)].sort((a, b) => a - b);
+        let isStraight = false;
+        if (sortedUnique.length === 5) {
+          if (sortedUnique[4] - sortedUnique[0] === 4) isStraight = true;
+          if (sortedUnique.join(',') === '0,1,2,3,12') isStraight = true;
+        }
+        const isRoyal = isFlush && isStraight && sortedUnique[0] === 8 && sortedUnique[4] === 12;
+
+        if (isRoyal) return { key: 'royal-flush', label: 'ROYAL FLUSH!' };
+        if (isFlush && isStraight) return { key: 'straight-flush', label: 'Straight Flush' };
+        if (countsArr[0] === 4) return { key: 'four-kind', label: 'Four of a Kind' };
+        if (countsArr[0] === 3 && countsArr[1] === 2) return { key: 'full-house', label: 'Full House' };
+        if (isFlush) return { key: 'flush', label: 'Flush' };
+        if (isStraight) return { key: 'straight', label: 'Straight' };
+        if (countsArr[0] === 3) return { key: 'three-kind', label: 'Three of a Kind' };
+        if (countsArr[0] === 2 && countsArr[1] === 2) return { key: 'two-pair', label: 'Two Pair' };
+        if (countsArr[0] === 2) {
+          const pairRank = Object.keys(counts).find((r) => counts[r] === 2);
+          if (parseInt(pairRank, 10) >= 9) return { key: 'jacks-or-better', label: 'Jacks or Better' };
+        }
+        return { key: 'nothing', label: 'No hand' };
+      }
+
+      function casinoAction(action) {
+        if (action === 'spinSlots') spinSlots();
+        else if (action === 'spinRoulette') spinRoulette();
+        else if (action === 'dealPoker') dealPoker();
+        else if (action === 'drawPoker') drawPoker();
+        else if (action === 'resetPoker') resetPoker();
+      }
+
+      function trackGambling(bet, payout) {
+        state.traits.gambledTotal += bet;
+        state.traits.gambleNet += (payout - bet);
+        if (state.traits.gambledTotal >= 2000 && !state.traits.gamblerFlag) {
+          state.traits.gamblerFlag = true;
+          addLog('🎲 You\'ve become a regular at the casino. Watch your savings.', 'warning');
+        }
+      }
+
+      // ---------- Retire ----------
+      function openRetire() {
+        const nw = getNetWorth();
+        const pct = clamp(nw / state.goal, 0, 1);
+        const yearsLeft = 65 - state.age;
+        const body = `
+          <div class="big-amount">
+            <div class="ba-label">Retirement progress</div>
+            <div class="ba-value ${nw < 0 ? 'debt' : ''}">${fmtMoney(nw)}</div>
+            <div class="ba-sub">Goal ${fmtMoney(state.goal)} (${fmtPct(pct)})</div>
+            <div class="bar" style="max-width:240px;margin:0.6rem auto 0;"><div class="bar-fill" style="width:${pct*100}%"></div></div>
+          </div>
+          <div style="padding:1rem;background:#f8fafc;border-radius:12px;border:1px solid #eef4fa;">
+            <div style="font-size:0.78rem;color:#6f8da3;text-transform:uppercase;letter-spacing:0.05em;font-weight:600;margin-bottom:0.3rem;">Years until 65</div>
+            <div style="font-size:1.2rem;font-weight:700;color:#0b2b3f;">${Math.max(0, yearsLeft)} years</div>
+            ${state.emergencyLoan > 0 ? `<div style="margin-top:0.5rem;font-size:0.8rem;color:#c0392b;font-weight:600;">⚠ You owe ${fmtMoney(state.emergencyLoan)} in emergency debt</div>` : ''}
+            ${nw < 0 ? `<div style="margin-top:0.5rem;font-size:0.8rem;color:#c0392b;font-weight:600;">⚠ Bankruptcy at −$5,000 (currently ${fmtMoney(nw)})</div>` : ''}
+          </div>
+        `;
+        openModal('Retirement Planner', 'umbrella-beach', body, `<div style="color:#6f8da3;font-size:0.75rem;">Every dollar matters. Cash decays, savings grow, stocks swing.</div>`);
+      }
+
+      // ============================================================
+      //  Trait modifiers
+      // ============================================================
+      function getEffectiveMarketVolatility() {
+        return 0.36 + (state.traits.riskTaker > 20 ? 0.10 : 0);
+      }
+      function getEffectiveMarketReturn() {
+        return 0.08 + (state.traits.diversificationStartYear ? 0.005 : 0);
+      }
+      function getEffectiveMortgageRate() {
+        return state.mortgageRate + (state.traits.debtCount >= 2 ? 0.015 : 0);
+      }
+      function getEffectiveInflation() {
+        return state.inflation * (state.traits.conservativeYears >= 5 ? 1.3 : 1);
+      }
+      function getEffectiveEmergencyCost(cost) {
+        if (state.car && !state.car.insured) return cost * 1.4;
+        if (state.traits.healthConscious) return cost * 0.7;
+        return cost;
+      }
+
+      // ============================================================
+      //  Bills Due
+      // ============================================================
+      function getUpcomingNetIncome() {
+        if (state.salary <= 0) return 0;
+        return state.salary * (1 - getTaxRate());
+      }
+
+      function computeBills() {
+        const taxes = state.salary * getTaxRate();
+        const living = getLivingCost();
+        const mortgage = state.house && state.house.mortgage ? state.house.mortgage.payment * 12 : 0;
+        const propertyTax = getPropertyTax();
+        const maintenance = getMaintenanceCost();
+        const carInsurance = getCarInsurance();
+        const carFuel = getCarFuel();
+        const carRepair = getCarRepair();
+        const loanInterest = state.emergencyLoan * 0.20;
+        return {
+          taxes, living, mortgage, propertyTax, maintenance,
+          carInsurance, carFuel, carRepair, loanInterest,
+          total: taxes + living + mortgage + propertyTax + maintenance + carInsurance + carFuel + carRepair + loanInterest,
+        };
+      }
+
+      function showBillsDue() {
+        const bills = computeBills();
+        state.pendingBills = bills;
+
+        const upcomingIncome = getUpcomingNetIncome();
+        const availableToSpend = state.cash + upcomingIncome;
+        const canPay = availableToSpend >= bills.total;
+        const shortfall = Math.max(0, bills.total - availableToSpend);
+
+        const lines = [
+          { label: 'Income tax', value: bills.taxes },
+          { label: `Living costs (${state.familySize} people)`, value: bills.living },
+        ];
+        if (bills.mortgage > 0) lines.push({ label: 'Mortgage', value: bills.mortgage });
+        if (bills.propertyTax > 0) lines.push({ label: 'Property tax', value: bills.propertyTax });
+        if (bills.maintenance > 0) lines.push({ label: 'Home maintenance', value: bills.maintenance });
+        if (bills.carInsurance > 0) lines.push({ label: 'Car insurance', value: bills.carInsurance });
+        if (bills.carFuel > 0) lines.push({ label: 'Car fuel', value: bills.carFuel });
+        if (bills.carRepair > 0) lines.push({ label: 'Car repair (⚠ unexpected)', value: bills.carRepair });
+        if (bills.loanInterest > 0) lines.push({ label: 'Emergency loan interest (20%)', value: bills.loanInterest, urgent: true });
+
+        const body = `
+          <div style="font-size:0.85rem;color:#4a5c6b;margin-bottom:1rem;line-height:1.5;">
+            Year ${state.year} is beginning. Your salary for this year will be deposited, then bills are subtracted. <strong>You only need enough cash on hand to cover the gap.</strong>
+          </div>
+
+          <div class="bill-summary" style="background:#f0f7fe;border-color:#cde0ef;">
+            <div class="bill-line">
+              <span class="bl-label">Cash on hand</span>
+              <span class="bl-value">${fmtMoney(state.cash)}</span>
+            </div>
+            <div class="bill-line gain">
+              <span class="bl-label">This year's net salary (+)</span>
+              <span class="bl-value">+${fmtMoney(upcomingIncome)}</span>
+            </div>
+            <div class="bill-total" style="color:#1b4a6b;border-color:#8db3d0;">
+              <span>Available to pay bills</span>
+              <span>${fmtMoney(availableToSpend)}</span>
+            </div>
+          </div>
+
+          <div class="cash-available ${!canPay ? 'warn' : ''}" style="margin-top:0.75rem;">
+            <span>Bills due: <strong>${fmtMoney(bills.total)}</strong></span>
+            ${canPay
+              ? `<span style="color:#5a8a4a;font-weight:700;">✓ You can pay</span>`
+              : `<span style="color:#c0392b;font-weight:700;">Short by ${fmtMoney(shortfall)}</span>`
+            }
+          </div>
+
+          <div class="bill-summary">
+            ${lines.map((l) => `
+              <div class="bill-line ${l.urgent ? 'urgent' : ''}">
+                <span class="bl-label">${l.label}</span>
+                <span class="bl-value">${fmtMoney(l.value)}</span>
+              </div>
+            `).join('')}
+            <div class="bill-total ${!canPay ? 'overdue' : ''}">
+              <span>Total</span>
+              <span>${fmtMoney(bills.total)}</span>
+            </div>
+          </div>
+
+          ${!canPay ? `
+            <div class="warning-banner" style="margin:0;animation:none;">
+              <i class="fas fa-exclamation-triangle"></i>
+              <span>You're ${fmtMoney(shortfall)} short even after this year's salary. You must take an emergency loan at 20% APR — or the bank will force one.</span>
+            </div>
+          ` : ''}
+        `;
+
+        const foot = canPay
+          ? `<button class="advance-btn" style="position:static;transform:none;margin-left:auto;" id="payBills"><i class="fas fa-check"></i> Pay bills (${fmtMoney(bills.total)})</button>`
+          : `<button class="advance-btn" style="position:static;transform:none;background:#c0392b;" id="borrowBills"><i class="fas fa-exclamation-triangle"></i> Borrow ${fmtMoney(shortfall)} at 20% APR</button>`;
+
+        openModal('Bills Due', 'file-invoice-dollar', body, foot, { noClose: true, danger: !canPay });
+
+        if (canPay) {
+          document.getElementById('payBills').addEventListener('click', () => payBills(bills, upcomingIncome));
+        } else {
+          document.getElementById('borrowBills').addEventListener('click', () => borrowAndPay(bills, shortfall, upcomingIncome));
+        }
+      }
+
+      function payBills(bills, upcomingIncome) {
+        if (upcomingIncome > 0) {
+          state.cash += upcomingIncome;
+          addLog(`Net income ${fmtMoney(upcomingIncome)} deposited.`, 'good');
+        }
+        state.cash -= bills.total;
+        addLog(`Paid ${fmtMoney(bills.total)} in bills.`, 'info');
+        closeModal();
+        advanceBtn.disabled = false;
+        advanceBtn.innerHTML = '<i class="fas fa-forward"></i> Advance Year';
+        renderHUD();
+        toast(`Bills paid: −${fmtMoney(bills.total)}`);
+        setTimeout(() => runYear(), 200);
+      }
+
+      function borrowAndPay(bills, shortfall, upcomingIncome) {
+        state.emergencyLoan += shortfall;
+        state.cash += shortfall;
+        state.traits.debtCount++;
+        addLog(`Borrowed ${fmtMoney(shortfall)} at 20% APR.`, 'bad');
+        if (upcomingIncome > 0) {
+          state.cash += upcomingIncome;
+          addLog(`Net income ${fmtMoney(upcomingIncome)} deposited.`, 'good');
+        }
+        state.cash -= bills.total;
+        addLog(`Paid ${fmtMoney(bills.total)} in bills.`, 'info');
+        closeModal();
+        advanceBtn.disabled = false;
+        advanceBtn.innerHTML = '<i class="fas fa-forward"></i> Advance Year';
+        renderHUD();
+        toast(`Emergency loan: +${fmtMoney(shortfall)} debt`, 'bad');
+        setTimeout(() => {
+          if (checkBankruptcy()) return;
+          runYear();
+        }, 200);
+      }
+
+      // ============================================================
+      //  Run Year
+      // ============================================================
+      function runYear() {
+        if (state.gameOver) return;
+
+        const prev = {
+          year: state.year, age: state.age,
+          cash: state.cash, savings: state.savings,
+          portfolio: getPortfolioValue(),
+          houseEquity: getHouseEquity(),
+          carValue: state.car ? state.car.value : 0,
+          netWorth: getNetWorth(),
+          salary: state.salary,
+          inflation: state.inflation,
+          sharePrice: state.sharePrice,
+          groceryPrices: { ...state.groceryPrices },
+        };
+
+        state.year++;
+        state.age++;
+
+        let incomeEarned = 0;
+        if (state.salary > 0) {
+          incomeEarned = state.salary * (1 - getTaxRate());
+        } else {
+          addLog(`Unemployed this year — no income.`, 'bad');
+        }
+
+        let savingsInterest = 0;
+        if (state.savings > 0) {
+          savingsInterest = state.savings * state.savingsRate;
+          state.savings += savingsInterest;
+        }
+
+        if (state.emergencyLoan > 0) {
+          const interest = state.emergencyLoan * 0.20;
+          state.emergencyLoan += interest;
+          addLog(`Emergency loan interest accrued: +${fmtMoney(interest)}`, 'bad');
+        }
+
+        const vol = getEffectiveMarketVolatility();
+        const mean = getEffectiveMarketReturn();
+        const marketReturn = mean + (Math.random() - 0.5) * vol;
+        state.sharePrice = Math.max(1, state.sharePrice * (1 + marketReturn));
+
+        let promotionText = '';
+        if (state.salary > 0) {
+          state.yearsAtJob++;
+          const baseChance = Math.min(0.65, 0.10 + state.yearsAtJob * 0.03);
+          const adjustedChance = baseChance + (state.traits.promotedTimes >= 3 ? 0.03 : 0);
+          if (chance(adjustedChance)) {
+            const raise = 0.12 + Math.random() * 0.10;
+            state.salary *= (1 + raise);
+            state.baseSalary *= (1 + raise);
+            state.yearsAtJob = 0;
+            state.traits.promotedTimes++;
+            const titles = ['Analyst', 'Senior Analyst', 'Manager', 'Director', 'VP'];
+            state.jobTitle = pick(titles);
+            promotionText = `Promoted to ${state.jobTitle} (+${(raise*100).toFixed(0)}%)`;
+            addLog(`🚀 ${promotionText}`, 'good');
+          } else {
+            state.salary *= (1 + state.inflation);
+          }
+        } else if (state.year >= state.unemployedUntilYear) {
+          if (chance(0.6)) {
+            state.salary = Math.max(state.baseSalary || 40000, 45000);
+            state.jobTitle = 'Analyst';
+            state.yearsAtJob = 0;
+            promotionText = 'Re-employed';
+            addLog('🔁 Found a new job.', 'good');
+          }
+        }
+
+        if (state.house) {
+          state.traits.homeownerYears++;
+          const appreciation = 0.03 + (state.traits.homeownerYears >= 10 ? 0.01 : 0) + (Math.random() - 0.5) * 0.06;
+          state.house.value *= (1 + appreciation);
+          state.house.condition = Math.max(0.1, state.house.condition - 0.05);
+        }
+
+        if (state.car) {
+          state.car.condition = Math.max(0, (state.car.condition || 1) - 0.05);
+          if (state.car.condition <= 0.1) {
+            addLog('🚗 Your car broke down permanently. It\'s gone.', 'bad');
+            state.car = null;
+          } else {
+            state.car.value *= 0.85;
+          }
+        }
+
+        const inflationShift = (Math.random() - 0.5) * 0.02;
+        state.inflation = clamp(state.inflation + inflationShift, 0.01, 0.08);
+        Object.keys(state.groceryPrices).forEach((k) => {
+          state.groceryPrices[k] *= (1 + state.inflation);
+        });
+        state.mortgageRate = clamp(state.mortgageRate + (Math.random() - 0.5) * 0.005, 0.02, 0.12);
+        state.savingsRate = clamp(state.inflation + 0.005 + (Math.random() - 0.5) * 0.005, 0.01, 0.10);
+
+        if (state.year === 3) {
+          if (state.shares > 0 && state.savings > 0) {
+            state.traits.diversificationStartYear = state.year;
+          }
+        }
+        if (state.year <= 5 && state.shares === 0) {
+          state.traits.conservativeYears++;
+        }
+
+        state.netWorthHistory.push({ year: state.year, nw: getNetWorth() });
+
+        const cashDrag = state.cash * state.inflation * 0.5;
+        if (state.cash > 0) {
+          state.cash -= cashDrag;
+        }
+
+        renderHUD();
+        renderLog();
+
+        const now = {
+          year: state.year, age: state.age,
+          cash: state.cash, savings: state.savings,
+          portfolio: getPortfolioValue(),
+          houseEquity: getHouseEquity(),
+          carValue: state.car ? state.car.value : 0,
+          netWorth: getNetWorth(),
+          salary: state.salary,
+          inflation: state.inflation,
+          sharePrice: state.sharePrice,
+          groceryPrices: { ...state.groceryPrices },
+        };
+
+        const billHTML = buildBill(prev, now, { incomeEarned, savingsInterest, marketReturn, promotionText });
+
+        if (checkBankruptcy()) return;
+
+        openModal('Year ' + prev.year + ' — Annual Statement', 'receipt', billHTML,
+          `<button class="advance-btn" style="position:static;transform:none;" id="billContinue">Continue <i class="fas fa-arrow-right"></i></button>`,
+          { wide: true }
+        );
+        modalBody.style.padding = '0';
+        modalBody.innerHTML = `<div style="padding:1.2rem 1.4rem;">${billHTML}</div>`;
+        setTimeout(() => {
+          const btn = document.getElementById('billContinue');
+          if (btn) btn.addEventListener('click', () => {
+            closeModal();
+            maybeFireEvent();
+          });
+        }, 0);
+      }
+
+      // ============================================================
+      //  Bill builder
+      // ============================================================
+      function buildBill(prev, now, context) {
+        const nwDelta = now.netWorth - prev.netWorth;
+        const groceryPrev = Object.values(prev.groceryPrices).reduce((a, b) => a + b, 0);
+        const groceryNow = Object.values(now.groceryPrices).reduce((a, b) => a + b, 0);
+        const shareDelta = ((now.sharePrice / prev.sharePrice) - 1) * 100;
+
+        function deltaSpan(curr, prevVal, inverse = false) {
+          const d = curr - prevVal;
+          if (Math.abs(d) < 0.5) return '';
+          const positive = d > 0;
+          const cls = inverse ? (positive ? 'down' : 'up') : (positive ? 'down' : 'up');
+          return `<span class="delta ${cls}">(${positive ? '+' : ''}${fmtMoney(d)})</span>`;
+        }
+
+        return `
+          <div class="bill">
+            <div class="bill-title">Annual Statement</div>
+            <div class="bill-subtitle">Age ${prev.age} → ${now.age} · Year ${prev.year} → ${now.year}</div>
+
+            <div class="bill-section">Income & interest</div>
+            <div class="bill-line">
+              <span class="bl-label">Net income</span>
+              <span class="bl-value">+${fmtMoney(context.incomeEarned)} ${deltaSpan(now.salary, prev.salary)}</span>
+            </div>
+            ${context.savingsInterest > 0 ? `<div class="bill-line gain"><span class="bl-label">Savings interest</span><span class="bl-value">+${fmtMoney(context.savingsInterest)}</span></div>` : ''}
+            ${context.promotionText ? `<div class="bill-line gain"><span class="bl-label">${context.promotionText}</span><span class="bl-value">✓</span></div>` : ''}
+
+            <div class="bill-section">Assets</div>
+            <div class="bill-line ${now.cash >= prev.cash ? 'gain' : 'loss'}">
+              <span class="bl-label">Cash (loses value to inflation)</span>
+              <span class="bl-value">${fmtMoney(now.cash)} ${deltaSpan(now.cash, prev.cash)}</span>
+            </div>
+            <div class="bill-line ${now.savings >= prev.savings ? 'gain' : 'loss'}">
+              <span class="bl-label">Savings (${(state.savingsRate * 100).toFixed(2)}% APY)</span>
+              <span class="bl-value">${fmtMoney(now.savings)} ${deltaSpan(now.savings, prev.savings)}</span>
+            </div>
+            <div class="bill-line ${now.portfolio >= prev.portfolio ? 'gain' : 'loss'}">
+              <span class="bl-label">Portfolio</span>
+              <span class="bl-value">${fmtMoney(now.portfolio)} ${deltaSpan(now.portfolio, prev.portfolio)}</span>
+            </div>
+            <div class="bill-line">
+              <span class="bl-label">Market return</span>
+              <span class="bl-value ${context.marketReturn >= 0 ? 'gain' : 'loss'}">${context.marketReturn >= 0 ? '+' : ''}${(context.marketReturn * 100).toFixed(1)}%</span>
+            </div>
+            ${now.houseEquity > 0 || prev.houseEquity > 0 ? `<div class="bill-line ${now.houseEquity >= prev.houseEquity ? 'gain' : 'loss'}"><span class="bl-label">Home equity</span><span class="bl-value">${fmtMoney(now.houseEquity)} ${deltaSpan(now.houseEquity, prev.houseEquity)}</span></div>` : ''}
+            ${now.carValue > 0 || prev.carValue > 0 ? `<div class="bill-line ${now.carValue >= prev.carValue ? 'gain' : 'loss'}"><span class="bl-label">Car</span><span class="bl-value">${fmtMoney(now.carValue)} ${deltaSpan(now.carValue, prev.carValue)}</span></div>` : ''}
+
+            <div class="bill-section ${state.emergencyLoan > 0 ? 'danger' : ''}">Debt</div>
+            ${state.emergencyLoan > 0 ? `
+              <div class="bill-line urgent">
+                <span class="bl-label">Emergency loan</span>
+                <span class="bl-value">−${fmtMoney(state.emergencyLoan)}</span>
+              </div>
+              <div class="bill-line urgent">
+                <span class="bl-label">Interest accrued (20%)</span>
+                <span class="bl-value">—</span>
+              </div>
+            ` : `<div class="bill-line"><span class="bl-label">No debt</span><span class="bl-value">✓</span></div>`}
+
+            <div class="bill-line total ${nwDelta >= 0 ? 'gain' : 'loss'}">
+              <span class="bl-label">Net worth</span>
+              <span class="bl-value">${fmtMoney(now.netWorth)} ${deltaSpan(now.netWorth, prev.netWorth)}</span>
+            </div>
+
+            <div class="bill-section">Economy</div>
+            <div class="bill-line"><span class="bl-label">Inflation</span><span class="bl-value">${(now.inflation * 100).toFixed(2)}%</span></div>
+            <div class="bill-line"><span class="bl-label">Grocery basket (5 items)</span><span class="bl-value">${fmtMoney(groceryNow, 2)} ${deltaSpan(groceryNow, groceryPrev)}</span></div>
+            <div class="bill-line"><span class="bl-label">Share price</span><span class="bl-value">${fmtMoney(now.sharePrice, 2)} <span class="delta ${shareDelta >= 0 ? 'up' : 'down'}">(${shareDelta >= 0 ? '+' : ''}${shareDelta.toFixed(1)}%)</span></span></div>
+
+            <div class="bill-note">
+              ${nwDelta >= 0 ? `Net worth grew by <strong>${fmtMoney(nwDelta)}</strong>.` : `Net worth fell by <strong>${fmtMoney(-nwDelta)}</strong>.`}
+            </div>
+          </div>
+        `;
+      }
+
+      // ============================================================
+      //  Events
+      // ============================================================
+      const EVENT_LIBRARY = [
+        {
+          id: 'windfall', weight: 0.08,
+          title: 'Unexpected windfall', icon: 'fa-gift',
+          desc: 'A distant relative left you an inheritance. What do you do with $4,000?',
+          minAge: 0,
+          choices: [
+            { label: 'Save it', desc: 'Goes to savings (protected from inflation)', effect: (s) => { s.savings += 4000; return 'You save $4,000'; }, gain: 4000 },
+            { label: 'Invest it', desc: 'Buy shares — could grow or crash', effect: (s) => { const n = Math.floor(4000 / s.sharePrice); s.shares += n; s.cash += 4000 - n * s.sharePrice; s.traits.riskTaker += n; return `Bought ${n} shares`; }, gain: 4000 },
+            { label: 'Spend it', desc: 'Straight to cash — easiest to spend, easiest to lose', effect: (s) => { s.cash += 4000; return 'You spend $4,000'; }, gain: 4000 },
+          ],
+        },
+        {
+          id: 'medical', weight: 0.14,
+          title: 'Medical emergency', icon: 'fa-hospital',
+          desc: 'A family member needs urgent treatment. Insurance covers part — your share is $2,400.',
+          minAge: 0,
+          choices: [
+            { label: 'Pay it', desc: 'Draws from cash, then savings, then borrows if needed', effect: (s) => {
+              return payFromCashThenSavings(2400, { markHealth: true });
+            }, loss: 2400 },
+            { label: 'Skip treatment', desc: 'Save money now — cost your health later', effect: (s) => {
+              s.traits.healthConscious = false;
+              return 'You skip treatment';
+            }, loss: 0 },
+          ],
+        },
+        {
+          id: 'car_repair', weight: 0.12,
+          title: 'Car trouble', icon: 'fa-car',
+          desc: 'Your car needs a major repair ($1,800). Or you could sell it as-is.',
+          minAge: 22,
+          cond: (s) => !!s.car,
+          choices: [
+            { label: 'Repair it', desc: 'Cash → savings → borrow', effect: (s) => {
+              const r = payFromCashThenSavings(1800);
+              if (s.car) s.car.condition = 1;
+              return 'Repaired: ' + r;
+            }, loss: 1800 },
+            { label: 'Sell the car', desc: 'Free cash, but −5% salary (commute)', effect: (s) => {
+              const v = s.car ? s.car.value * 0.6 : 0;
+              s.cash += v;
+              s.car = null;
+              s.traits.thrifty++;
+              s.salary *= 0.95;
+              return `Sold for ${fmtMoney(v)}, salary −5%`;
+            }, gain: 0 },
+          ],
+        },
+        {
+          id: 'layoff', weight: 0.05,
+          title: 'Layoff', icon: 'fa-briefcase',
+          desc: 'Your company is downsizing. You\'re offered severance, or can fight for your role.',
+          minAge: 26,
+          cond: (s) => s.salary > 0,
+          choices: [
+            { label: 'Take severance', desc: '3 months pay, lose job', effect: (s) => {
+              const sev = s.salary * 0.25;
+              s.cash += sev;
+              s.salary = 0;
+              s.jobTitle = 'Unemployed';
+              s.unemployedUntilYear = s.year + 1;
+              s.traits.unemployedYears++;
+              return `+${fmtMoney(sev)} severance, unemployed`;
+            }, gain: 'salary' },
+            { label: 'Fight for your role', desc: '50/50 chance', effect: (s) => {
+              if (chance(0.5)) return 'You keep your job';
+              s.salary = 0;
+              s.jobTitle = 'Unemployed';
+              s.unemployedUntilYear = s.year + 1;
+              s.traits.unemployedYears++;
+              return 'Laid off anyway';
+            }, risky: true },
+          ],
+        },
+        {
+          id: 'bonus', weight: 0.08,
+          title: 'Year-end bonus', icon: 'fa-star',
+          desc: 'Your hard work paid off. Bonus incoming.',
+          minAge: 24,
+          cond: (s) => s.salary > 0,
+          choices: [
+            { label: 'Take the bonus', desc: '+8% of salary', effect: (s) => { const b = s.salary * 0.08; s.cash += b; return `+${fmtMoney(b)}`; }, gain: 'salary' },
+          ],
+        },
+        {
+          id: 'family', weight: 0.04,
+          title: 'Family grows', icon: 'fa-baby',
+          desc: 'A new child joins the family. Living costs will rise permanently.',
+          minAge: 26, once: true,
+          choices: [
+            { label: 'Welcome them', desc: 'Family size +1, costs rise', effect: (s) => { s.familySize++; return 'Family of ' + s.familySize; }, gain: 0 },
+          ],
+        },
+        {
+          id: 'home_repair', weight: 0.08,
+          title: 'Roof leak', icon: 'fa-house-damage',
+          desc: 'Your roof is leaking. It needs repair ($6,000) or your house value drops 10%.',
+          minAge: 24,
+          cond: (s) => !!s.house,
+          choices: [
+            { label: 'Fix it', desc: 'Cash → savings → borrow', effect: (s) => {
+              const r = payFromCashThenSavings(6000);
+              if (s.house) s.house.condition = 1;
+              return 'Fixed: ' + r;
+            }, loss: 6000 },
+            { label: 'Ignore it', desc: 'House value −10%', effect: (s) => {
+              if (s.house) {
+                s.house.value *= 0.9;
+                s.house.condition = Math.max(0.3, s.house.condition - 0.3);
+              }
+              return 'House value −10%';
+            }, loss: 0 },
+          ],
+        },
+        {
+          id: 'opportunity', weight: 0.06,
+          title: 'Business opportunity', icon: 'fa-lightbulb',
+          desc: 'A friend offers you a stake in their startup for $3,000. Could return 3×, or nothing.',
+          minAge: 25,
+          choices: [
+            { label: 'Invest', desc: 'Risk it', effect: (s) => {
+              if (s.cash < 3000) { return 'Not enough cash — you decline'; }
+              s.cash -= 3000;
+              s.traits.riskTaker += 3;
+              if (chance(0.35)) { s.cash += 9000; return 'It hit! +$9,000'; }
+              return 'It failed. −$3,000';
+            }, risky: true },
+            { label: 'Decline', desc: 'Keep your money', effect: () => 'You decline', gain: 0 },
+          ],
+        },
+        {
+          id: 'stock_crash', weight: 0.03,
+          title: 'Market crash', icon: 'fa-chart-line',
+          desc: 'Global markets plunge. You\'re forced to react.',
+          minAge: 25,
+          choices: [
+            { label: 'Sell everything', desc: 'Lock in losses', effect: (s) => {
+              const lost = s.shares * s.sharePrice * 0.3;
+              s.cash += s.shares * s.sharePrice * 0.7;
+              s.shares = 0;
+              return `Sold at a loss: −${fmtMoney(lost)}`;
+            }, loss: 0 },
+            { label: 'Hold steady', desc: 'Markets usually recover', effect: (s) => {
+              s.sharePrice *= 0.7;
+              s.traits.riskTaker++;
+              return 'Markets down −30%';
+            }, risky: true },
+          ],
+        },
+        {
+          id: 'job_offer', weight: 0.05,
+          title: 'Job offer', icon: 'fa-arrow-up',
+          desc: 'A rival firm offers +20% pay — but you start over at the new company.',
+          minAge: 26,
+          cond: (s) => s.salary > 0,
+          choices: [
+            { label: 'Take the offer', desc: '+20% salary', effect: (s) => { s.salary *= 1.2; s.baseSalary *= 1.2; s.yearsAtJob = 0; s.jobTitle = 'New role'; return '+20% salary'; }, gain: 'salary' },
+            { label: 'Stay', desc: 'Loyalty may pay off', effect: () => 'You stay', gain: 0 },
+          ],
+        },
+        {
+          id: 'medical_bill', weight: 0.06,
+          title: 'Unexpected medical bill', icon: 'fa-prescription-bottle',
+          desc: 'Out-of-pocket medical costs. You have no insurance — full $3,500 is yours.',
+          minAge: 0,
+          cond: (s) => !s.traits.healthConscious,
+          choices: [
+            { label: 'Pay it', desc: 'Cash → savings → borrow', effect: (s) => {
+              return payFromCashThenSavings(3500, { markHealth: true });
+            }, loss: 3500 },
+            { label: 'Skip treatment', desc: 'Cheaper now, worse later', effect: () => 'You skip — expect more of this', loss: 0 },
+          ],
+        },
+      ];
+
+      function triggerEvent(evt) {
+        const choicesHTML = evt.choices.map((c, i) => {
+          let costClass = '';
+          let costText = '';
+          if (c.loss) { costText = `−${fmtMoney(c.loss)}`; costClass = 'loss'; }
+          else if (c.gain === 'salary') { costText = 'Salary change'; costClass = ''; }
+          else if (typeof c.gain === 'number' && c.gain > 0) { costText = `+${fmtMoney(c.gain)}`; costClass = 'gain'; }
+          else if (c.risky) { costText = '⚠ Risky'; costClass = 'loss'; }
+
+          return `
+            <button class="event-choice" data-choice="${i}">
+              <div class="ec-icon"><i class="fas fa-hand-pointer"></i></div>
+              <div class="ec-body">
+                <h4>${c.label}</h4>
+                <p>${c.desc}</p>
+              </div>
+              ${costText ? `<div class="ec-cost ${costClass}">${costText}</div>` : ''}
+            </button>
+          `;
+        }).join('');
+
+        const body = `
+          <div class="event-card">
+            <span class="event-icon"><i class="fas ${evt.icon}"></i></span>
+            <h3>${evt.title}</h3>
+            <p>${evt.desc}</p>
+            <div class="event-choices">${choicesHTML}</div>
+          </div>
+        `;
+        openModal('Life Event', 'bolt', body, `<div style="color:#6f8da3;font-size:0.75rem;">Some consequences are hidden — they'll only show up later.</div>`, { danger: true });
+
+        modalBody.querySelectorAll('.event-choice').forEach((b) => {
+          b.addEventListener('click', () => {
+            const choice = evt.choices[parseInt(b.dataset.choice, 10)];
+            const result = choice.effect(state);
+            addLog(`[${evt.title}] ${result}`, choice.loss ? 'bad' : 'event');
+            toast(result, choice.loss ? 'bad' : 'good');
+            closeModal();
+            renderHUD();
+            if (checkBankruptcy()) return;
+            advanceBtn.disabled = false;
+            advanceBtn.innerHTML = '<i class="fas fa-calendar-plus"></i> Start Next Year';
+          });
+        });
+      }
+
+      function maybeTriggerEvent() {
+        if (state.year === 1) return null;
+        const eligible = EVENT_LIBRARY.filter((e) => {
+          if (e.minAge && state.age < e.minAge) return false;
+          if (e.cond && !e.cond(state)) return false;
+          if (e.once && state.eventsThisYear.includes(e.id)) return false;
+          return true;
+        });
+        if (eligible.length === 0) return null;
+        const totalWeight = eligible.reduce((s, e) => s + e.weight, 0);
+        const roll = Math.random() * Math.max(0.35, totalWeight);
+        if (roll > totalWeight) return null;
+        const pick2 = Math.random() * totalWeight;
+        let acc = 0;
+        for (const e of eligible) {
+          acc += e.weight;
+          if (pick2 <= acc) return e;
+        }
+        return eligible[0];
+      }
+
+      function maybeFireEvent() {
+        if (state.age >= 65) return endGame();
+        const evt = maybeTriggerEvent();
+        if (evt) {
+          state.eventsThisYear.push(evt.id);
+          triggerEvent(evt);
+        } else {
+          advanceBtn.disabled = false;
+          advanceBtn.innerHTML = '<i class="fas fa-calendar-plus"></i> Start Next Year';
+        }
+      }
+
+      // ============================================================
+      //  Bankruptcy
+      // ============================================================
+      function checkBankruptcy() {
+        const nw = getNetWorth();
+        if (nw < -5000) {
+          state.gameOver = true;
+          addLog(`BANKRUPT at ${state.age} with net worth ${fmtMoney(nw)}.`, 'bad');
+          renderHUD();
+          renderLog();
+          const body = `
+            <div class="big-amount">
+              <div class="ba-label">Game over</div>
+              <div class="ba-value debt">${fmtMoney(nw)}</div>
+              <div class="ba-sub">You went bankrupt.</div>
+            </div>
+            <div style="text-align:center;font-size:0.85rem;color:#4a5c6b;line-height:1.6;">
+              Your net worth dropped below −$5,000. The bank has foreclosed, creditors are calling, and the game is over.
+              <br><br>
+              You survived <strong>${state.year - 1}</strong> years.
+            </div>
+          `;
+          openModal('Bankrupt', 'skull', body, `<button class="start-btn" style="margin:0;" onclick="location.reload()"><i class="fas fa-redo"></i> Try again</button>`, { danger: true, noClose: true });
+          return true;
+        }
+        return false;
+      }
+
+      // ============================================================
+      //  End game at 65
+      // ============================================================
+      function endGame() {
+        state.gameOver = true;
+        const nw = getNetWorth();
+        const won = nw >= state.goal;
+
+        const traitReveals = [];
+        const t = state.traits;
+        if (t.riskTaker >= 20) traitReveals.push('🎲 <strong>Risk-taker</strong>: higher stock volatility');
+        if (t.debtCount >= 2) traitReveals.push('💳 <strong>Debt-prone</strong>: mortgage rate permanently +1.5%');
+        if (t.healthConscious) traitReveals.push('❤️ <strong>Health-conscious</strong>: medical events rarer, cheaper');
+        if (t.homeownerYears >= 10) traitReveals.push('🏠 <strong>Homeowner</strong>: +1% annual house appreciation');
+        if (t.diversificationStartYear) traitReveals.push('📊 <strong>Diversified</strong>: +0.5% stock returns forever');
+        if (t.conservativeYears >= 5) traitReveals.push('🐢 <strong>Conservative</strong>: inflation hits 30% harder');
+        if (t.promotedTimes >= 3) traitReveals.push('🚀 <strong>Promotion-prone</strong>: +3% promotion chance');
+        if (t.thrifty >= 1) traitReveals.push('🪙 <strong>Thrifty</strong>: sold possessions when needed');
+        if (t.unemployedYears >= 2) traitReveals.push('📉 <strong>Resume gaps</strong>: harder to find work');
+        if (t.gamblerFlag) traitReveals.push('🎲 <strong>Compulsive gambler</strong>: you spent a lot at the casino');
+        if (t.gambleNet >= 2000) traitReveals.push('🍀 <strong>Lucky</strong>: the casino paid out well to you');
+        if (t.gambleNet <= -3000) traitReveals.push('💸 <strong>House\'s favorite</strong>: the casino cleaned you out');
+        if (traitReveals.length === 0) traitReveals.push('You played it straight — no extremes.');
+
+        addLog(`Retired at ${state.age} with ${fmtMoney(nw)}.`, won ? 'good' : 'bad');
+        const body = `
+          <div class="big-amount">
+            <div class="ba-label">Final net worth</div>
+            <div class="ba-value ${won ? '' : 'debt'}">${fmtMoney(nw)}</div>
+            <div class="ba-sub">${won ? '🎉 You hit your goal. A comfortable retirement awaits.' : '😬 You came up short.'}</div>
+          </div>
+
+          <div class="bill-section">Life summary</div>
+          <div class="item-list">
+            <div class="item"><div class="item-body"><h4>Years survived</h4><p>${state.year - 1}</p></div></div>
+            <div class="item"><div class="item-body"><h4>Times promoted</h4><p>${t.promotedTimes}</p></div></div>
+            <div class="item"><div class="item-body"><h4>Emergency loans taken</h4><p>${t.debtCount}</p></div></div>
+            <div class="item"><div class="item-body"><h4>Final salary</h4><p>${fmtMoney(state.salary)}</p></div></div>
+          </div>
+
+          <div class="bill-section">Hidden traits (revealed)</div>
+          <div class="item-list">
+            ${traitReveals.map((tr) => `<div class="item"><div class="item-body"><p style="font-size:0.82rem;margin:0;color:#2c4a5f;">${tr}</p></div></div>`).join('')}
+          </div>
+        `;
+        openModal('Retirement', 'flag-checkered', body,
+          `<button class="start-btn" style="margin:0;" onclick="location.reload()"><i class="fas fa-redo"></i> Play again</button>`,
+          { good: won, danger: !won, wide: true, noClose: true }
+        );
+      }
+
+      // ============================================================
+      //  Advance button
+      // ============================================================
+      function startYear() {
+        if (state.gameOver) return;
+        advanceBtn.disabled = true;
+        advanceBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing…';
+        state.eventsThisYear = [];
+        showBillsDue();
+      }
+
+      // ============================================================
+      //  Setup / Start
+      // ============================================================
+      document.querySelectorAll('.setup-options').forEach((group) => {
+        const key = group.dataset.group;
+        group.querySelectorAll('.setup-btn').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            group.querySelectorAll('.setup-btn').forEach((b) => b.classList.remove('is-active'));
+            btn.classList.add('is-active');
+            SETUP[key] = parseInt(btn.dataset.value, 10);
+          });
+        });
+      });
+
+      startBtn.addEventListener('click', () => {
+        state.age = SETUP.age;
+        state.startAge = SETUP.age;
+        state.familySize = SETUP.family;
+        state.salary = SETUP.income;
+        state.baseSalary = SETUP.income;
+        state.goal = SETUP.goal;
+        state.cash = 8000 + (SETUP.family === 1 ? 2000 : 0);
+        state.jobTitle = 'Junior Analyst';
+
+        startScreen.classList.add('is-hidden');
+        state.started = true;
+        renderTown();
+        renderHUD();
+        renderLog();
+        addLog(`You start at ${state.age} with ${fmtMoney(state.cash)} cash and a ${fmtMoney(state.salary)} job. Goal: ${fmtMoney(state.goal)}.`, 'info');
+
+        advanceBtn.classList.remove('pulse');
+        advanceBtn.disabled = true;
+        advanceBtn.innerHTML = '<i class="fas fa-file-invoice-dollar"></i> Bills due…';
+        showBillsDue();
+      });
+
+      advanceBtn.addEventListener('click', () => {
+        if (state.gameOver) return;
+        startYear();
+      });
+
+      window.addEventListener('keydown', (e) => {
+        if (!state.started || state.gameOver) return;
+        if (['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'].includes(document.activeElement.tagName)) return;
+        if (e.key === 'Escape' && !modalOverlay.classList.contains('is-open')) return;
+        if (e.key === ' ' || e.key === 'Enter') {
+          if (modalOverlay.classList.contains('is-open')) return;
+          e.preventDefault();
+          startYear();
+        }
+        if (e.key >= '1' && e.key <= '6') {
+          const b = BUILDINGS[parseInt(e.key, 10) - 1];
+          if (b && !modalOverlay.classList.contains('is-open')) openBuilding(b.id);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visual Illusions Test — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back to catalog</a>
+
+    <div class="sim-header">
+      <h1>Visual Illusions Test</h1>
+      <div class="sim-meta">Psychology · Perception</div>
+    </div>
+
+    <div class="sim-description">
+      Adjust a line to match the length of another, then find out how far off you were. Test yourself on Müller-Lyer, Ponzo, and Ebbinghaus illusions — and see how much your brain insists on the wrong answer.
+    </div>
+
+    <div class="sim-canvas-wrap">
+      <canvas id="canvas" width="820" height="420"></canvas>
+    </div>
+
+    <div class="sim-controls">
+      <div class="control">
+        <label>Illusion</label>
+        <select id="illusion">
+          <option value="muller" selected>Müller-Lyer</option>
+          <option value="ponzo">Ponzo</option>
+          <option value="ebbinghaus">Ebbinghaus</option>
+        </select>
+      </div>
+      <div class="control">
+        <label>Your answer: <span id="valLabel">100%</span></label>
+        <input type="range" id="value" min="50" max="150" value="100" step="1">
+      </div>
+      <div class="control">
+        <label>&nbsp;</label>
+        <div class="btn-row">
+          <button class="btn" id="reveal">Reveal truth</button>
+          <button class="btn secondary" id="reset">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-stats">
+      <div class="stat"><span class="stat-label">Your estimate</span><span class="stat-value" id="your">—</span></div>
+      <div class="stat"><span class="stat-label">Actual</span><span class="stat-value" id="actual">—</span></div>
+      <div class="stat"><span class="stat-label">Error</span><span class="stat-value" id="error">—</span></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const illusionSel = document.getElementById('illusion');
+      const valueInput = document.getElementById('value');
+      const valLabel = document.getElementById('valLabel');
+      const revealBtn = document.getElementById('reveal');
+      const resetBtn = document.getElementById('reset');
+      const yourEl = document.getElementById('your');
+      const actualEl = document.getElementById('actual');
+      const errorEl = document.getElementById('error');
+
+      let revealed = false;
+
+      function draw() {
+        const w = canvas.width, h = canvas.height;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+
+        const factor = parseFloat(valueInput.value) / 100;
+        const illusion = illusionSel.value;
+
+        if (illusion === 'muller') {
+          drawMuller(w, h, factor);
+        } else if (illusion === 'ponzo') {
+          drawPonzo(w, h, factor);
+        } else {
+          drawEbbinghaus(w, h, factor);
+        }
+      }
+
+      function drawMuller(w, h, factor) {
+        // Reference line on top (constant length)
+        const baseLen = 200;
+        const refX = w / 2 - baseLen / 2;
+        const refY = h / 2 - 80;
+
+        ctx.strokeStyle = '#0b2b3f';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(refX, refY);
+        ctx.lineTo(refX + baseLen, refY);
+        ctx.stroke();
+
+        // Arrowheads pointing outward at ends
+        drawArrowHead(refX, refY, -1, 1);
+        drawArrowHead(refX + baseLen, refY, 1, 1);
+
+        // Test line (adjustable)
+        const testLen = baseLen * factor;
+        const testX = w / 2 - testLen / 2;
+        const testY = h / 2 + 80;
+
+        ctx.beginPath();
+        ctx.moveTo(testX, testY);
+        ctx.lineTo(testX + testLen, testY);
+        ctx.stroke();
+
+        // Arrowheads pointing inward (this makes it look shorter)
+        drawArrowHead(testX, testY, 1, -1);
+        drawArrowHead(testX + testLen, testY, -1, -1);
+
+        // Labels
+        ctx.fillStyle = '#6f8da3';
+        ctx.font = '12px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('Reference', w / 2, refY - 30);
+        ctx.fillText('Match this one', w / 2, testY + 40);
+      }
+
+      function drawArrowHead(x, y, dirX, dirY) {
+        const size = 12;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + dirX * size, y - dirY * size * 0.6);
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + dirX * size, y + dirY * size * 0.6);
+        ctx.stroke();
+      }
+
+      function drawPonzo(w, h, factor) {
+        // Railway tracks converging
+        ctx.strokeStyle = '#8ba9c0';
+        ctx.lineWidth = 2;
+        const vanishX = w / 2, vanishY = 60;
+        ctx.beginPath();
+        ctx.moveTo(vanishX, vanishY);
+        ctx.lineTo(50, h - 40);
+        ctx.moveTo(vanishX, vanishY);
+        ctx.lineTo(w - 50, h - 40);
+        ctx.stroke();
+
+        // Horizontal cross-ties
+        for (let i = 1; i <= 6; i++) {
+          const t = i / 7;
+          const y = vanishY + (h - 60 - vanishY) * t;
+          const leftX = vanishX + (50 - vanishX) * t;
+          const rightX = vanishX + (w - 50 - vanishX) * t;
+          ctx.strokeStyle = '#cfdde9';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(leftX, y);
+          ctx.lineTo(rightX, y);
+          ctx.stroke();
+        }
+
+        // Two horizontal lines at different heights
+        const len = 180;
+        const x1 = w / 2 - len / 2;
+        const y1 = h / 2 - 50;
+        const y2 = h / 2 + 50;
+        ctx.strokeStyle = '#c76b3b';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x1 + len, y1);
+        ctx.stroke();
+
+        // Test line (adjustable)
+        const testLen = len * factor;
+        const tx = w / 2 - testLen / 2;
+        ctx.beginPath();
+        ctx.moveTo(tx, y2);
+        ctx.lineTo(tx + testLen, y2);
+        ctx.stroke();
+
+        ctx.fillStyle = '#6f8da3';
+        ctx.font = '12px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('Reference (top)', w / 2, y1 - 15);
+        ctx.fillText('Match this one', w / 2, y2 + 25);
+      }
+
+      function drawEbbinghaus(w, h, factor) {
+        // Central circles
+        const cx1 = w / 3;
+        const cx2 = 2 * w / 3;
+        const cy = h / 2;
+        const centerR = 30;
+
+        // Left: surrounded by large circles (makes centre look smaller)
+        ctx.fillStyle = '#e4f0f9';
+        ctx.strokeStyle = '#8ba9c0';
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * Math.PI * 2;
+          const r = 50;
+          const x = cx1 + Math.cos(a) * r * 1.8;
+          const y = cy + Math.sin(a) * r * 1.8;
+          ctx.beginPath();
+          ctx.arc(x, y, 25, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        }
+        ctx.fillStyle = '#8db3d0';
+        ctx.beginPath();
+        ctx.arc(cx1, cy, centerR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Right: surrounded by small circles
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * Math.PI * 2;
+          const r = 50;
+          const x = cx2 + Math.cos(a) * r * 1.8;
+          const y = cy + Math.sin(a) * r * 1.8;
+          ctx.beginPath();
+          ctx.arc(x, y, 10, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        }
+        // Test centre with adjustable size
+        const testR = centerR * factor;
+        ctx.fillStyle = '#f5b342';
+        ctx.beginPath();
+        ctx.arc(cx2, cy, testR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Labels
+        ctx.fillStyle = '#6f8da3';
+        ctx.font = '12px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('Reference', cx1, cy + 130);
+        ctx.fillText('Match this one', cx2, cy + 130);
+      }
+
+      function update() {
+        valLabel.textContent = valueInput.value + '%';
+        draw();
+      }
+
+      function reveal() {
+        const val = parseFloat(valueInput.value);
+        yourEl.textContent = val + '%';
+        actualEl.textContent = '100%';
+        const err = Math.round(val - 100);
+        errorEl.textContent = (err >= 0 ? '+' : '') + err + '%';
+        revealed = true;
+      }
+
+      function reset() {
+        valueInput.value = 100;
+        yourEl.textContent = '—';
+        actualEl.textContent = '—';
+        errorEl.textContent = '—';
+        revealed = false;
+        update();
+      }
+
+      valueInput.addEventListener('input', update);
+      illusionSel.addEventListener('change', reset);
+      revealBtn.addEventListener('click', reveal);
+      resetBtn.addEventListener('click', reset);
+
+      update();
+    })();
+  </script>
+</body>
+</html>
