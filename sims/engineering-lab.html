@@ -22,317 +22,184 @@
           "stage  facts";
       }
     }
-
-    /* Discipline tabs */
     .disc-bar {
       grid-area: tabs;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
+      display: flex; flex-wrap: wrap; gap: 0.5rem;
       padding: 0.85rem 1rem;
       background: white;
       border-radius: 16px;
       border: 1px solid #e2edf5;
-      box-shadow: 0 4px 12px -8px rgba(0, 20, 30, 0.08);
+      box-shadow: 0 4px 12px -8px rgba(0,20,30,0.08);
     }
     .disc-btn {
-      flex: 1 1 auto;
-      min-width: 100px;
+      flex: 1 1 auto; min-width: 100px;
       padding: 0.6rem 0.9rem;
       border-radius: 12px;
       border: 1.5px solid #cfdde9;
-      background: #f8fafc;
-      color: #1b4a6b;
-      font-size: 0.82rem;
-      font-weight: 600;
-      cursor: pointer;
-      font-family: inherit;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.3rem;
+      background: #f8fafc; color: #1b4a6b;
+      font-size: 0.82rem; font-weight: 600;
+      cursor: pointer; font-family: inherit;
+      display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
       transition: all 0.15s ease;
     }
-    .disc-btn:hover {
-      border-color: #8db3d0;
-      background: #eef4fa;
-      transform: translateY(-1px);
-    }
-    .disc-btn.is-active {
-      border-color: #2c7aa0;
-      background: #2c7aa0;
-      color: white;
-      box-shadow: 0 6px 16px -8px rgba(44, 122, 160, 0.6);
-    }
+    .disc-btn:hover { border-color: #8db3d0; background: #eef4fa; transform: translateY(-1px); }
+    .disc-btn.is-active { border-color: #2c7aa0; background: #2c7aa0; color: white; box-shadow: 0 6px 16px -8px rgba(44,122,160,0.6); }
     .disc-btn i { font-size: 1.1rem; }
 
-    /* Stage */
     .stage-wrap {
       grid-area: stage;
       position: relative;
-      background: #0b2b3f;
+      background: #7bb1d8;
       border-radius: 20px;
       overflow: hidden;
-      box-shadow: 0 20px 40px -20px rgba(16, 70, 100, 0.5);
-      cursor: crosshair;
+      box-shadow: 0 20px 40px -20px rgba(16,70,100,0.5);
       user-select: none;
       min-height: 460px;
+      cursor: crosshair;
     }
-    .stage-wrap canvas {
-      display: block;
-      width: 100%;
-      height: auto;
-      touch-action: none;
-    }
+    .stage-wrap canvas { display: block; width: 100%; height: auto; touch-action: none; }
 
-    /* HUD */
     .stage-hud {
-      position: absolute;
-      top: 12px;
-      left: 12px;
-      display: flex;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-      pointer-events: none;
+      position: absolute; top: 12px; left: 12px;
+      display: flex; gap: 0.5rem; flex-wrap: wrap; pointer-events: none;
     }
     .stage-hud .pill {
-      background: rgba(11, 43, 63, 0.82);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      background: rgba(11,43,63,0.82);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
       color: white;
-      padding: 0.35rem 0.7rem;
-      border-radius: 20px;
-      font-size: 0.72rem;
-      font-weight: 600;
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 0.35rem 0.7rem; border-radius: 20px;
+      font-size: 0.72rem; font-weight: 600;
+      border: 1px solid rgba(255,255,255,0.12);
     }
     .stage-hud .pill i { margin-right: 0.3rem; color: #f5b342; }
 
-    /* Bottom hint */
     .stage-hint {
-      position: absolute;
-      bottom: 12px;
-      left: 12px;
-      right: 12px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.4rem;
-      pointer-events: none;
+      position: absolute; bottom: 12px; left: 12px; right: 12px;
+      display: flex; flex-wrap: wrap; gap: 0.4rem; pointer-events: none;
     }
     .stage-hint .hint {
-      background: rgba(11, 43, 63, 0.82);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      background: rgba(11,43,63,0.82);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
       color: white;
-      padding: 0.32rem 0.65rem;
-      border-radius: 20px;
+      padding: 0.32rem 0.65rem; border-radius: 20px;
       font-size: 0.7rem;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      border: 1px solid rgba(255,255,255,0.1);
     }
-    .stage-hint .hint kbd {
-      background: rgba(255, 255, 255, 0.2);
-      padding: 0 5px;
-      border-radius: 3px;
-      font-size: 0.65rem;
-      font-family: inherit;
-    }
+    .stage-hint .hint i { color: #f5b342; }
 
-    /* Cursor crosshair readout */
     .stage-cursor {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      background: rgba(11, 43, 63, 0.85);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      position: absolute; top: 12px; right: 12px;
+      background: rgba(11,43,63,0.85);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
       color: white;
-      padding: 0.35rem 0.7rem;
-      border-radius: 8px;
-      font-size: 0.72rem;
-      font-variant-numeric: tabular-nums;
+      padding: 0.35rem 0.7rem; border-radius: 8px;
+      font-size: 0.72rem; font-variant-numeric: tabular-nums;
       pointer-events: none;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      opacity: 0;
-      transition: opacity 0.15s ease;
+      border: 1px solid rgba(255,255,255,0.12);
+      opacity: 0; transition: opacity 0.15s ease;
     }
     .stage-wrap:hover .stage-cursor { opacity: 1; }
 
-    /* Tool panel */
     .tool-panel {
       grid-area: tools;
-      background: white;
-      border-radius: 16px;
+      background: white; border-radius: 16px;
       border: 1px solid #e2edf5;
       padding: 1rem 1.1rem;
-      box-shadow: 0 4px 12px -8px rgba(0, 20, 30, 0.08);
+      box-shadow: 0 4px 12px -8px rgba(0,20,30,0.08);
     }
     .tool-panel h4 {
-      font-size: 0.72rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: #6f8da3;
-      margin-bottom: 0.7rem;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
+      font-size: 0.72rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      color: #6f8da3; margin-bottom: 0.7rem;
+      display: flex; align-items: center; gap: 0.4rem;
     }
     .tool-panel h4 i { color: #2c7aa0; }
     .tool-panel h4:not(:first-child) { margin-top: 1rem; }
 
-    .tool-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.45rem;
-    }
+    .tool-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem; }
     .tool-btn {
-      padding: 0.6rem 0.5rem;
-      border-radius: 10px;
-      border: 1.5px solid #cfdde9;
-      background: #f8fafc;
-      color: #1b4a6b;
-      font-size: 0.75rem;
-      font-weight: 600;
-      cursor: pointer;
-      font-family: inherit;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.25rem;
-      transition: all 0.15s ease;
-      text-align: center;
-      line-height: 1.2;
+      padding: 0.6rem 0.5rem; border-radius: 10px;
+      border: 1.5px solid #cfdde9; background: #f8fafc;
+      color: #1b4a6b; font-size: 0.75rem; font-weight: 600;
+      cursor: pointer; font-family: inherit;
+      display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
+      transition: all 0.15s ease; text-align: center; line-height: 1.2;
     }
     .tool-btn:hover { border-color: #8db3d0; background: #eef4fa; }
-    .tool-btn.is-active {
-      border-color: #2c7aa0;
-      background: #2c7aa0;
-      color: white;
-    }
+    .tool-btn.is-active { border-color: #2c7aa0; background: #2c7aa0; color: white; }
     .tool-btn i { font-size: 1rem; }
 
-    .material-row {
-      display: flex;
-      gap: 0.4rem;
-      flex-wrap: wrap;
-    }
+    .material-row { display: flex; gap: 0.4rem; flex-wrap: wrap; }
     .mat-btn {
-      flex: 1 1 0;
-      min-width: 60px;
+      flex: 1 1 0; min-width: 60px;
       padding: 0.5rem 0.3rem;
-      border-radius: 8px;
-      border: 1.5px solid #cfdde9;
-      background: #f8fafc;
-      color: #1b4a6b;
-      font-size: 0.7rem;
-      font-weight: 700;
-      cursor: pointer;
-      font-family: inherit;
-      text-align: center;
-      transition: all 0.15s ease;
+      border-radius: 8px; border: 1.5px solid #cfdde9;
+      background: #f8fafc; color: #1b4a6b;
+      font-size: 0.7rem; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      text-align: center; transition: all 0.15s ease;
     }
     .mat-btn:hover { border-color: #8db3d0; }
-    .mat-btn.is-active {
-      border-color: #2c7aa0;
-      background: #2c7aa0;
-      color: white;
-    }
+    .mat-btn.is-active { border-color: #2c7aa0; background: #2c7aa0; color: white; }
 
-    /* Slider (only where genuinely needed) */
-    .slider-row {
-      display: flex;
-      flex-direction: column;
-      gap: 0.35rem;
-      margin-bottom: 0.7rem;
-    }
+    .slider-row { display: flex; flex-direction: column; gap: 0.35rem; margin-bottom: 0.7rem; }
     .slider-row label {
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: #1b4a6b;
-      display: flex;
-      justify-content: space-between;
+      font-size: 0.78rem; font-weight: 600; color: #1b4a6b;
+      display: flex; justify-content: space-between;
     }
     .slider-row .value-chip {
-      background: #e4f0f9;
-      color: #1b4a6b;
-      padding: 0.15rem 0.55rem;
-      border-radius: 20px;
-      font-size: 0.72rem;
-      font-variant-numeric: tabular-nums;
-      font-weight: 600;
+      background: #e4f0f9; color: #1b4a6b;
+      padding: 0.15rem 0.55rem; border-radius: 20px;
+      font-size: 0.72rem; font-variant-numeric: tabular-nums; font-weight: 600;
     }
-    .slider-row input[type="range"] {
-      width: 100%;
-      accent-color: #2c7aa0;
-      cursor: pointer;
-    }
+    .slider-row input[type="range"] { width: 100%; accent-color: #2c7aa0; cursor: pointer; }
 
-    /* Facts panel */
     .fact-panel {
-      grid-area: facts;
-      background: white;
-      border-radius: 16px;
-      border: 1px solid #e2edf5;
-      padding: 1rem 1.1rem;
-      box-shadow: 0 4px 12px -8px rgba(0, 20, 30, 0.08);
+      grid-area: facts; background: white; border-radius: 16px;
+      border: 1px solid #e2edf5; padding: 1rem 1.1rem;
+      box-shadow: 0 4px 12px -8px rgba(0,20,30,0.08);
     }
     .fact-panel h4 {
-      font-size: 0.72rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: #6f8da3;
-      margin-bottom: 0.7rem;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
+      font-size: 0.72rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      color: #6f8da3; margin-bottom: 0.7rem;
+      display: flex; align-items: center; gap: 0.4rem;
     }
     .fact-panel h4 i { color: #2c7aa0; }
 
-    .facts {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.4rem;
-    }
-    .fact {
-      background: #f8fafc;
-      border-radius: 8px;
-      padding: 0.5rem 0.6rem;
-      border: 1px solid #eef4fa;
-    }
-    .fact .fl {
-      font-size: 0.6rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #6f8da3;
-      font-weight: 600;
-    }
-    .fact .fv {
-      font-size: 0.86rem;
-      font-weight: 700;
-      color: #0b2b3f;
-      font-variant-numeric: tabular-nums;
-      margin-top: 1px;
-    }
-    .fact .fv.good { color: #5a8a4a; }
-    .fact .fv.warn { color: #c76b3b; }
-    .fact .fv.bad { color: #c0392b; }
+    .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; }
+    .fact { background: #f8fafc; border-radius: 8px; padding: 0.5rem 0.6rem; border: 1px solid #eef4fa; }
+    .fact .fl { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6f8da3; font-weight: 600; }
+    .fact .fv { font-size: 0.86rem; font-weight: 700; color: #0b2b3f; font-variant-numeric: tabular-nums; margin-top: 1px; }
 
-    /* Info banner */
     .info-banner {
       background: linear-gradient(135deg, #f0f7fe, #e4f0f9);
       border-left: 4px solid #2c7aa0;
-      padding: 0.75rem 1rem;
-      border-radius: 10px;
-      font-size: 0.82rem;
-      color: #1b4a6b;
-      line-height: 1.5;
+      padding: 0.75rem 1rem; border-radius: 10px;
+      font-size: 0.82rem; color: #1b4a6b; line-height: 1.5;
       margin-bottom: 0.75rem;
     }
     .info-banner strong { color: #0b2b3f; }
+
+    .btn-small {
+      padding: 0.4rem 0.7rem;
+      border-radius: 20px;
+      border: 1.5px solid #cfdde9;
+      background: #f8fafc;
+      color: #1b4a6b;
+      font-size: 0.72rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s ease;
+    }
+    .btn-small:hover { border-color: #8db3d0; background: #eef4fa; }
+    .btn-small.danger { color: #c0392b; border-color: #f8d4d4; }
+    .btn-small.danger:hover { background: #fef5f4; }
+    .btn-small.primary { background: #2c7aa0; color: white; border-color: #2c7aa0; }
+    .btn-small.primary:hover { background: #1b4a6b; }
+    .btn-row { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.5rem; }
 
     @media (max-width: 600px) {
       .stage-hint { display: none; }
@@ -350,35 +217,18 @@
     </div>
 
     <div class="sim-description">
-      Five interactive labs in one. Switch between trusses, beams, circuits, gears, and projectiles. Every number updates live, everything is directly manipulable, and every physics effect is real. No goals, no scores — just explore.
+      Five interactive labs in one. Build a truss, add multiple loads to a beam, wire components into a circuit, chain gears together, or launch projectiles. Every interaction is direct — just try it.
     </div>
 
     <div class="lab-wrap">
-      <!-- Discipline switcher -->
       <div class="disc-bar" id="discBar">
-        <button class="disc-btn is-active" data-disc="truss">
-          <i class="fas fa-project-diagram"></i>
-          <span>Truss</span>
-        </button>
-        <button class="disc-btn" data-disc="beam">
-          <i class="fas fa-minus"></i>
-          <span>Beam</span>
-        </button>
-        <button class="disc-btn" data-disc="circuit">
-          <i class="fas fa-bolt"></i>
-          <span>Circuit</span>
-        </button>
-        <button class="disc-btn" data-disc="gears">
-          <i class="fas fa-cog"></i>
-          <span>Gears</span>
-        </button>
-        <button class="disc-btn" data-disc="projectile">
-          <i class="fas fa-rocket"></i>
-          <span>Projectile</span>
-        </button>
+        <button class="disc-btn is-active" data-disc="truss"><i class="fas fa-project-diagram"></i><span>Truss</span></button>
+        <button class="disc-btn" data-disc="beam"><i class="fas fa-minus"></i><span>Beam</span></button>
+        <button class="disc-btn" data-disc="circuit"><i class="fas fa-bolt"></i><span>Circuit</span></button>
+        <button class="disc-btn" data-disc="gears"><i class="fas fa-cog"></i><span>Gears</span></button>
+        <button class="disc-btn" data-disc="projectile"><i class="fas fa-rocket"></i><span>Projectile</span></button>
       </div>
 
-      <!-- Stage -->
       <div class="stage-wrap" id="stage">
         <canvas id="canvas"></canvas>
         <div class="stage-hud">
@@ -388,10 +238,8 @@
         <div class="stage-hint" id="stageHint"></div>
       </div>
 
-      <!-- Tool panel -->
       <div class="tool-panel" id="toolPanel"></div>
 
-      <!-- Facts panel -->
       <div class="fact-panel">
         <h4><i class="fas fa-info-circle"></i> Live measurements</h4>
         <div class="info-banner" id="infoBanner"></div>
@@ -400,12 +248,21 @@
     </div>
 
     <div class="insight-panel">
-      <h4><i class="fas fa-lightbulb"></i> What you can learn here</h4>
+      <h4><i class="fas fa-lightbulb"></i> How to interact</h4>
       <p>
-        Each tab is a real simulation. Try things, break things, watch numbers change. In <strong>Truss</strong>, add joints and beams and watch forces flow to the supports — members turn red when they're overstressed. In <strong>Beam</strong>, drag the load to see how shear and moment change shape. In <strong>Circuit</strong>, click to place components and watch current flow through the wires. In <strong>Gears</strong>, spin the driver and see how tooth counts trade speed for torque. In <strong>Projectile</strong>, drag the launch vector and trace the arc.
+        <strong>Truss:</strong> Drag from one joint to another to add a member. Drag joints to move them. Double-click a joint to toggle a support. Right-click a member to delete it. Pick a material, build within budget, then hit <em>Test Bridge</em> to see a vehicle drive across.
       </p>
       <p>
-        Nothing is graded. Nothing can fail permanently. Every change is one undo away (right-click or press <kbd>R</kbd> to reset the current tab).
+        <strong>Beam:</strong> Click anywhere on the beam to add a point load. Drag loads to move them. Right-click to remove.
+      </p>
+      <p>
+        <strong>Circuit:</strong> Click a component to select it, then click another to wire them. Click a switch to toggle it. Click a selected component again to cycle its type.
+      </p>
+      <p>
+        <strong>Gears:</strong> Click empty space to add gears. Drag them near each other and they'll mesh. Use the +/− buttons on each gear to change its teeth count.
+      </p>
+      <p>
+        <strong>Projectile:</strong> Click-drag from the cannon to aim and set speed. Release to launch. The last 3 shots stay on screen to compare.
       </p>
     </div>
   </div>
@@ -415,7 +272,7 @@
       'use strict';
 
       // ============================================================
-      //  DOM
+      //  DOM & setup
       // ============================================================
       const stage = document.getElementById('stage');
       const canvas = document.getElementById('canvas');
@@ -428,9 +285,6 @@
       const factsEl = document.getElementById('facts');
       const infoBanner = document.getElementById('infoBanner');
 
-      // ============================================================
-      //  Canvas sizing
-      // ============================================================
       canvas.style.aspectRatio = '4 / 3';
       canvas.style.width = '100%';
       canvas.style.height = 'auto';
@@ -451,631 +305,689 @@
       //  Global state
       // ============================================================
       const state = {
-        disc: 'truss', // truss | beam | circuit | gears | projectile
-        mouse: { x: 0, y: 0, in: false },
+        disc: 'truss',
+        mouse: { x: 0, y: 0, in: false, down: false, button: 0 },
       };
 
       // ============================================================
-      //  TRUSS LAB
+      //  TRUSS — Poly Bridge Style Verlet Physics
       // ============================================================
-      const truss = {
-        // Grid in world coords, mapped 1:1 to canvas pixels
-        nodes: [],
-        members: [],
-        supports: [], // indices into nodes
-        load: { x: 0, y: 0, weight: 10 },
-        material: 'steel', // steel | wood | cable
-        selectedNode: null,
-        hoveredMember: null,
-        draggingNode: null,
-        // Material definitions
-        MATS: {
-          steel: { color: '#2c7aa0', strength: 30, label: 'Steel' },
-          wood: { color: '#a0522d', strength: 3, label: 'Wood' },
-          cable: { color: '#f5b342', strength: 25, label: 'Cable', tensionOnly: true },
+      const MATS = {
+        wood:  { 
+          color: '#8b5a2b', color2: '#5c3a1a', width: 8, strength: 2500, cost: 20, label: 'Wood' 
+        },
+        steel: { 
+          color: '#4a90e2', color2: '#2c5a7a', width: 6, strength: 8000, cost: 60, label: 'Steel' 
+        },
+        cable: { 
+          color: '#f5b342', color2: '#c48a1a', width: 3, strength: 4000, cost: 35, label: 'Cable', tensionOnly: true 
         },
       };
 
+      const TRUCKS = [
+        { id: 'hatchback', name: 'Hatchback', weight: 4000, w: 50, h: 35, color: '#e74c3c', icon: 'fa-car' },
+        { id: 'sedan',     name: 'Sedan',     weight: 7000, w: 75, h: 35, color: '#3498db', icon: 'fa-car-side' },
+        { id: 'van',       name: 'Van',       weight: 12000, w: 85, h: 45, color: '#2ecc71', icon: 'fa-truck' },
+        { id: 'truck',     name: 'Semi Truck',weight: 20000, w: 120, h: 50, color: '#f1c40f', icon: 'fa-truck-moving' },
+      ];
+
+      const truss = {
+        GRID: 40,
+        nodes: [],
+        members: [],
+        supports: [],
+        mode: 'build',
+        dragFrom: null,
+        dragPos: null,
+        hoverMember: null,
+        hoverNode: null,
+        truck: null,
+        budget: 3000,
+        material: 'wood',
+        selectedTruck: 1,
+        brokenMembers: new Set(),
+      };
+
       function initTruss() {
+        const gy = Math.min(400, H - 120);
+        const leftAnchorX = 160;
+        const rightAnchorX = Math.max(400, W - 160);
+
+        // Poly Bridge style starting points (not a full bridge, just anchors)
+        truss.nodes = [
+          { x: leftAnchorX, y: gy, oldX: leftAnchorX, oldY: gy, fixed: true },
+          { x: rightAnchorX, y: gy, oldX: rightAnchorX, oldY: gy, fixed: true },
+        ];
+
+        // Add a couple of starting nodes so the player doesn't start from scratch
+        truss.nodes.push({ x: leftAnchorX + 120, y: gy, oldX: leftAnchorX + 120, oldY: gy, fixed: false });
+        truss.nodes.push({ x: rightAnchorX - 120, y: gy, oldX: rightAnchorX - 120, oldY: gy, fixed: false });
+
+        truss.supports = [0, 1];
+        truss.members = [
+          { a: 0, b: 2, mat: 'wood' },
+          { a: 2, b: 3, mat: 'wood' },
+          { a: 3, b: 1, mat: 'wood' },
+        ];
+        
+        // Add some top structure
+        truss.nodes.push({ x: leftAnchorX + 240, y: gy - 80, oldX: leftAnchorX + 240, oldY: gy - 80, fixed: false });
+        truss.nodes.push({ x: rightAnchorX - 240, y: gy - 80, oldX: rightAnchorX - 240, oldY: gy - 80, fixed: false });
+        truss.members.push({ a: 2, b: 4, mat: 'steel' });
+        truss.members.push({ a: 4, b: 5, mat: 'steel' });
+        truss.members.push({ a: 5, b: 3, mat: 'steel' });
+        truss.members.push({ a: 4, b: 3, mat: 'steel' });
+        truss.members.push({ a: 2, b: 5, mat: 'steel' });
+
+        truss.mode = 'build';
+        truss.truck = null;
+        truss.dragFrom = null;
+        truss.material = 'wood';
+        truss.brokenMembers.clear();
+      }
+
+      function clearTruss() {
         truss.nodes = [];
         truss.members = [];
         truss.supports = [];
-        truss.load = { x: 0, y: 0, weight: 10 };
-        truss.selectedNode = null;
-        truss.hoveredMember = null;
-        truss.draggingNode = null;
-        // Build a default simple truss
-        const groundY = 400;
-        const nodes = [
-          { x: 100, y: groundY }, // 0
-          { x: 300, y: groundY }, // 1
-          { x: 500, y: groundY }, // 2
-          { x: 200, y: groundY - 150 }, // 3
-          { x: 400, y: groundY - 150 }, // 4
-        ];
-        nodes.forEach((n) => truss.nodes.push(n));
-        truss.supports = [0, 2];
-        // Members (bottom chord + top chord + diagonals)
-        const members = [
-          [0, 1], [1, 2],
-          [3, 4],
-          [0, 3], [3, 1], [1, 4], [4, 2],
-        ];
-        members.forEach(([a, b]) => {
-          truss.members.push({ a, b, material: 'steel' });
-        });
-        // Load on node 3
-        truss.load = { x: truss.nodes[3].x, y: truss.nodes[3].y, weight: 10, attachedTo: 3 };
+        truss.truck = null;
+        truss.mode = 'build';
+        truss.brokenMembers.clear();
+        toolPanel.innerHTML = trussTools();
+        bindTrussTools();
+        resize();
+        drawTruss(performance.now());
       }
 
-      function solveTruss() {
-        const n = truss.nodes.length;
-        if (n < 2) return null;
+      function trussCost() {
+        let cost = 0;
+        truss.members.forEach((m) => {
+          const a = truss.nodes[m.a], b = truss.nodes[m.b];
+          if (!a || !b) return;
+          const len = Math.hypot(b.x - a.x, b.y - a.y);
+          cost += (len / 40) * MATS[m.mat].cost;
+        });
+        return Math.round(cost);
+      }
 
-        // Build node positions array
-        const pos = truss.nodes.map((node) => ({ x: node.x, y: node.y }));
+      function getDeckY() {
+        if (truss.supports.length < 2) return Math.min(400, H - 120);
+        const y0 = truss.nodes[truss.supports[0]]?.y;
+        const y1 = truss.nodes[truss.supports[1]]?.y;
+        if (y0 === undefined && y1 === undefined) return Math.min(400, H - 120);
+        if (y0 === undefined) return y1;
+        if (y1 === undefined) return y0;
+        return Math.max(y0, y1);
+      }
 
-        // Build member directions + lengths
-        const dirs = truss.members.map((m) => {
-          const a = pos[m.a], b = pos[m.b];
-          const dx = b.x - a.x, dy = b.y - a.y;
-          const len = Math.hypot(dx, dy);
-          return { dx: dx / len, dy: dy / len, len };
+      // Smoother truck Y tracking (Blends nodes)
+      function getTruckY(truckX) {
+        if (truss.nodes.length === 0) return getDeckY() - 2;
+        let closestNode = null;
+        let minDist = Infinity;
+        
+        // Find the two nearest deck nodes
+        const deckNodes = truss.nodes.filter(n => Math.abs(n.y - getDeckY()) < 40).sort((a,b) => a.x - b.x);
+        
+        if (deckNodes.length === 0) return getDeckY() - 2;
+        
+        for (let i = 0; i < deckNodes.length - 1; i++) {
+          const n1 = deckNodes[i];
+          const n2 = deckNodes[i+1];
+          if (truckX >= n1.x && truckX <= n2.x) {
+            const t = (truckX - n1.x) / (n2.x - n1.x || 1);
+            return n1.y + (n2.y - n1.y) * t;
+          }
+        }
+        
+        // If outside, snap to nearest
+        deckNodes.forEach(n => {
+          const d = Math.abs(n.x - truckX);
+          if (d < minDist) { minDist = d; closestNode = n; }
+        });
+        
+        return closestNode ? closestNode.y : getDeckY() - 2;
+      }
+
+      // Verlet Physics Simulation (Poly Bridge Style)
+      function simulateTruss() {
+        if (truss.mode !== 'test') return;
+
+        const gravity = 0.35;
+        const dampening = 0.96;
+        const iterations = 12; 
+
+        // 1. Integrate nodes
+        truss.nodes.forEach(n => {
+          if (n.fixed) return;
+          const vx = (n.x - n.oldX) * dampening;
+          const vy = (n.y - n.oldY) * dampening;
+          n.oldX = n.x;
+          n.oldY = n.y;
+          n.x += vx;
+          n.y += vy + gravity;
         });
 
-        // Reactions: assume support at first index is pinned (rx, ry),
-        // second is roller (ry only). Other supports are ignored for simplicity.
-        const supports = truss.supports;
-        if (supports.length < 2) return null;
-
-        const numMembers = truss.members.length;
-        const unknowns = numMembers + 3; // member forces + rx + ry1 + ry2
-
-        // Build equilibrium equations: 2 per node = 2n equations
-        // For a statically determinate truss, 2n = members + reactions
-        if (2 * n !== unknowns) {
-          // Not statically determinate — still try to solve least-squares style
-        }
-
-        // Matrix: rows = 2n, cols = unknowns
-        const A = [];
-        const b = [];
-        for (let i = 0; i < n; i++) {
-          // x equation
-          const rowX = new Array(unknowns).fill(0);
-          const rowY = new Array(unknowns).fill(0);
-          // Member contributions
-          truss.members.forEach((m, idx) => {
-            const d = dirs[idx];
-            if (m.a === i) {
-              rowX[idx] += d.dx;
-              rowY[idx] += d.dy;
-            }
-            if (m.b === i) {
-              rowX[idx] -= d.dx;
-              rowY[idx] -= d.dy;
+        // 2. Apply Truck load (distributed across nearby nodes)
+        if (truss.truck && truss.truck.alive) {
+          const tx = truss.truck.x;
+          const tW = truss.truck.weight;
+          
+          truss.nodes.forEach(n => {
+            if (n.fixed) return;
+            const dx = Math.abs(n.x - tx);
+            // Truck wheel span roughly +- 30px
+            if (dx < 45) {
+              const force = (45 - dx) / 45;
+              n.y += (tW * force) * 0.00003; // Gravity force mapping
             }
           });
-          // Reaction contributions
-          // Support 0: rx (col numMembers), ry (col numMembers + 1)
-          // Support 1: ry (col numMembers + 2)
-          if (i === supports[0]) {
-            rowX[numMembers] += 1;
-            rowY[numMembers + 1] += 1;
-          }
-          if (i === supports[1]) {
-            rowY[numMembers + 2] += 1;
-          }
-          // Load at this node
-          const bx = 0, by = 0;
-          if (truss.load.attachedTo === i) {
-            by -= truss.load.weight;
-          }
-          A.push(rowX); b.push(-bx);
-          A.push(rowY); b.push(-by);
         }
 
-        // Solve via least squares (A^T A) x = A^T b — robust for over/under-determined
-        const forces = leastSquaresSolve(A, b, unknowns);
-        return forces;
-      }
+        // 3. Solve constraints (Poly Bridge structural stiffness)
+        for (let iter = 0; iter < iterations; iter++) {
+          truss.members.forEach((mem, idx) => {
+            if (truss.brokenMembers.has(idx)) return;
+            
+            const a = truss.nodes[mem.a];
+            const b = truss.nodes[mem.b];
+            if (!a || !b) return;
 
-      // Simple least-squares solver using Gaussian elimination on normal equations
-      function leastSquaresSolve(A, b, nCols) {
-        const nRows = A.length;
-        // Build normal equations: M = A^T A, v = A^T b
-        const M = Array.from({ length: nCols }, () => new Array(nCols).fill(0));
-        const v = new Array(nCols).fill(0);
-        for (let i = 0; i < nRows; i++) {
-          for (let j = 0; j < nCols; j++) {
-            v[j] += A[i][j] * b[i];
-            for (let k = 0; k < nCols; k++) {
-              M[j][k] += A[i][j] * A[i][k];
-            }
-          }
-        }
-        // Add small regularization to avoid singularity
-        for (let i = 0; i < nCols; i++) M[i][i] += 1e-6;
-        // Solve M x = v
-        return gaussSolve(M, v);
-      }
-
-      function gaussSolve(M, v) {
-        const n = v.length;
-        const A = M.map((row) => [...row]);
-        const b = [...v];
-        for (let i = 0; i < n; i++) {
-          // Pivot
-          let maxRow = i;
-          for (let k = i + 1; k < n; k++) {
-            if (Math.abs(A[k][i]) > Math.abs(A[maxRow][i])) maxRow = k;
-          }
-          [A[i], A[maxRow]] = [A[maxRow], A[i]];
-          [b[i], b[maxRow]] = [b[maxRow], b[i]];
-          if (Math.abs(A[i][i]) < 1e-9) continue;
-          for (let k = i + 1; k < n; k++) {
-            const factor = A[k][i] / A[i][i];
-            for (let j = i; j < n; j++) A[k][j] -= factor * A[i][j];
-            b[k] -= factor * b[i];
-          }
-        }
-        const x = new Array(n).fill(0);
-        for (let i = n - 1; i >= 0; i--) {
-          let sum = b[i];
-          for (let j = i + 1; j < n; j++) sum -= A[i][j] * x[j];
-          x[i] = Math.abs(A[i][i]) < 1e-9 ? 0 : sum / A[i][i];
-        }
-        return x;
-      }
-
-      function drawTruss() {
-        const forces = solveTruss();
-        const memberForces = forces ? forces.slice(0, truss.members.length) : null;
-        const supportX = forces ? forces[truss.members.length] : 0;
-        const supportY1 = forces ? forces[truss.members.length + 1] : 0;
-        const supportY2 = forces ? forces[truss.members.length + 2] : 0;
-
-        // Ground line
-        const groundY = truss.nodes.length > 0 ? Math.max(...truss.nodes.map((n) => n.y)) : H * 0.7;
-        ctx.strokeStyle = '#5a8a4a';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(0, groundY + 20);
-        ctx.lineTo(W, groundY + 20);
-        ctx.stroke();
-        // Ground hatch
-        for (let x = 0; x < W; x += 20) {
-          ctx.beginPath();
-          ctx.moveTo(x, groundY + 20);
-          ctx.lineTo(x - 10, groundY + 30);
-          ctx.strokeStyle = '#5a8a4a';
-          ctx.lineWidth = 1;
-          ctx.stroke();
-        }
-
-        // Members
-        truss.members.forEach((m, idx) => {
-          const a = truss.nodes[m.a], b = truss.nodes[m.b];
-          const mat = truss.MATS[m.material];
-          let color = mat.color;
-          let lineWidth = 4;
-
-          if (memberForces) {
-            const force = Math.abs(memberForces[idx]);
-            // Cable under compression = slack, force = 0
-            const effectiveForce = (mat.tensionOnly && memberForces[idx] < 0) ? 0 : force;
-            const stress = effectiveForce / mat.strength;
-            if (stress > 1) {
-              color = '#c0392b'; // failed
-              lineWidth = 5;
-            } else if (stress > 0.8) {
-              color = '#c76b3b';
-            } else if (stress > 0.5) {
-              color = '#f5b342';
-            } else {
-              color = '#5a8a4a';
-            }
-            if (stress > 1) {
-              // Draw broken member
-              const midX = (a.x + b.x) / 2;
-              const midY = (a.y + b.y) / 2;
-              const dx = b.x - a.x, dy = b.y - a.y;
-              const len = Math.hypot(dx, dy);
-              const breakAngle = Math.atan2(dy, dx);
-              ctx.strokeStyle = color;
-              ctx.lineWidth = lineWidth;
-              ctx.beginPath();
-              ctx.moveTo(a.x, a.y);
-              ctx.lineTo(midX - 8 * Math.cos(breakAngle), midY - 8 * Math.sin(breakAngle));
-              ctx.stroke();
-              ctx.beginPath();
-              ctx.moveTo(midX + 8 * Math.cos(breakAngle), midY + 8 * Math.sin(breakAngle));
-              ctx.lineTo(b.x, b.y);
-              ctx.stroke();
+            const dx = b.x - a.x;
+            const dy = b.y - a.y;
+            const dist = Math.hypot(dx, dy) || 0.001;
+            
+            // Calculate rest length dynamically
+            const restLen = Math.max(20, Math.hypot(b.oldX - a.oldX, b.oldY - a.oldY));
+            const strain = (dist - restLen) / restLen;
+            
+            const mat = MATS[mem.mat];
+            
+            // Check breaking condition
+            const absStrain = Math.abs(strain);
+            if (absStrain > (mat.strength / 10000)) {
+              truss.brokenMembers.add(idx);
+              if (truss.truck) {
+                truss.truck.alive = false;
+                truss.truck.fallStart = performance.now();
+              }
               return;
             }
+
+            // Spring force (Hooke's Law)
+            // Cables only pull (resist positive strain), Wood/Steel resist both
+            let stiffness = 0.7; 
+            if (mat.tensionOnly && strain < 0) stiffness = 0.05; // Slack cable
+            
+            const difference = (dist - restLen) / dist;
+            
+            if (!a.fixed) {
+              a.x += dx * stiffness * difference * 0.5;
+              a.y += dy * stiffness * difference * 0.5;
+            }
+            if (!b.fixed) {
+              b.x -= dx * stiffness * difference * 0.5;
+              b.y -= dy * stiffness * difference * 0.5;
+            }
+          });
+        }
+
+        // 4. Floor collision (Cliffs)
+        const gy = getDeckY();
+        truss.nodes.forEach(n => {
+          if (n.fixed) return;
+          if (n.x < 160 && n.y > gy - 20) { n.y = gy - 20; n.oldY = n.y; }
+          if (n.x > W - 160 && n.y > gy - 20) { n.y = gy - 20; n.oldY = n.y; }
+          // Bottom of screen
+          if (n.y > H) { n.y = H; n.oldY = n.y; }
+        });
+      }
+
+      function drawTruss(t) {
+        const gy = getDeckY();
+        
+        // Poly Bridge Sky & Background
+        const skyGrad = ctx.createLinearGradient(0, 0, 0, gy);
+        skyGrad.addColorStop(0, '#4facfe');
+        skyGrad.addColorStop(0.7, '#00f2fe');
+        skyGrad.addColorStop(1, '#a1c4fd');
+        ctx.fillStyle = skyGrad;
+        ctx.fillRect(0, 0, W, gy);
+
+        // Distant Hills
+        ctx.fillStyle = '#83b85b';
+        ctx.beginPath();
+        ctx.moveTo(0, gy);
+        ctx.quadraticCurveTo(W * 0.2, gy - 80, W * 0.5, gy);
+        ctx.quadraticCurveTo(W * 0.8, gy - 60, W, gy);
+        ctx.fill();
+
+        // Cliffs (Poly Bridge Terrain)
+        ctx.fillStyle = '#4a3b32'; // Dark dirt
+        ctx.fillRect(0, gy, 160, H - gy);
+        ctx.fillRect(W - 160, gy, 160, H - gy);
+        
+        // Grass layer
+        ctx.fillStyle = '#59a34e'; 
+        ctx.fillRect(0, gy, 160, 15);
+        ctx.fillRect(W - 160, gy, 160, 15);
+
+        // Subtle Grid (Only in build mode)
+        if (truss.mode === 'build') {
+          ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+          ctx.lineWidth = 1;
+          for (let x = 0; x < W; x += truss.GRID) {
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+          }
+          for (let y = 0; y < H; y += truss.GRID) {
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+          }
+        }
+
+        // Draw Members (Poly Bridge style)
+        truss.members.forEach((mem, idx) => {
+          const a = truss.nodes[mem.a];
+          const b = truss.nodes[mem.b];
+          if (!a || !b) return;
+
+          const mat = MATS[mem.mat];
+          let baseColor = mat.color;
+          let topColor = mat.color2;
+          let width = mat.width;
+          
+          if (truss.brokenMembers.has(idx)) {
+            baseColor = '#555';
+            topColor = '#333';
+            width = 2;
+            ctx.setLineDash([4, 4]);
+          } else if (truss.mode === 'test') {
+            // Calculate stress for color
+            const dist = Math.hypot(b.x - a.x, b.y - a.y);
+            const restLen = Math.max(20, Math.hypot(b.oldX - a.oldX, b.oldY - a.oldY));
+            const strain = (dist - restLen) / restLen;
+            
+            if (strain > 0.05) {
+              // Tension (Red)
+              const t = Math.min(1, strain / 0.15);
+              baseColor = `rgb(255, ${Math.floor(50 - t*50)}, ${Math.floor(50 - t*50)})`;
+              topColor = '#aa0000';
+            } else if (strain < -0.05) {
+              // Compression (Blue)
+              const t = Math.min(1, Math.abs(strain) / 0.15);
+              baseColor = `rgb(${Math.floor(50 - t*50)}, ${Math.floor(50 - t*50)}, 255)`;
+              topColor = '#0000aa';
+            }
+          } else if (truss.hoverMember === idx) {
+            baseColor = '#ffffff';
+            topColor = '#dddddd';
           }
 
-          ctx.strokeStyle = color;
-          ctx.lineWidth = lineWidth;
           ctx.lineCap = 'round';
+          
+          // Draw base shadow/outline
+          ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+          ctx.lineWidth = width + 2;
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y + 2);
+          ctx.lineTo(b.x, b.y + 2);
+          ctx.stroke();
+
+          // Draw main beam
+          ctx.strokeStyle = baseColor;
+          ctx.lineWidth = width;
           ctx.beginPath();
           ctx.moveTo(a.x, a.y);
           ctx.lineTo(b.x, b.y);
           ctx.stroke();
+
+          // Draw top highlight for 3D effect
+          ctx.strokeStyle = topColor;
+          ctx.lineWidth = width / 2.5;
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y - width/4);
+          ctx.lineTo(b.x, b.y - width/4);
+          ctx.stroke();
+
+          ctx.setLineDash([]);
         });
 
-        // Joints
-        truss.nodes.forEach((node, i) => {
+        // Draw Nodes (Gusset plates)
+        truss.nodes.forEach((n, i) => {
           const isSupport = truss.supports.includes(i);
-          const isSelected = truss.selectedNode === i;
+          const isHover = truss.hoverNode === i;
+          
           ctx.beginPath();
-          ctx.arc(node.x, node.y, isSelected ? 9 : 7, 0, Math.PI * 2);
-          ctx.fillStyle = isSelected ? '#f5b342' : (isSupport ? '#c76b3b' : '#ffffff');
+          ctx.arc(n.x, n.y, isHover ? 10 : 8, 0, Math.PI * 2);
+          ctx.fillStyle = isSupport ? '#e67e22' : (isHover ? '#f1c40f' : '#ecf0f1');
           ctx.fill();
-          ctx.strokeStyle = '#0b2b3f';
-          ctx.lineWidth = 2;
+          ctx.strokeStyle = '#2c3e50';
+          ctx.lineWidth = 3;
           ctx.stroke();
+
+          // Add a little bolt detail
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, 3, 0, Math.PI * 2);
+          ctx.fillStyle = '#2c3e50';
+          ctx.fill();
 
           if (isSupport) {
-            // Draw support triangle
-            const isFixed = truss.supports.indexOf(i) === 0;
-            ctx.fillStyle = '#c76b3b';
+            ctx.fillStyle = '#e67e22';
             ctx.beginPath();
-            ctx.moveTo(node.x, node.y + 10);
-            ctx.lineTo(node.x - 12, node.y + 25);
-            ctx.lineTo(node.x + 12, node.y + 25);
+            ctx.moveTo(n.x, n.y + 8);
+            ctx.lineTo(n.x - 12, n.y + 22);
+            ctx.lineTo(n.x + 12, n.y + 22);
             ctx.closePath();
             ctx.fill();
-            ctx.strokeStyle = '#0b2b3f';
-            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = '#2c3e50';
+            ctx.lineWidth = 2;
             ctx.stroke();
-            // Hatch marks
-            for (let hx = -10; hx <= 10; hx += 5) {
-              ctx.beginPath();
-              ctx.moveTo(node.x + hx, node.y + 25);
-              ctx.lineTo(node.x + hx - 4, node.y + 30);
-              ctx.stroke();
-            }
-            if (isFixed) {
-              // Draw pin
-              ctx.fillStyle = '#0b2b3f';
-              ctx.beginPath();
-              ctx.arc(node.x, node.y + 5, 2, 0, Math.PI * 2);
-              ctx.fill();
-            }
           }
         });
 
-        // Load arrow
-        if (truss.load.attachedTo !== undefined && truss.load.attachedTo !== null) {
-          const node = truss.nodes[truss.load.attachedTo];
-          if (node) {
-            const arrowLen = 40 + truss.load.weight * 3;
-            ctx.strokeStyle = '#c0392b';
-            ctx.fillStyle = '#c0392b';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.moveTo(node.x, node.y - arrowLen);
-            ctx.lineTo(node.x, node.y - 15);
-            ctx.stroke();
-            // Arrowhead
-            ctx.beginPath();
-            ctx.moveTo(node.x, node.y - 10);
-            ctx.lineTo(node.x - 8, node.y - 25);
-            ctx.lineTo(node.x + 8, node.y - 25);
-            ctx.closePath();
-            ctx.fill();
-            // Weight label
-            ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 12px system-ui';
-            ctx.textAlign = 'center';
-            ctx.fillText(truss.load.weight + ' kN', node.x, node.y - arrowLen - 6);
-          }
+        // Draw Active Drag Line
+        if (truss.dragFrom !== null && truss.dragPos && truss.mode === 'build') {
+          const from = truss.nodes[truss.dragFrom];
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+          ctx.lineWidth = 6;
+          ctx.setLineDash([10, 10]);
+          ctx.beginPath();
+          ctx.moveTo(from.x, from.y);
+          ctx.lineTo(truss.dragPos.x, truss.dragPos.y);
+          ctx.stroke();
+          ctx.setLineDash([]);
         }
 
-        // Update facts
-        if (memberForces) {
-          const maxForce = Math.max(...truss.members.map((m, i) => {
-            const mat = truss.MATS[m.material];
-            const f = memberForces[i];
-            const eff = (mat.tensionOnly && f < 0) ? 0 : Math.abs(f);
-            return eff;
-          }), 0);
-          const failedCount = truss.members.filter((m, i) => {
-            const mat = truss.MATS[m.material];
-            const f = memberForces[i];
-            const eff = (mat.tensionOnly && f < 0) ? 0 : Math.abs(f);
-            return eff > mat.strength;
-          }).length;
+        // Draw Truck (Poly Bridge style flatbed)
+        if (truss.truck) {
+          const tInfo = TRUCKS[truss.selectedTruck];
+          const tx = truss.truck.x;
+          const ty = truss.truck.y;
+          
+          ctx.save();
+          ctx.translate(tx, ty);
+          
+          // Chassis
+          ctx.fillStyle = truss.truck.alive ? tInfo.color : '#7f8c8d';
+          ctx.beginPath();
+          ctx.roundRect(-tInfo.w/2, -tInfo.h, tInfo.w, tInfo.h, 5);
+          ctx.fill();
+          ctx.strokeStyle = '#2c3e50';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          
+          // Cab (if it's a semi/van)
+          if (tInfo.id === 'truck' || tInfo.id === 'van') {
+            ctx.fillStyle = '#34495e';
+            ctx.beginPath();
+            ctx.roundRect(-tInfo.w/2, -tInfo.h - 20, tInfo.w * 0.4, 20, [5, 5, 0, 0]);
+            ctx.fill();
+            ctx.stroke();
+          }
+          
+          // Wheels (Suspended)
+          ctx.fillStyle = '#2c3e50';
+          ctx.beginPath();
+          ctx.arc(-tInfo.w/2 + 15, 0, 12, 0, Math.PI * 2);
+          ctx.arc(tInfo.w/2 - 15, 0, 12, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Wheel hubs
+          ctx.fillStyle = '#95a5a6';
+          ctx.beginPath();
+          ctx.arc(-tInfo.w/2 + 15, 0, 5, 0, Math.PI * 2);
+          ctx.arc(tInfo.w/2 - 15, 0, 5, 0, Math.PI * 2);
+          ctx.fill();
+          
+          ctx.restore();
+        }
 
+        // Update Facts
+        if (truss.mode === 'test') {
           updateFacts({
-            'Members': truss.members.length,
-            'Joints': truss.nodes.length,
-            'Max force': maxForce.toFixed(1) + ' kN',
-            'Failed': failedCount > 0 ? failedCount : 'none',
-            'Reaction L': Math.abs(supportY1).toFixed(1) + ' kN',
-            'Reaction R': Math.abs(supportY2).toFixed(1) + ' kN',
+            'Phase': 'Testing',
+            'Cost': '$' + trussCost() + ' / $' + truss.budget,
+            'Vehicle': TRUCKS[truss.selectedTruck].name,
+            'Status': truss.truck ? (truss.truck.alive ? 'Driving' : 'Crashed') : 'Waiting',
           });
         } else {
           updateFacts({
+            'Phase': 'Building',
+            'Cost': '$' + trussCost() + ' / $' + truss.budget,
             'Members': truss.members.length,
             'Joints': truss.nodes.length,
-            'Status': 'Add more members',
+            'Status': 'Ready to test',
           });
         }
       }
 
-      function trussTools() {
-        return `
-          <h4><i class="fas fa-tools"></i> Tools</h4>
-          <div class="tool-grid">
-            <button class="tool-btn is-active" data-action="trussAdd">
-              <i class="fas fa-plus-circle"></i> Add member
-            </button>
-            <button class="tool-btn" data-action="trussMove">
-              <i class="fas fa-arrows-alt"></i> Move joint
-            </button>
-            <button class="tool-btn" data-action="trussSupport">
-              <i class="fas fa-anchor"></i> Toggle support
-            </button>
-            <button class="tool-btn" data-action="trussLoad">
-              <i class="fas fa-weight-hanging"></i> Set load
-            </button>
-          </div>
-          <h4><i class="fas fa-cube"></i> Material</h4>
-          <div class="material-row" id="materialRow">
-            <button class="mat-btn is-active" data-mat="steel">Steel</button>
-            <button class="mat-btn" data-mat="wood">Wood</button>
-            <button class="mat-btn" data-mat="cable">Cable</button>
-          </div>
-          <h4><i class="fas fa-weight-hanging"></i> Load</h4>
-          <div class="slider-row">
-            <label>Weight <span class="value-chip" id="trussLoadChip">10 kN</span></label>
-            <input type="range" id="trussLoadInput" min="1" max="50" value="10" step="1">
-          </div>
-          <div class="slider-row">
-            <label>Loaded joint <span class="value-chip" id="trussJointChip">#3</span></label>
-            <input type="range" id="trussJointInput" min="0" max="${truss.nodes.length - 1}" value="3" step="1">
-          </div>
-        `;
-      }
-
-      function bindTrussTools() {
-        toolPanel.querySelectorAll('[data-action]').forEach((b) => {
-          b.addEventListener('click', () => {
-            toolPanel.querySelectorAll('[data-action]').forEach((x) => x.classList.remove('is-active'));
-            b.classList.add('is-active');
-            truss.tool = b.dataset.action;
-          });
+      function trussHitNode(x, y, r = 20) {
+        let best = -1, bd = r;
+        truss.nodes.forEach((n, i) => {
+          const d = Math.hypot(n.x - x, n.y - y);
+          if (d < bd) { bd = d; best = i; }
         });
-        toolPanel.querySelectorAll('[data-mat]').forEach((b) => {
-          b.addEventListener('click', () => {
-            truss.material = b.dataset.mat;
-            toolPanel.querySelectorAll('[data-mat]').forEach((x) => x.classList.toggle('is-active', x === b));
-          });
-        });
-        const loadInput = document.getElementById('trussLoadInput');
-        const loadChip = document.getElementById('trussLoadChip');
-        if (loadInput) {
-          loadInput.addEventListener('input', () => {
-            truss.load.weight = parseFloat(loadInput.value);
-            loadChip.textContent = truss.load.weight + ' kN';
-          });
-        }
-        const jointInput = document.getElementById('trussJointInput');
-        const jointChip = document.getElementById('trussJointChip');
-        if (jointInput) {
-          jointInput.addEventListener('input', () => {
-            truss.load.attachedTo = parseInt(jointInput.value, 10);
-            jointChip.textContent = '#' + truss.load.attachedTo;
-          });
-        }
+        return best;
       }
 
-      // Truss interactions
-      let trussMode = 'trussAdd'; // add | move
-      let pendingMemberStart = null;
-
-      function trussClick(x, y) {
-        // Find nearest node
-        let nearest = null, bestDist = 20;
-        truss.nodes.forEach((node, i) => {
-          const d = Math.hypot(node.x - x, node.y - y);
-          if (d < bestDist) { bestDist = d; nearest = i; }
-        });
-
-        if (trussMode === 'trussAdd') {
-          if (nearest !== null) {
-            if (pendingMemberStart === null) {
-              pendingMemberStart = nearest;
-              truss.selectedNode = nearest;
-            } else if (pendingMemberStart !== nearest) {
-              // Check duplicate
-              const exists = truss.members.some((m) =>
-                (m.a === pendingMemberStart && m.b === nearest) ||
-                (m.a === nearest && m.b === pendingMemberStart)
-              );
-              if (!exists) {
-                truss.members.push({ a: pendingMemberStart, b: nearest, material: truss.material });
-              }
-              pendingMemberStart = null;
-              truss.selectedNode = null;
-            }
-          } else {
-            // Add new node
-            truss.nodes.push({ x, y });
-            truss.selectedNode = truss.nodes.length - 1;
-            pendingMemberStart = null;
-          }
-        }
-      }
-
-      function trussRightClick(x, y) {
-        // Delete member if near one
+      function trussHitMember(x, y, r = 12) {
+        let best = -1, bd = r;
         truss.members.forEach((m, i) => {
+          if (truss.brokenMembers.has(i)) return;
           const a = truss.nodes[m.a], b = truss.nodes[m.b];
-          const dist = pointToSegmentDist(x, y, a.x, a.y, b.x, b.y);
-          if (dist < 8) {
-            truss.members.splice(i, 1);
-          }
+          if (!a || !b) return;
+          const d = pointToSegment(x, y, a.x, a.y, b.x, b.y);
+          if (d < bd) { bd = d; best = i; }
         });
+        return best;
       }
 
-      function pointToSegmentDist(px, py, x1, y1, x2, y2) {
-        const dx = x2 - x1, dy = y2 - y1;
-        const len2 = dx * dx + dy * dy;
-        if (len2 === 0) return Math.hypot(px - x1, py - y1);
-        let t = ((px - x1) * dx + (py - y1) * dy) / len2;
-        t = Math.max(0, Math.min(1, t));
-        return Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy));
+      function startTrussTest() {
+        if (truss.mode === 'test') return;
+        if (trussCost() > truss.budget) {
+          setInfoBanner('<strong>Over budget!</strong> Remove some members.');
+          return;
+        }
+        truss.mode = 'test';
+        truss.brokenMembers.clear();
+        
+        // Reset any stretched nodes to their original positions before test
+        truss.nodes.forEach(n => {
+          n.oldX = n.x;
+          n.oldY = n.y;
+        });
+        
+        const tInfo = TRUCKS[truss.selectedTruck];
+        truss.truck = {
+          x: -tInfo.w,
+          y: getDeckY(),
+          weight: tInfo.weight,
+          alive: true,
+          startTime: performance.now(),
+          fallStart: null
+        };
+        
+        setInfoBanner('<strong>Testing…</strong> Watch the bridge physics react to the load!');
+        toolPanel.innerHTML = trussTools();
+        bindTrussTools();
+      }
+
+      function endTrussTest() {
+        truss.mode = 'build';
+        truss.truck = null;
+        truss.brokenMembers.clear();
+        
+        // Reset nodes to original positions
+        truss.nodes.forEach(n => {
+          n.x = n.oldX;
+          n.y = n.oldY;
+        });
+        
+        setInfoBanner('<strong>Back to editing.</strong> Adjust your bridge and test again.');
+        toolPanel.innerHTML = trussTools();
+        bindTrussTools();
       }
 
       // ============================================================
-      //  BEAM LAB
+      //  BEAM
       // ============================================================
       const beam = {
-        length: 8, // metres
-        loadPos: 0.5, // 0-1
-        loadMag: 10, // kN
-        supportType: 'simple', // simple | cantilever
+        supportType: 'simple',
+        length: 8,
+        loads: [{ pos: 0.5, mag: 10 }],
+        dragLoad: null,
+        hoverLoad: null,
       };
 
-      function drawBeam() {
-        const padX = 80;
-        const beamY = H / 2;
-        const beamLengthPx = W - 2 * padX;
-        const x0 = padX;
-        const x1 = W - padX;
+      function drawBeam(t) {
+        const padX = 100;
+        const beamY = H / 2 - 40;
+        const beamLen = W - 2 * padX;
+        const x0 = padX, x1 = W - padX;
 
-        // Beam
-        ctx.fillStyle = '#cfdde9';
-        ctx.fillRect(x0, beamY - 12, beamLengthPx, 24);
+        const L = beam.length;
+        const P_total = beam.loads.reduce((a, l) => a + l.mag, 0);
+
+        let Ra = 0, Rb = 0, Ma = 0;
+        if (beam.supportType === 'simple') {
+          let sumM = 0;
+          beam.loads.forEach((l) => { sumM += l.mag * (l.pos * L); });
+          Rb = sumM / L;
+          Ra = P_total - Rb;
+        } else {
+          beam.loads.forEach((l) => { Ma += l.mag * (l.pos * L); });
+          Ra = P_total;
+        }
+
+        const sag = beam.loads.reduce((a, l) => a + l.mag * l.pos * (1 - l.pos), 0) * 0.2;
+
         ctx.strokeStyle = '#8ba9c0';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x0, beamY - 12, beamLengthPx, 24);
+        ctx.lineWidth = 24;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        for (let i = 0; i <= 40; i++) {
+          const f = i / 40;
+          const px = x0 + f * beamLen;
+          const py = beamY + sag * Math.sin(f * Math.PI);
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+        ctx.strokeStyle = '#cfdde9';
+        ctx.lineWidth = 20;
+        ctx.beginPath();
+        for (let i = 0; i <= 40; i++) {
+          const f = i / 40;
+          const px = x0 + f * beamLen;
+          const py = beamY + sag * Math.sin(f * Math.PI);
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
 
-        // Supports
         ctx.fillStyle = '#c76b3b';
         if (beam.supportType === 'simple') {
-          // Pin at left
           ctx.beginPath();
           ctx.moveTo(x0, beamY + 12);
-          ctx.lineTo(x0 - 12, beamY + 32);
-          ctx.lineTo(x0 + 12, beamY + 32);
+          ctx.lineTo(x0 - 14, beamY + 32);
+          ctx.lineTo(x0 + 14, beamY + 32);
           ctx.closePath();
           ctx.fill();
-          ctx.strokeStyle = '#0b2b3f';
-          ctx.stroke();
-          // Roller at right
+          ctx.strokeStyle = '#0b2b3f'; ctx.lineWidth = 1.5; ctx.stroke();
           ctx.beginPath();
           ctx.moveTo(x1, beamY + 12);
-          ctx.lineTo(x1 - 12, beamY + 32);
-          ctx.lineTo(x1 + 12, beamY + 32);
+          ctx.lineTo(x1 - 14, beamY + 32);
+          ctx.lineTo(x1 + 14, beamY + 32);
           ctx.closePath();
           ctx.fill();
           ctx.stroke();
-          // Rollers
-          ctx.beginPath();
-          ctx.arc(x1 - 6, beamY + 36, 4, 0, Math.PI * 2);
-          ctx.arc(x1 + 6, beamY + 36, 4, 0, Math.PI * 2);
-          ctx.fillStyle = '#0b2b3f';
-          ctx.fill();
         } else {
-          // Fixed wall at left
-          ctx.fillRect(x0 - 20, beamY - 40, 20, 80);
-          ctx.strokeStyle = '#0b2b3f';
-          ctx.lineWidth = 2;
-          ctx.strokeRect(x0 - 20, beamY - 40, 20, 80);
+          ctx.fillRect(x0 - 22, beamY - 40, 22, 80);
+          ctx.strokeStyle = '#0b2b3f'; ctx.lineWidth = 2;
+          ctx.strokeRect(x0 - 22, beamY - 40, 22, 80);
           for (let yy = -40; yy <= 40; yy += 10) {
             ctx.beginPath();
-            ctx.moveTo(x0 - 20, beamY + yy);
-            ctx.lineTo(x0 - 30, beamY + yy + 8);
+            ctx.moveTo(x0 - 22, beamY + yy);
+            ctx.lineTo(x0 - 32, beamY + yy + 8);
             ctx.stroke();
           }
         }
 
-        // Load arrow
-        const loadX = x0 + beam.loadPos * beamLengthPx;
-        const arrowH = 30 + beam.loadMag * 3;
-        ctx.strokeStyle = '#c0392b';
-        ctx.fillStyle = '#c0392b';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(loadX, beamY - 12 - arrowH);
-        ctx.lineTo(loadX, beamY - 12);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(loadX, beamY - 12);
-        ctx.lineTo(loadX - 8, beamY - 24);
-        ctx.lineTo(loadX + 8, beamY - 24);
-        ctx.closePath();
-        ctx.fill();
+        beam.loads.forEach((load, i) => {
+          const loadX = x0 + load.pos * beamLen;
+          const sagY = sag * Math.sin(load.pos * Math.PI);
+          const arrowH = 30 + load.mag * 2.5;
+          const isHover = beam.hoverLoad === i;
+          ctx.strokeStyle = isHover ? '#f5b342' : '#c0392b';
+          ctx.fillStyle = isHover ? '#f5b342' : '#c0392b';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(loadX, beamY + sagY - 12 - arrowH);
+          ctx.lineTo(loadX, beamY + sagY - 12);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(loadX, beamY + sagY - 12);
+          ctx.lineTo(loadX - 8, beamY + sagY - 24);
+          ctx.lineTo(loadX + 8, beamY + sagY - 24);
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 12px system-ui';
+          ctx.textAlign = 'center';
+          ctx.fillText(load.mag + ' kN', loadX, beamY + sagY - 12 - arrowH - 6);
+        });
 
-        // Weight label
-        ctx.fillStyle = '#0b2b3f';
-        ctx.font = 'bold 13px system-ui';
-        ctx.textAlign = 'center';
-        ctx.fillText(beam.loadMag + ' kN', loadX, beamY - 12 - arrowH - 6);
-
-        // Shear and moment diagrams (below beam)
-        const diagTop = beamY + 80;
-        const diagHeight = 90;
-
-        // Compute shear & moment
-        const L = beam.length;
-        const a = beam.loadPos * L;
-        const P = beam.loadMag;
-        const N = 100;
+        const N = 120;
         const shear = [], moment = [];
-
-        let Ra, Rb;
-        if (beam.supportType === 'simple') {
-          Ra = P * (L - a) / L;
-          Rb = P * a / L;
-          for (let i = 0; i <= N; i++) {
-            const x = (i / N) * L;
-            const V = x < a ? Ra : Ra - P;
-            const M = x < a ? Ra * x : Rb * (L - x);
-            shear.push({ x, v: V });
-            moment.push({ x, m: M });
+        for (let i = 0; i <= N; i++) {
+          const x = (i / N) * L;
+          let V = 0, M = 0;
+          if (beam.supportType === 'simple') {
+            V = Ra;
+            beam.loads.forEach((l) => {
+              const a = l.pos * L;
+              if (x > a) V -= l.mag;
+            });
+            M = Ra * x;
+            beam.loads.forEach((l) => {
+              const a = l.pos * L;
+              if (x > a) M -= l.mag * (x - a);
+            });
+          } else {
+            V = -P_total;
+            beam.loads.forEach((l) => {
+              const a = l.pos * L;
+              if (x > a) V += l.mag;
+            });
+            M = -Ma + Ra * x;
+            beam.loads.forEach((l) => {
+              const a = l.pos * L;
+              if (x > a) M -= l.mag * (x - a);
+            });
           }
-        } else {
-          // Cantilever
-          Ra = P;
-          for (let i = 0; i <= N; i++) {
-            const x = (i / N) * L;
-            const V = x < a ? -P : 0;
-            const M = x < a ? -P * (a - x) : 0;
-            shear.push({ x, v: V });
-            moment.push({ x, m: M });
-          }
+          shear.push({ x, v: V });
+          moment.push({ x, m: M });
         }
-
         const maxV = Math.max(...shear.map((s) => Math.abs(s.v)), 1);
-        const maxM = Math.max(...moment.map((m) => Math.abs(m.m)), 1);
+        const maxM = Math.max(...moment.map((s) => Math.abs(s.m)), 1);
 
-        // Draw shear diagram
-        drawDiagram(x0, beamLengthPx, diagTop, diagHeight, shear, 'v', maxV, '#2c7aa0', 'Shear (kN)');
-
-        // Draw moment diagram
-        drawDiagram(x0, beamLengthPx, diagTop + diagHeight + 50, diagHeight, moment, 'm', maxM, '#c76b3b', 'Moment (kN·m)');
+        drawDiagram(x0, beamLen, beamY + 100, 80, shear, 'v', maxV, '#2c7aa0', 'Shear (kN)');
+        drawDiagram(x0, beamLen, beamY + 210, 80, moment, 'm', maxM, '#c76b3b', 'Moment (kN·m)');
 
         updateFacts({
-          'Span': beam.length.toFixed(1) + ' m',
-          'Load': beam.loadMag.toFixed(0) + ' kN',
+          'Span': L.toFixed(1) + ' m',
+          'Loads': beam.loads.length,
+          'Total load': P_total.toFixed(0) + ' kN',
           'Support': beam.supportType === 'simple' ? 'Simple' : 'Cantilever',
           'Max shear': maxV.toFixed(1) + ' kN',
           'Max moment': maxM.toFixed(1) + ' kN·m',
-          'Load pos': (beam.loadPos * 100).toFixed(0) + '%',
+          'React L': Ra.toFixed(1) + ' kN',
+          'React R': Rb.toFixed(1) + ' kN',
         });
       }
 
       function drawDiagram(x0, width, top, height, data, key, maxVal, color, label) {
         const midY = top + height / 2;
         const half = height / 2 - 4;
-
-        // Baseline
         ctx.strokeStyle = '#e0eaf2';
         ctx.lineWidth = 1;
         ctx.beginPath();
@@ -1083,8 +995,7 @@
         ctx.lineTo(x0 + width, midY);
         ctx.stroke();
 
-        // Fill
-        ctx.fillStyle = color.replace('rgb', 'rgba').replace(')', ', 0.15)');
+        ctx.fillStyle = key === 'v' ? 'rgba(44,122,160,0.15)' : 'rgba(199,107,59,0.15)';
         ctx.beginPath();
         ctx.moveTo(x0, midY);
         data.forEach((pt) => {
@@ -1094,10 +1005,8 @@
         });
         ctx.lineTo(x0 + width, midY);
         ctx.closePath();
-        ctx.fillStyle = key === 'v' ? 'rgba(44, 122, 160, 0.15)' : 'rgba(199, 107, 59, 0.15)';
         ctx.fill();
 
-        // Line
         ctx.strokeStyle = color;
         ctx.lineWidth = 2.5;
         ctx.beginPath();
@@ -1109,599 +1018,452 @@
         });
         ctx.stroke();
 
-        // Label
         ctx.fillStyle = color;
         ctx.font = 'bold 11px system-ui';
         ctx.textAlign = 'left';
         ctx.fillText(label, x0, top - 4);
       }
 
-      function beamTools() {
-        return `
-          <h4><i class="fas fa-tools"></i> Support</h4>
-          <div class="tool-grid">
-            <button class="tool-btn ${beam.supportType === 'simple' ? 'is-active' : ''}" data-support="simple">
-              <i class="fas fa-grip-lines"></i> Simple
-            </button>
-            <button class="tool-btn ${beam.supportType === 'cantilever' ? 'is-active' : ''}" data-support="cantilever">
-              <i class="fas fa-square"></i> Cantilever
-            </button>
-          </div>
-          <h4><i class="fas fa-sliders-h"></i> Load</h4>
-          <div class="slider-row">
-            <label>Magnitude <span class="value-chip" id="beamMagChip">${beam.loadMag} kN</span></label>
-            <input type="range" id="beamMagInput" min="1" max="50" value="${beam.loadMag}" step="1">
-          </div>
-          <div class="slider-row">
-            <label>Position <span class="value-chip" id="beamPosChip">${(beam.loadPos * 100).toFixed(0)}%</span></label>
-            <input type="range" id="beamPosInput" min="0.05" max="0.95" value="${beam.loadPos}" step="0.01">
-          </div>
-          <h4><i class="fas fa-ruler-horizontal"></i> Span</h4>
-          <div class="slider-row">
-            <label>Length <span class="value-chip" id="beamLenChip">${beam.length.toFixed(1)} m</span></label>
-            <input type="range" id="beamLenInput" min="3" max="15" value="${beam.length}" step="0.5">
-          </div>
-        `;
-      }
-
-      function bindBeamTools() {
-        toolPanel.querySelectorAll('[data-support]').forEach((b) => {
-          b.addEventListener('click', () => {
-            beam.supportType = b.dataset.support;
-            toolPanel.querySelectorAll('[data-support]').forEach((x) => x.classList.toggle('is-active', x === b));
-          });
-        });
-        const mag = document.getElementById('beamMagInput');
-        if (mag) mag.addEventListener('input', () => {
-          beam.loadMag = parseFloat(mag.value);
-          document.getElementById('beamMagChip').textContent = beam.loadMag + ' kN';
-        });
-        const pos = document.getElementById('beamPosInput');
-        if (pos) pos.addEventListener('input', () => {
-          beam.loadPos = parseFloat(pos.value);
-          document.getElementById('beamPosChip').textContent = (beam.loadPos * 100).toFixed(0) + '%';
-        });
-        const len = document.getElementById('beamLenInput');
-        if (len) len.addEventListener('input', () => {
-          beam.length = parseFloat(len.value);
-          document.getElementById('beamLenChip').textContent = beam.length.toFixed(1) + ' m';
-        });
-      }
-
       // ============================================================
-      //  CIRCUIT LAB
+      //  CIRCUIT
       // ============================================================
       const circuit = {
-        components: [], // { type, x, y, value }
-        wires: [], // { from: idx, to: idx }
-        selected: null,
-        nextId: 1,
-        type: 'battery', // battery | resistor | led | capacitor
+        slots: [
+          { type: 'battery', value: 9 },
+          { type: 'resistor', value: 100 },
+          { type: 'led', value: 0 },
+          { type: 'switch', value: 1 },
+        ],
+        wires: [[0,1],[1,2],[2,3],[3,0]],
+        selectedSlot: null,
       };
 
-      function initCircuit() {
-        circuit.components = [
-          { id: 1, type: 'battery', x: 200, y: 300, value: 9 },
-          { id: 2, type: 'resistor', x: 400, y: 300, value: 100 },
-          { id: 3, type: 'led', x: 600, y: 300, value: 0 },
-        ];
-        circuit.wires = [{ from: 1, to: 2 }, { from: 2, to: 3 }, { from: 3, to: 1 }];
-        circuit.nextId = 4;
-      }
+      function drawCircuit(t) {
+        const cx = W / 2, cy = H / 2;
+        const slotRadius = 130;
 
-      function drawCircuit() {
-        // Simple series circuit: battery → resistor → LED → back to battery
-        // Draw ground grid
-        ctx.strokeStyle = 'rgba(255,255,255,0.05)';
-        ctx.lineWidth = 1;
-        for (let x = 0; x < W; x += 40) {
-          ctx.beginPath();
-          ctx.moveTo(x, 0);
-          ctx.lineTo(x, H);
-          ctx.stroke();
-        }
-        for (let y = 0; y < H; y += 40) {
-          ctx.beginPath();
-          ctx.moveTo(0, y);
-          ctx.lineTo(W, y);
-          ctx.stroke();
-        }
+        const batt = circuit.slots.find((s) => s.type === 'battery');
+        const res = circuit.slots.find((s) => s.type === 'resistor');
+        const sw = circuit.slots.find((s) => s.type === 'switch');
+        const closed = sw && sw.value === 1;
+        const voltage = batt ? batt.value : 0;
+        const resistance = res ? res.value : 1000;
+        const current = closed ? voltage / resistance : 0;
+        const ledOn = current > 0.005;
 
-        // Wires
-        circuit.wires.forEach((w) => {
-          const a = circuit.components.find((c) => c.id === w.from);
-          const b = circuit.components.find((c) => c.id === w.to);
-          if (!a || !b) return;
-          ctx.strokeStyle = '#8db3d0';
+        circuit.wires.forEach(([a, b]) => {
+          const sa = circuit.slots[a], sb = circuit.slots[b];
+          if (!sa || !sb) return;
+          const angA = (a / circuit.slots.length) * Math.PI * 2 - Math.PI / 2;
+          const angB = (b / circuit.slots.length) * Math.PI * 2 - Math.PI / 2;
+          const x1 = cx + Math.cos(angA) * slotRadius;
+          const y1 = cy + Math.sin(angA) * slotRadius;
+          const x2 = cx + Math.cos(angB) * slotRadius;
+          const y2 = cy + Math.sin(angB) * slotRadius;
+
+          ctx.strokeStyle = closed ? '#f5b342' : '#8db3d0';
           ctx.lineWidth = 3;
           ctx.beginPath();
-          ctx.moveTo(a.x, a.y);
-          ctx.lineTo(b.x, b.y);
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
           ctx.stroke();
-        });
 
-        // Compute circuit values (assume series)
-        const batt = circuit.components.find((c) => c.type === 'battery');
-        const resistor = circuit.components.find((c) => c.type === 'resistor');
-        const led = circuit.components.find((c) => c.type === 'led');
-        let current = 0, voltage = 0, power = 0, ledOn = false;
-        if (batt && resistor) {
-          voltage = batt.value;
-          current = voltage / (resistor.value || 1);
-          power = voltage * current;
-          ledOn = current > 0.01;
-        }
-
-        // Animate current flow
-        const t = performance.now() / 1000;
-        circuit.wires.forEach((w) => {
-          const a = circuit.components.find((c) => c.id === w.from);
-          const b = circuit.components.find((c) => c.id === w.to);
-          if (!a || !b) return;
-          const dx = b.x - a.x, dy = b.y - a.y;
-          const len = Math.hypot(dx, dy);
-          const ux = dx / len, uy = dy / len;
-          const numDots = Math.floor(len / 30);
-          for (let i = 0; i < numDots; i++) {
-            const frac = ((i / numDots) + t * current * 2) % 1;
-            const px = a.x + ux * len * frac;
-            const py = a.y + uy * len * frac;
-            ctx.beginPath();
-            ctx.arc(px, py, 3, 0, Math.PI * 2);
-            ctx.fillStyle = current > 0.001 ? '#f5b342' : 'rgba(255,255,255,0.2)';
-            ctx.fill();
+          if (closed && current > 0.001) {
+            const len = Math.hypot(x2 - x1, y2 - y1);
+            const nDots = Math.floor(len / 25);
+            const phase = (t * 0.001 * current * 4) % 1;
+            for (let i = 0; i < nDots; i++) {
+              const frac = ((i / nDots) + phase) % 1;
+              const px = x1 + (x2 - x1) * frac;
+              const py = y1 + (y2 - y1) * frac;
+              ctx.beginPath();
+              ctx.arc(px, py, 3, 0, Math.PI * 2);
+              ctx.fillStyle = '#f5b342';
+              ctx.fill();
+            }
           }
         });
 
-        // Components
-        circuit.components.forEach((c) => {
-          drawComponent(c, ledOn, current);
+        circuit.slots.forEach((slot, i) => {
+          const ang = (i / circuit.slots.length) * Math.PI * 2 - Math.PI / 2;
+          const x = cx + Math.cos(ang) * slotRadius;
+          const y = cy + Math.sin(ang) * slotRadius;
+          const isSelected = circuit.selectedSlot === i;
+
+          ctx.beginPath();
+          ctx.arc(x, y, 28, 0, Math.PI * 2);
+          ctx.fillStyle = isSelected ? '#f5b342' : 'rgba(255,255,255,0.1)';
+          ctx.fill();
+          ctx.strokeStyle = isSelected ? '#f5b342' : '#cfdde9';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          drawCircuitIcon(slot, x, y, ledOn, closed);
+
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 10px system-ui';
+          ctx.textAlign = 'center';
+          ctx.fillText(slot.type, x, y + 44);
         });
 
         updateFacts({
           'Voltage': voltage.toFixed(1) + ' V',
-          'Resistance': (resistor ? resistor.value : 0) + ' Ω',
+          'Resistance': resistance + ' Ω',
           'Current': current.toFixed(3) + ' A',
-          'Power': power.toFixed(2) + ' W',
+          'Power': (voltage * current).toFixed(2) + ' W',
+          'Switch': closed ? 'closed' : 'open',
           'LED': ledOn ? 'ON' : 'off',
-          'Components': circuit.components.length,
         });
       }
 
-      function drawComponent(c, ledOn, current) {
-        const r = 24;
-        if (c.type === 'battery') {
-          // Battery symbol
-          ctx.fillStyle = '#8db3d0';
-          ctx.fillRect(c.x - 15, c.y - 20, 8, 40);
-          ctx.fillStyle = '#cfdde9';
-          ctx.fillRect(c.x + 5, c.y - 12, 8, 24);
-          ctx.fillStyle = '#ffffff';
-          ctx.font = 'bold 11px system-ui';
-          ctx.textAlign = 'center';
-          ctx.fillText(c.value + 'V', c.x, c.y + 40);
-        } else if (c.type === 'resistor') {
-          // Zigzag resistor
-          ctx.strokeStyle = '#cfdde9';
+      function drawCircuitIcon(slot, x, y, ledOn, closed) {
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        if (slot.type === 'battery') {
+          ctx.strokeStyle = '#f5b342';
           ctx.lineWidth = 3;
           ctx.beginPath();
-          ctx.moveTo(c.x - 20, c.y);
-          for (let i = 0; i < 6; i++) {
-            ctx.lineTo(c.x - 15 + i * 5, c.y + (i % 2 === 0 ? -10 : 10));
-          }
-          ctx.lineTo(c.x + 20, c.y);
+          ctx.moveTo(x - 12, y - 10); ctx.lineTo(x + 12, y - 10);
+          ctx.moveTo(x - 6, y + 4); ctx.lineTo(x + 6, y + 4);
           ctx.stroke();
+          ctx.font = 'bold 9px system-ui';
           ctx.fillStyle = '#ffffff';
-          ctx.font = 'bold 11px system-ui';
-          ctx.textAlign = 'center';
-          ctx.fillText(c.value + 'Ω', c.x, c.y + 40);
-        } else if (c.type === 'led') {
-          // LED
+          ctx.fillText(slot.value + 'V', x, y + 18);
+        } else if (slot.type === 'resistor') {
+          ctx.strokeStyle = '#f5b342';
+          ctx.lineWidth = 3;
           ctx.beginPath();
-          ctx.arc(c.x, c.y, 18, 0, Math.PI * 2);
-          const glowColor = ledOn ? '#f5b342' : 'rgba(245, 179, 66, 0.15)';
-          ctx.fillStyle = glowColor;
-          ctx.fill();
+          ctx.moveTo(x - 15, y);
+          for (let i = 0; i < 5; i++) {
+            ctx.lineTo(x - 10 + i * 5, y + (i % 2 === 0 ? -8 : 8));
+          }
+          ctx.lineTo(x + 15, y);
+          ctx.stroke();
+          ctx.font = 'bold 9px system-ui';
+          ctx.fillStyle = '#ffffff';
+          ctx.fillText(slot.value + 'Ω', x, y + 18);
+        } else if (slot.type === 'led') {
           if (ledOn) {
-            const glow = ctx.createRadialGradient(c.x, c.y, 5, c.x, c.y, 40);
-            glow.addColorStop(0, 'rgba(245, 179, 66, 0.6)');
-            glow.addColorStop(1, 'rgba(245, 179, 66, 0)');
-            ctx.fillStyle = glow;
+            const g = ctx.createRadialGradient(x, y, 3, x, y, 30);
+            g.addColorStop(0, 'rgba(245,179,66,0.8)');
+            g.addColorStop(1, 'rgba(245,179,66,0)');
+            ctx.fillStyle = g;
             ctx.beginPath();
-            ctx.arc(c.x, c.y, 40, 0, Math.PI * 2);
+            ctx.arc(x, y, 30, 0, Math.PI * 2);
             ctx.fill();
           }
-          ctx.strokeStyle = '#f5b342';
-          ctx.lineWidth = 2.5;
           ctx.beginPath();
-          ctx.arc(c.x, c.y, 18, 0, Math.PI * 2);
+          ctx.arc(x, y, 12, 0, Math.PI * 2);
+          ctx.fillStyle = ledOn ? '#f5b342' : 'rgba(245,179,66,0.2)';
+          ctx.fill();
+          ctx.strokeStyle = '#f5b342';
+          ctx.lineWidth = 2;
           ctx.stroke();
-          ctx.fillStyle = '#ffffff';
-          ctx.font = 'bold 11px system-ui';
-          ctx.textAlign = 'center';
-          ctx.fillText('LED', c.x, c.y + 4);
+        } else if (slot.type === 'switch') {
+          ctx.strokeStyle = closed ? '#5a8a4a' : '#c0392b';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(x - 12, y);
+          if (closed) ctx.lineTo(x + 12, y);
+          else ctx.lineTo(x + 10, y - 12);
+          ctx.stroke();
+          ctx.fillStyle = closed ? '#5a8a4a' : '#c0392b';
+          ctx.beginPath();
+          ctx.arc(x - 14, y, 4, 0, Math.PI * 2);
+          ctx.arc(x + 14, y, 4, 0, Math.PI * 2);
+          ctx.fill();
         }
       }
 
-      function circuitTools() {
-        return `
-          <h4><i class="fas fa-tools"></i> Add component</h4>
-          <div class="tool-grid">
-            <button class="tool-btn is-active" data-comp="battery">
-              <i class="fas fa-battery-full"></i> Battery
-            </button>
-            <button class="tool-btn" data-comp="resistor">
-              <i class="fas fa-wave-square"></i> Resistor
-            </button>
-            <button class="tool-btn" data-comp="led">
-              <i class="fas fa-lightbulb"></i> LED
-            </button>
-          </div>
-          <h4><i class="fas fa-sliders-h"></i> Adjust</h4>
-          <div class="slider-row">
-            <label>Battery <span class="value-chip" id="battChip">9 V</span></label>
-            <input type="range" id="battInput" min="1" max="24" value="9" step="1">
-          </div>
-          <div class="slider-row">
-            <label>Resistor <span class="value-chip" id="resChip">100 Ω</span></label>
-            <input type="range" id="resInput" min="10" max="1000" value="100" step="10">
-          </div>
-          <div class="info-banner" style="margin-top:0.75rem;margin-bottom:0;">
-            <strong>Ohm's law:</strong> V = I·R. Current flows from + to −.
-          </div>
-        `;
-      }
-
-      function bindCircuitTools() {
-        toolPanel.querySelectorAll('[data-comp]').forEach((b) => {
-          b.addEventListener('click', () => {
-            toolPanel.querySelectorAll('[data-comp]').forEach((x) => x.classList.remove('is-active'));
-            b.classList.add('is-active');
-            circuit.type = b.dataset.comp;
-          });
-        });
-        const batt = document.getElementById('battInput');
-        if (batt) batt.addEventListener('input', () => {
-          const b = circuit.components.find((c) => c.type === 'battery');
-          if (b) b.value = parseFloat(batt.value);
-          document.getElementById('battChip').textContent = batt.value + ' V';
-        });
-        const res = document.getElementById('resInput');
-        if (res) res.addEventListener('input', () => {
-          const r = circuit.components.find((c) => c.type === 'resistor');
-          if (r) r.value = parseFloat(res.value);
-          document.getElementById('resChip').textContent = res.value + ' Ω';
-        });
-      }
-
       // ============================================================
-      //  GEARS LAB
+      //  GEARS
       // ============================================================
-      const gears = {
-        driverTeeth: 12,
-        drivenTeeth: 36,
+      const gearState = {
+        gears: [
+          { x: 200, y: 300, teeth: 12, angle: 0, color: '#2c7aa0', driver: true },
+          { x: 380, y: 300, teeth: 36, angle: 0, color: '#c76b3b', driver: false },
+        ],
         driverRPM: 60,
-        driverAngle: 0,
-        drivenAngle: 0,
+        dragGear: null,
+        hoverGear: null,
         lastTime: 0,
       };
 
+      function gearRadius(teeth) { return 40 + teeth * 1.8; }
+
       function drawGears(t) {
-        const dt = t - (gears.lastTime || t);
-        gears.lastTime = t;
+        const dt = gearState.lastTime ? (t - gearState.lastTime) / 1000 : 0;
+        gearState.lastTime = t;
 
-        const centerY = H / 2;
-        const driverRadius = 40 + gears.driverTeeth * 1.8;
-        const drivenRadius = 40 + gears.drivenTeeth * 1.8;
+        const driver = gearState.gears.find((g) => g.driver);
+        if (!driver) {
+          updateFacts({ 'Status': 'No driver gear' });
+          return;
+        }
 
-        const driverX = W / 2 - driverRadius - 20;
-        const drivenX = W / 2 + drivenRadius + 20;
+        const omega0 = (gearState.driverRPM / 60) * Math.PI * 2;
+        driver.angle += omega0 * dt;
 
-        // Update angles
-        const driverOmega = (gears.driverRPM / 60) * Math.PI * 2;
-        gears.driverAngle += driverOmega * dt / 1000;
-        gears.drivenAngle = -gears.driverAngle * (gears.driverTeeth / gears.drivenTeeth);
+        const sorted = [...gearState.gears].sort((a, b) => a.x - b.x);
+        for (let i = 1; i < sorted.length; i++) {
+          const prev = sorted[i - 1];
+          const cur = sorted[i];
+          if (Math.abs(cur.y - prev.y) < (gearRadius(prev.teeth) + gearRadius(cur.teeth))) {
+            cur.angle = -prev.angle * (prev.teeth / cur.teeth);
+            cur.color = `hsl(${(i * 40) % 360}, 60%, 50%)`;
+          }
+        }
 
-        drawGear(driverX, centerY, driverRadius, gears.driverTeeth, gears.driverAngle, '#2c7aa0');
-        drawGear(drivenX, centerY, drivenRadius, gears.drivenTeeth, gears.drivenAngle, '#c76b3b');
+        gearState.gears.forEach((g) => {
+          drawGear(g.x, g.y, gearRadius(g.teeth), g.teeth, g.angle, g.color, g === gearState.hoverGear);
 
-        // Labels
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 14px system-ui';
-        ctx.textAlign = 'center';
-        ctx.fillText('Driver', driverX, centerY + driverRadius + 40);
-        ctx.fillText(gears.driverTeeth + ' teeth', driverX, centerY + driverRadius + 60);
-        ctx.fillText(gears.driverRPM + ' RPM', driverX, centerY + driverRadius + 80);
+          if (g === gearState.hoverGear) {
+            ctx.fillStyle = '#f5b342';
+            ctx.beginPath();
+            ctx.arc(g.x, g.y - gearRadius(g.teeth) - 30, 10, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#0b2b3f';
+            ctx.font = 'bold 14px system-ui';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('+', g.x, g.y - gearRadius(g.teeth) - 30);
 
-        ctx.fillText('Driven', drivenX, centerY + drivenRadius + 40);
-        ctx.fillText(gears.drivenTeeth + ' teeth', drivenX, centerY + drivenRadius + 60);
-        const drivenRPM = gears.driverRPM * (gears.driverTeeth / gears.drivenTeeth);
-        ctx.fillText(drivenRPM.toFixed(1) + ' RPM', drivenX, centerY + drivenRadius + 80);
+            ctx.fillStyle = '#f5b342';
+            ctx.beginPath();
+            ctx.arc(g.x, g.y + gearRadius(g.teeth) + 30, 10, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#0b2b3f';
+            ctx.fillText('−', g.x, g.y + gearRadius(g.teeth) + 30);
+          }
+        });
 
-        const ratio = gears.drivenTeeth / gears.driverTeeth;
+        const lastGear = sorted[sorted.length - 1];
+        const drivenRPM = gearState.driverRPM * (driver.teeth / lastGear.teeth) * Math.pow(-1, sorted.length - 1);
         updateFacts({
-          'Driver teeth': gears.driverTeeth,
-          'Driven teeth': gears.drivenTeeth,
-          'Driver RPM': gears.driverRPM,
-          'Driven RPM': drivenRPM.toFixed(1),
-          'Gear ratio': ratio.toFixed(2) + ':1',
-          'Torque ×': ratio.toFixed(2),
+          'Gears': gearState.gears.length,
+          'Driver teeth': driver.teeth,
+          'Last teeth': lastGear.teeth,
+          'Driver RPM': gearState.driverRPM,
+          'Last RPM': Math.abs(drivenRPM).toFixed(1),
+          'Total ratio': (lastGear.teeth / driver.teeth).toFixed(2) + ':1',
         });
       }
 
-      function drawGear(cx, cy, radius, teeth, angle, color) {
-        const innerRadius = radius * 0.82;
-
+      function drawGear(cx, cy, r, teeth, angle, color, hover) {
+        const inner = r * 0.82;
         ctx.save();
         ctx.translate(cx, cy);
         ctx.rotate(angle);
-
         ctx.beginPath();
         for (let i = 0; i < teeth; i++) {
           const a0 = (i / teeth) * Math.PI * 2;
           const a1 = ((i + 0.25) / teeth) * Math.PI * 2;
           const a2 = ((i + 0.75) / teeth) * Math.PI * 2;
           const a3 = ((i + 1) / teeth) * Math.PI * 2;
-          if (i === 0) {
-            ctx.moveTo(Math.cos(a0) * innerRadius, Math.sin(a0) * innerRadius);
-          } else {
-            ctx.lineTo(Math.cos(a0) * innerRadius, Math.sin(a0) * innerRadius);
-          }
-          ctx.lineTo(Math.cos(a1) * radius, Math.sin(a1) * radius);
-          ctx.lineTo(Math.cos(a2) * radius, Math.sin(a2) * radius);
-          ctx.lineTo(Math.cos(a3) * innerRadius, Math.sin(a3) * innerRadius);
+          if (i === 0) ctx.moveTo(Math.cos(a0) * inner, Math.sin(a0) * inner);
+          else ctx.lineTo(Math.cos(a0) * inner, Math.sin(a0) * inner);
+          ctx.lineTo(Math.cos(a1) * r, Math.sin(a1) * r);
+          ctx.lineTo(Math.cos(a2) * r, Math.sin(a2) * r);
+          ctx.lineTo(Math.cos(a3) * inner, Math.sin(a3) * inner);
         }
         ctx.closePath();
         ctx.fillStyle = color;
         ctx.fill();
-        ctx.strokeStyle = '#0b2b3f';
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = hover ? '#f5b342' : '#0b2b3f';
+        ctx.lineWidth = hover ? 3 : 2;
         ctx.stroke();
 
-        // Hub
         ctx.beginPath();
-        ctx.arc(0, 0, radius * 0.25, 0, Math.PI * 2);
+        ctx.arc(0, 0, r * 0.22, 0, Math.PI * 2);
         ctx.fillStyle = '#0b2b3f';
         ctx.fill();
-        ctx.beginPath();
-        ctx.arc(0, 0, radius * 0.1, 0, Math.PI * 2);
-        ctx.fillStyle = '#ffffff';
-        ctx.fill();
 
-        // Spoke marker
         ctx.strokeStyle = '#0b2b3f';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(0, 0);
-        ctx.lineTo(innerRadius * 0.9, 0);
+        ctx.lineTo(inner * 0.9, 0);
         ctx.stroke();
 
         ctx.restore();
       }
 
-      function gearsTools() {
-        return `
-          <h4><i class="fas fa-cog"></i> Gear train</h4>
-          <div class="slider-row">
-            <label>Driver teeth <span class="value-chip" id="driverTeethChip">${gears.driverTeeth}</span></label>
-            <input type="range" id="driverTeethInput" min="8" max="48" value="${gears.driverTeeth}" step="1">
-          </div>
-          <div class="slider-row">
-            <label>Driven teeth <span class="value-chip" id="drivenTeethChip">${gears.drivenTeeth}</span></label>
-            <input type="range" id="drivenTeethInput" min="8" max="48" value="${gears.drivenTeeth}" step="1">
-          </div>
-          <div class="slider-row">
-            <label>Driver RPM <span class="value-chip" id="driverRPMChip">${gears.driverRPM}</span></label>
-            <input type="range" id="driverRPMInput" min="1" max="200" value="${gears.driverRPM}" step="1">
-          </div>
-          <div class="info-banner" style="margin-top:0.75rem;margin-bottom:0;">
-            <strong>Gear ratio</strong> = driven teeth / driver teeth.<br>
-            Speed divides by ratio; torque multiplies by ratio.
-          </div>
-        `;
-      }
-
-      function bindGearsTools() {
-        const dT = document.getElementById('driverTeethInput');
-        if (dT) dT.addEventListener('input', () => {
-          gears.driverTeeth = parseInt(dT.value, 10);
-          document.getElementById('driverTeethChip').textContent = gears.driverTeeth;
-        });
-        const drT = document.getElementById('drivenTeethInput');
-        if (drT) drT.addEventListener('input', () => {
-          gears.drivenTeeth = parseInt(drT.value, 10);
-          document.getElementById('drivenTeethChip').textContent = gears.drivenTeeth;
-        });
-        const rpm = document.getElementById('driverRPMInput');
-        if (rpm) rpm.addEventListener('input', () => {
-          gears.driverRPM = parseInt(rpm.value, 10);
-          document.getElementById('driverRPMChip').textContent = gears.driverRPM;
-        });
-      }
-
       // ============================================================
-      //  PROJECTILE LAB
+      //  PROJECTILE
       // ============================================================
       const proj = {
         angle: 45,
         speed: 30,
         gravity: 9.81,
         drag: 0,
+        wind: 0,
         trails: [],
-        running: false,
-        lastTime: 0,
+        animating: null,
+        dragStart: null,
+        dragEnd: null,
+        target: { x: 0.7, y: 0.15 },
       };
 
-      function initProj() {
-        proj.trails = [];
-        proj.running = false;
-        proj.lastTime = 0;
-      }
-
-      function simulateProjectile(angleDeg, speed, gravity, drag) {
+      function simulateProjectile(angle, speed, gravity, drag, wind) {
         const dt = 0.01;
-        const rad = (angleDeg * Math.PI) / 180;
+        const rad = (angle * Math.PI) / 180;
         let x = 0, y = 0;
         let vx = speed * Math.cos(rad);
         let vy = speed * Math.sin(rad);
-        const points = [{ x, y }];
+        const pts = [{ x, y }];
         let t = 0;
         while (y >= 0 && t < 30) {
           const v = Math.hypot(vx, vy);
-          const ax = -drag * v * vx;
+          const ax = -drag * v * vx + wind;
           const ay = -gravity - drag * v * vy;
           vx += ax * dt;
           vy += ay * dt;
           x += vx * dt;
           y += vy * dt;
           t += dt;
-          points.push({ x, y });
+          pts.push({ x, y });
         }
-        return points;
+        return pts;
       }
 
       function drawProjectile(t) {
-        const points = simulateProjectile(proj.angle, proj.speed, proj.gravity, proj.drag);
-        const maxX = Math.max(...points.map((p) => p.x), 1);
-        const maxY = Math.max(...points.map((p) => p.y), 1);
+        const padX = 60, padTop = 40, padBot = 60;
+        const groundY = H - padBot;
 
-        const padX = 60, padY = 40;
-        const groundY = H - padY;
-        const scale = Math.min((W - 2 * padX) / maxX, (groundY - padY) / maxY);
+        let maxX = 1, maxY = 1;
+        proj.trails.forEach((tr) => {
+          tr.points.forEach((p) => {
+            if (p.x > maxX) maxX = p.x;
+            if (p.y > maxY) maxY = p.y;
+          });
+        });
+        if (proj.animating) {
+          proj.animating.points.forEach((p) => {
+            if (p.x > maxX) maxX = p.x;
+            if (p.y > maxY) maxY = p.y;
+          });
+        }
 
-        // Ground
+        const scale = Math.min((W - 2 * padX) / maxX, (groundY - padTop) / maxY);
+
         ctx.fillStyle = '#5a8a4a';
         ctx.fillRect(0, groundY, W, H - groundY);
-
-        // Grid
-        ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-        ctx.lineWidth = 1;
-        const step = 5;
-        for (let x = 0; x <= maxX; x += step) {
-          const px = padX + x * scale;
-          ctx.beginPath();
-          ctx.moveTo(px, padY);
-          ctx.lineTo(px, groundY);
-          ctx.stroke();
-        }
-        for (let y = 0; y <= maxY; y += step) {
-          const py = groundY - y * scale;
-          ctx.beginPath();
-          ctx.moveTo(padX, py);
-          ctx.lineTo(W - padX, py);
-          ctx.stroke();
-        }
-
-        // Trajectory
-        ctx.strokeStyle = '#2c7aa0';
-        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#3a6a2a';
+        ctx.lineWidth = 2;
         ctx.beginPath();
-        points.forEach((p, i) => {
+        ctx.moveTo(0, groundY);
+        ctx.lineTo(W, groundY);
+        ctx.stroke();
+
+        const tx = padX + proj.target.x * (W - 2 * padX);
+        const ty = groundY - proj.target.y * (groundY - padTop);
+        ctx.strokeStyle = '#f5b342';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(tx, ty, 20, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(tx, ty, 10, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = '#f5b342';
+        ctx.beginPath();
+        ctx.arc(tx, ty, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        proj.trails.forEach((tr) => {
+          ctx.strokeStyle = tr.color;
+          ctx.lineWidth = 1.5;
+          ctx.globalAlpha = 0.4;
+          ctx.beginPath();
+          tr.points.forEach((p, i) => {
+            const px = padX + p.x * scale;
+            const py = groundY - p.y * scale;
+            if (i === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+          });
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+        });
+
+        if (proj.animating) {
+          const elapsed = (t - proj.animating.startTime) / 1000;
+          const idx = Math.min(Math.floor(elapsed * 100), proj.animating.points.length - 1);
+          const p = proj.animating.points[idx];
           const px = padX + p.x * scale;
           const py = groundY - p.y * scale;
-          if (i === 0) ctx.moveTo(px, py);
-          else ctx.lineTo(px, py);
-        });
-        ctx.stroke();
 
-        // Ground markers
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '11px system-ui';
-        ctx.textAlign = 'center';
-        ctx.fillText(Math.round(maxX) + ' m', padX + points[points.length - 1].x * scale, groundY + 18);
-        ctx.fillText('Range', padX + points[points.length - 1].x * scale, groundY + 32);
+          ctx.strokeStyle = proj.animating.color;
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          for (let i = 0; i <= idx; i++) {
+            const q = proj.animating.points[i];
+            const qx = padX + q.x * scale;
+            const qy = groundY - q.y * scale;
+            if (i === 0) ctx.moveTo(qx, qy);
+            else ctx.lineTo(qx, qy);
+          }
+          ctx.stroke();
 
-        // Launch arrow
-        const startPx = padX;
-        const startPy = groundY;
-        const arrowLen = 60;
-        const rad = (proj.angle * Math.PI) / 180;
-        const endX = startPx + Math.cos(rad) * arrowLen;
-        const endY = startPy - Math.sin(rad) * arrowLen;
-        ctx.strokeStyle = '#f5b342';
-        ctx.fillStyle = '#f5b342';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(startPx, startPy);
-        ctx.lineTo(endX, endY);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(endX, endY);
-        ctx.lineTo(endX - 10 * Math.cos(rad - 0.4), endY + 10 * Math.sin(rad - 0.4));
-        ctx.lineTo(endX - 10 * Math.cos(rad + 0.4), endY + 10 * Math.sin(rad + 0.4));
-        ctx.closePath();
-        ctx.fill();
+          ctx.fillStyle = proj.animating.color;
+          ctx.beginPath();
+          ctx.arc(px, py, 8, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 2;
+          ctx.stroke();
 
-        // Ball
-        const apex = Math.max(...points.map((p) => p.y));
-        const apexPoint = points.find((p) => p.y === apex);
-        ctx.fillStyle = '#c0392b';
-        ctx.beginPath();
-        ctx.arc(padX + apexPoint.x * scale, groundY - apexPoint.y * scale, 5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 11px system-ui';
-        ctx.textAlign = 'left';
-        ctx.fillText('apex ' + apex.toFixed(1) + ' m', padX + apexPoint.x * scale + 10, groundY - apexPoint.y * scale);
+          if (idx >= proj.animating.points.length - 1) {
+            proj.trails.push({
+              points: proj.animating.points,
+              color: proj.animating.color,
+            });
+            if (proj.trails.length > 3) proj.trails.shift();
+            proj.animating = null;
+          }
+        }
+
+        if (proj.dragStart && proj.dragEnd) {
+          const dx = proj.dragEnd.x - proj.dragStart.x;
+          const dy = proj.dragEnd.y - proj.dragStart.y;
+          const len = Math.hypot(dx, dy);
+          const angle = Math.atan2(-dy, dx) * 180 / Math.PI;
+          const speed = Math.min(80, len / 4);
+          ctx.strokeStyle = '#f5b342';
+          ctx.lineWidth = 3;
+          ctx.setLineDash([5, 5]);
+          ctx.beginPath();
+          ctx.moveTo(proj.dragStart.x, proj.dragStart.y);
+          ctx.lineTo(proj.dragEnd.x, proj.dragEnd.y);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = '#f5b342';
+          ctx.font = 'bold 14px system-ui';
+          ctx.textAlign = 'center';
+          ctx.fillText(angle.toFixed(0) + '° · ' + speed.toFixed(0) + ' m/s',
+            (proj.dragStart.x + proj.dragEnd.x) / 2,
+            (proj.dragStart.y + proj.dragEnd.y) / 2 - 15);
+        }
+
+        const lastTrail = proj.animating
+          ? proj.animating.points
+          : proj.trails[proj.trails.length - 1]?.points;
+        let range = 0, apex = 0;
+        if (lastTrail) {
+          range = lastTrail[lastTrail.length - 1].x;
+          apex = Math.max(...lastTrail.map((p) => p.y));
+        }
 
         updateFacts({
+          'Shots fired': proj.trails.length + (proj.animating ? 1 : 0),
           'Angle': proj.angle.toFixed(0) + '°',
           'Speed': proj.speed.toFixed(0) + ' m/s',
-          'Gravity': proj.gravity.toFixed(2) + ' m/s²',
-          'Range': maxX.toFixed(1) + ' m',
-          'Apex': apex.toFixed(1) + ' m',
-          'Flight time': (points.length * 0.01).toFixed(2) + ' s',
-        });
-      }
-
-      function projTools() {
-        return `
-          <h4><i class="fas fa-rocket"></i> Launch</h4>
-          <div class="slider-row">
-            <label>Angle <span class="value-chip" id="projAngleChip">${proj.angle.toFixed(0)}°</span></label>
-            <input type="range" id="projAngleInput" min="5" max="85" value="${proj.angle}" step="1">
-          </div>
-          <div class="slider-row">
-            <label>Speed <span class="value-chip" id="projSpeedChip">${proj.speed.toFixed(0)} m/s</span></label>
-            <input type="range" id="projSpeedInput" min="5" max="80" value="${proj.speed}" step="1">
-          </div>
-          <h4><i class="fas fa-globe"></i> Environment</h4>
-          <div class="tool-grid">
-            <button class="tool-btn ${Math.abs(proj.gravity - 9.81) < 0.01 ? 'is-active' : ''}" data-grav="9.81">
-              <i class="fas fa-globe"></i> Earth
-            </button>
-            <button class="tool-btn ${Math.abs(proj.gravity - 1.62) < 0.01 ? 'is-active' : ''}" data-grav="1.62">
-              <i class="fas fa-moon"></i> Moon
-            </button>
-          </div>
-          <div class="slider-row" style="margin-top:0.7rem;">
-            <label>Air drag <span class="value-chip" id="projDragChip">${proj.drag.toFixed(2)}</span></label>
-            <input type="range" id="projDragInput" min="0" max="0.1" value="${proj.drag}" step="0.005">
-          </div>
-        `;
-      }
-
-      function bindProjTools() {
-        const a = document.getElementById('projAngleInput');
-        if (a) a.addEventListener('input', () => {
-          proj.angle = parseFloat(a.value);
-          document.getElementById('projAngleChip').textContent = proj.angle.toFixed(0) + '°';
-        });
-        const s = document.getElementById('projSpeedInput');
-        if (s) s.addEventListener('input', () => {
-          proj.speed = parseFloat(s.value);
-          document.getElementById('projSpeedChip').textContent = proj.speed.toFixed(0) + ' m/s';
-        });
-        const d = document.getElementById('projDragInput');
-        if (d) d.addEventListener('input', () => {
-          proj.drag = parseFloat(d.value);
-          document.getElementById('projDragChip').textContent = proj.drag.toFixed(2);
-        });
-        toolPanel.querySelectorAll('[data-grav]').forEach((b) => {
-          b.addEventListener('click', () => {
-            proj.gravity = parseFloat(b.dataset.grav);
-            toolPanel.querySelectorAll('[data-grav]').forEach((x) => x.classList.toggle('is-active', x === b));
-          });
+          'Gravity': proj.gravity.toFixed(2),
+          'Wind': proj.wind.toFixed(1),
+          'Last range': range.toFixed(1) + ' m',
+          'Last apex': apex.toFixed(1) + ' m',
+          'Drag': proj.drag.toFixed(3),
         });
       }
 
@@ -1717,16 +1479,309 @@
         `).join('');
       }
 
-      function setInfoBanner(html) {
-        infoBanner.innerHTML = html;
-      }
-
+      function setInfoBanner(html) { infoBanner.innerHTML = html; }
       function setStageHint(hints) {
         stageHint.innerHTML = hints.map((h) => `<span class="hint">${h}</span>`).join('');
       }
-
-      function updateModePill(icon, label) {
+      function setModePill(icon, label) {
         modePill.innerHTML = `<i class="fas fa-${icon}"></i> ${label}`;
+      }
+
+      // ============================================================
+      //  Tool panels
+      // ============================================================
+      function trussTools() {
+        if (truss.mode === 'test') {
+          return `
+            <h4><i class="fas fa-truck"></i> Testing</h4>
+            <p style="font-size:0.82rem;color:#4a5c6b;margin:0 0 0.75rem 0;">
+              The ${TRUCKS[truss.selectedTruck].name} is crossing. Watch the members stretch and snap.
+            </p>
+            <div class="btn-row">
+              <button class="btn-small danger" id="trussStopTest">Stop test</button>
+            </div>
+            <div class="info-banner" style="margin-top:0.75rem;margin-bottom:0;">
+              <strong>Legend:</strong><br>
+              <span style="color:#ff4444;">■ Red</span> = tension<br>
+              <span style="color:#4444ff;">■ Blue</span> = compression
+            </div>
+          `;
+        }
+        return `
+          <h4><i class="fas fa-cube"></i> Material</h4>
+          <div class="material-row">
+            <button class="mat-btn ${truss.material === 'wood' ? 'is-active' : ''}" data-mat="wood">Wood</button>
+            <button class="mat-btn ${truss.material === 'steel' ? 'is-active' : ''}" data-mat="steel">Steel</button>
+            <button class="mat-btn ${truss.material === 'cable' ? 'is-active' : ''}" data-mat="cable">Cable</button>
+          </div>
+          <h4><i class="fas fa-car"></i> Vehicle to Test</h4>
+          <div class="tool-grid" style="grid-template-columns: 1fr 1fr; gap: 0.3rem;">
+            ${TRUCKS.map((t, i) => `
+              <button class="tool-btn ${truss.selectedTruck === i ? 'is-active' : ''}" data-truck="${i}" style="font-size:0.65rem; padding: 0.4rem 0.2rem;">
+                <i class="fas ${t.icon}"></i> ${t.name}
+              </button>
+            `).join('')}
+          </div>
+          <h4><i class="fas fa-tools"></i> Actions</h4>
+          <div class="btn-row">
+            <button class="btn-small primary" id="trussTestBtn"><i class="fas fa-play"></i> Test Bridge</button>
+            <button class="btn-small" id="trussLoadBtn">Load Default</button>
+            <button class="btn-small danger" id="trussClearBtn">Clear All</button>
+          </div>
+          <div class="info-banner" style="margin-top:0.75rem;margin-bottom:0;">
+            <strong>Build:</strong><br>
+            • Drag from a joint to another → add member<br>
+            • Click empty grid → add joint<br>
+            • Right-click member → delete<br>
+            • Double-click joint → toggle support
+          </div>
+        `;
+      }
+
+      function bindTrussTools() {
+        if (truss.mode === 'test') {
+          document.getElementById('trussStopTest')?.addEventListener('click', endTrussTest);
+          return;
+        }
+        toolPanel.querySelectorAll('[data-mat]').forEach((b) => {
+          b.addEventListener('click', () => {
+            truss.material = b.dataset.mat;
+            toolPanel.querySelectorAll('[data-mat]').forEach((x) => x.classList.toggle('is-active', x === b));
+          });
+        });
+        toolPanel.querySelectorAll('[data-truck]').forEach((b) => {
+          b.addEventListener('click', () => {
+            truss.selectedTruck = parseInt(b.dataset.truck, 10);
+            toolPanel.innerHTML = trussTools();
+            bindTrussTools();
+          });
+        });
+        document.getElementById('trussTestBtn')?.addEventListener('click', startTrussTest);
+        document.getElementById('trussLoadBtn')?.addEventListener('click', () => {
+          initTruss();
+          toolPanel.innerHTML = trussTools();
+          bindTrussTools();
+        });
+        document.getElementById('trussClearBtn')?.addEventListener('click', () => {
+          clearTruss();
+        });
+      }
+
+      function beamTools() {
+        return `
+          <h4><i class="fas fa-anchor"></i> Support</h4>
+          <div class="tool-grid">
+            <button class="tool-btn ${beam.supportType === 'simple' ? 'is-active' : ''}" data-support="simple">
+              <i class="fas fa-grip-lines"></i> Simple
+            </button>
+            <button class="tool-btn ${beam.supportType === 'cantilever' ? 'is-active' : ''}" data-support="cantilever">
+              <i class="fas fa-square"></i> Cantilever
+            </button>
+          </div>
+          <h4><i class="fas fa-ruler-horizontal"></i> Span</h4>
+          <div class="slider-row">
+            <label>Length <span class="value-chip" id="bLenChip">${beam.length.toFixed(1)} m</span></label>
+            <input type="range" id="bLenInput" min="3" max="15" value="${beam.length}" step="0.5">
+          </div>
+          <h4><i class="fas fa-tools"></i> Actions</h4>
+          <div class="btn-row">
+            <button class="btn-small" id="beamAddLoad">+ Add load</button>
+            <button class="btn-small danger" id="beamClear">Clear all loads</button>
+          </div>
+          <div class="info-banner" style="margin-top:0.75rem;margin-bottom:0;">
+            <strong>Interactions:</strong><br>
+            • Click beam → add load<br>
+            • Drag load → move it<br>
+            • Right-click load → remove
+          </div>
+        `;
+      }
+
+      function bindBeamTools() {
+        toolPanel.querySelectorAll('[data-support]').forEach((b) => {
+          b.addEventListener('click', () => {
+            beam.supportType = b.dataset.support;
+            toolPanel.querySelectorAll('[data-support]').forEach((x) => x.classList.toggle('is-active', x === b));
+          });
+        });
+        const li = document.getElementById('bLenInput');
+        if (li) li.addEventListener('input', () => {
+          beam.length = parseFloat(li.value);
+          document.getElementById('bLenChip').textContent = beam.length.toFixed(1) + ' m';
+        });
+        document.getElementById('beamAddLoad')?.addEventListener('click', () => {
+          beam.loads.push({ pos: 0.5, mag: 10 });
+        });
+        document.getElementById('beamClear')?.addEventListener('click', () => {
+          beam.loads = [];
+        });
+      }
+
+      function circuitTools() {
+        return `
+          <h4><i class="fas fa-sliders-h"></i> Selected component</h4>
+          <div id="circuitControls">
+            ${renderCircuitControls()}
+          </div>
+          <h4><i class="fas fa-tools"></i> Actions</h4>
+          <div class="btn-row">
+            <button class="btn-small" id="circuitReset">Reset circuit</button>
+          </div>
+          <div class="info-banner" style="margin-top:0.75rem;margin-bottom:0;">
+            <strong>Interactions:</strong><br>
+            • Click a component to select it<br>
+            • Click another to wire them together<br>
+            • Click selected component again to cycle type
+          </div>
+        `;
+      }
+
+      function renderCircuitControls() {
+        const i = circuit.selectedSlot;
+        if (i === null || !circuit.slots[i]) {
+          return '<p style="font-size:0.78rem;color:#6f8da3;margin:0;">Select a component to adjust it.</p>';
+        }
+        const s = circuit.slots[i];
+        let html = `<p style="font-size:0.78rem;font-weight:700;color:#1b4a6b;margin:0 0 0.5rem 0;">Slot ${i}: ${s.type}</p>`;
+        if (s.type === 'battery') {
+          html += `<div class="slider-row">
+            <label>Voltage <span class="value-chip" id="circVal">${s.value} V</span></label>
+            <input type="range" id="circValueInput" min="1" max="24" value="${s.value}" step="1">
+          </div>`;
+        } else if (s.type === 'resistor') {
+          html += `<div class="slider-row">
+            <label>Resistance <span class="value-chip" id="circVal">${s.value} Ω</span></label>
+            <input type="range" id="circValueInput" min="10" max="1000" value="${s.value}" step="10">
+          </div>`;
+        } else if (s.type === 'switch') {
+          html += `<p style="font-size:0.78rem;color:#4a5c6b;margin:0;">Click on the switch in the canvas to toggle it.</p>`;
+        } else {
+          html += `<p style="font-size:0.78rem;color:#4a5c6b;margin:0;">No adjustable value.</p>`;
+        }
+        return html;
+      }
+
+      function bindCircuitTools() {
+        const i = circuit.selectedSlot;
+        const inp = document.getElementById('circValueInput');
+        if (inp && i !== null) {
+          inp.addEventListener('input', () => {
+            circuit.slots[i].value = parseFloat(inp.value);
+            document.getElementById('circVal').textContent =
+              circuit.slots[i].value + (circuit.slots[i].type === 'battery' ? ' V' : ' Ω');
+          });
+        }
+        document.getElementById('circuitReset')?.addEventListener('click', () => {
+          circuit.slots = [
+            { type: 'battery', value: 9 },
+            { type: 'resistor', value: 100 },
+            { type: 'led', value: 0 },
+            { type: 'switch', value: 1 },
+          ];
+          circuit.wires = [[0,1],[1,2],[2,3],[3,0]];
+          circuit.selectedSlot = null;
+          toolPanel.innerHTML = circuitTools();
+          bindCircuitTools();
+        });
+      }
+
+      function gearsTools() {
+        return `
+          <h4><i class="fas fa-cog"></i> Driver</h4>
+          <div class="slider-row">
+            <label>Driver RPM <span class="value-chip" id="driverRPMVal">${gearState.driverRPM}</span></label>
+            <input type="range" id="driverRPMInput" min="1" max="200" value="${gearState.driverRPM}" step="1">
+          </div>
+          <h4><i class="fas fa-tools"></i> Actions</h4>
+          <div class="btn-row">
+            <button class="btn-small" id="gearAdd">+ Add gear</button>
+            <button class="btn-small danger" id="gearClear">Remove extra gears</button>
+          </div>
+          <div class="info-banner" style="margin-top:0.75rem;margin-bottom:0;">
+            <strong>Interactions:</strong><br>
+            • Click empty space → add gear<br>
+            • Drag gear → move it<br>
+            • Hover gear → + / − buttons<br>
+            • Meshed gears auto-link
+          </div>
+        `;
+      }
+
+      function bindGearsTools() {
+        const dr = document.getElementById('driverRPMInput');
+        if (dr) dr.addEventListener('input', () => {
+          gearState.driverRPM = parseInt(dr.value, 10);
+          document.getElementById('driverRPMVal').textContent = gearState.driverRPM;
+        });
+        document.getElementById('gearAdd')?.addEventListener('click', () => {
+          gearState.gears.push({
+            x: 500 + Math.random() * 100,
+            y: 200 + Math.random() * 200,
+            teeth: 20,
+            angle: 0,
+            color: '#8db3d0',
+            driver: false,
+          });
+        });
+        document.getElementById('gearClear')?.addEventListener('click', () => {
+          gearState.gears = [gearState.gears[0], gearState.gears[1]];
+        });
+      }
+
+      function projectileTools() {
+        return `
+          <h4><i class="fas fa-globe"></i> Gravity</h4>
+          <div class="tool-grid">
+            <button class="tool-btn ${Math.abs(proj.gravity - 9.81) < 0.01 ? 'is-active' : ''}" data-grav="9.81">
+              <i class="fas fa-globe"></i> Earth
+            </button>
+            <button class="tool-btn ${Math.abs(proj.gravity - 1.62) < 0.01 ? 'is-active' : ''}" data-grav="1.62">
+              <i class="fas fa-moon"></i> Moon
+            </button>
+          </div>
+          <h4><i class="fas fa-wind"></i> Environment</h4>
+          <div class="slider-row">
+            <label>Wind <span class="value-chip" id="windChip">${proj.wind.toFixed(1)}</span></label>
+            <input type="range" id="windInput" min="-5" max="5" value="${proj.wind}" step="0.5">
+          </div>
+          <div class="slider-row">
+            <label>Air drag <span class="value-chip" id="dragChip">${proj.drag.toFixed(3)}</span></label>
+            <input type="range" id="dragInput" min="0" max="0.1" value="${proj.drag}" step="0.005">
+          </div>
+          <h4><i class="fas fa-tools"></i> Actions</h4>
+          <div class="btn-row">
+            <button class="btn-small danger" id="projClear">Clear trails</button>
+          </div>
+          <div class="info-banner" style="margin-top:0.75rem;margin-bottom:0;">
+            <strong>Interactions:</strong><br>
+            • Click-drag from cannon → aim and launch<br>
+            • Drag target ring → move goal<br>
+            • Last 3 shots stay on screen
+          </div>
+        `;
+      }
+
+      function bindProjectileTools() {
+        const wi = document.getElementById('windInput');
+        if (wi) wi.addEventListener('input', () => {
+          proj.wind = parseFloat(wi.value);
+          document.getElementById('windChip').textContent = proj.wind.toFixed(1);
+        });
+        const di = document.getElementById('dragInput');
+        if (di) di.addEventListener('input', () => {
+          proj.drag = parseFloat(di.value);
+          document.getElementById('dragChip').textContent = proj.drag.toFixed(3);
+        });
+        toolPanel.querySelectorAll('[data-grav]').forEach((b) => {
+          b.addEventListener('click', () => {
+            proj.gravity = parseFloat(b.dataset.grav);
+            toolPanel.querySelectorAll('[data-grav]').forEach((x) => x.classList.toggle('is-active', x === b));
+          });
+        });
+        document.getElementById('projClear')?.addEventListener('click', () => {
+          proj.trails = [];
+          proj.animating = null;
+        });
       }
 
       // ============================================================
@@ -1737,64 +1792,63 @@
         discBar.querySelectorAll('.disc-btn').forEach((b) => {
           b.classList.toggle('is-active', b.dataset.disc === disc);
         });
+        state.hover = null;
+        state.drag = null;
 
-        // Reset per-discipline state
         if (disc === 'truss') {
           if (truss.nodes.length === 0) initTruss();
-          trussMode = 'trussAdd';
-          pendingMemberStart = null;
-          updateModePill('project-diagram', 'Truss');
+          setModePill('project-diagram', 'Truss');
           setStageHint([
-            '<i class="fas fa-mouse"></i> Click empty = add joint',
-            '<i class="fas fa-mouse"></i> Click joint, then joint = add member',
-            '<i class="fas fa-mouse"></i> Right-click member = delete',
+            '<i class="fas fa-mouse"></i> Drag between joints → add member',
+            '<i class="fas fa-mouse"></i> Click empty → add joint',
+            '<i class="fas fa-play"></i> Test bridge → vehicle drives across',
           ]);
-          setInfoBanner('<strong>Truss:</strong> members carry only axial force. Colors show stress — green is safe, red means the member has failed under the current load.');
+          setInfoBanner('<strong>Build a bridge:</strong> drag from a joint to another to add a member. Test it with different vehicles.');
           toolPanel.innerHTML = trussTools();
           bindTrussTools();
         } else if (disc === 'beam') {
-          updateModePill('minus', 'Beam');
+          setModePill('minus', 'Beam');
           setStageHint([
-            '<i class="fas fa-sliders-h"></i> Adjust load in side panel',
-            '<i class="fas fa-eye"></i> Watch shear &amp; moment diagrams',
+            '<i class="fas fa-mouse"></i> Click beam → add load',
+            '<i class="fas fa-mouse"></i> Drag load → move',
+            '<i class="fas fa-mouse"></i> Right-click → remove',
           ]);
-          setInfoBanner('<strong>Beam:</strong> the shear diagram shows internal force, the moment diagram shows internal bending moment. Beams fail where the moment peaks.');
+          setInfoBanner('<strong>Multiple loads:</strong> click to add more. The shear and moment diagrams recalculate instantly.');
           toolPanel.innerHTML = beamTools();
           bindBeamTools();
         } else if (disc === 'circuit') {
-          if (circuit.components.length === 0) initCircuit();
-          updateModePill('bolt', 'Circuit');
+          setModePill('bolt', 'Circuit');
           setStageHint([
-            '<i class="fas fa-sliders-h"></i> Adjust voltage &amp; resistance',
-            '<i class="fas fa-lightbulb"></i> Watch LED light up',
+            '<i class="fas fa-mouse"></i> Click a component to select',
+            '<i class="fas fa-mouse"></i> Click two to wire them',
           ]);
-          setInfoBanner('<strong>Circuit:</strong> a simple series loop. Voltage from the battery pushes current through the resistor. Higher resistance = lower current = dimmer LED.');
+          setInfoBanner('<strong>Sandbox circuit:</strong> click a component to select it, then another to connect them.');
           toolPanel.innerHTML = circuitTools();
           bindCircuitTools();
         } else if (disc === 'gears') {
-          updateModePill('cog', 'Gears');
+          setModePill('cog', 'Gears');
           setStageHint([
-            '<i class="fas fa-sliders-h"></i> Adjust teeth &amp; RPM',
-            '<i class="fas fa-sync"></i> Gears spin continuously',
+            '<i class="fas fa-mouse"></i> Click empty space → add gear',
+            '<i class="fas fa-mouse"></i> Drag gear → move',
+            '<i class="fas fa-mouse"></i> Hover gear → +/− buttons',
           ]);
-          setInfoBanner('<strong>Gears:</strong> teeth count determines the ratio. A 12-tooth driver and 36-tooth driven gear gives a 3:1 ratio — the driven gear spins 3× slower but with 3× the torque.');
+          setInfoBanner('<strong>Gear train:</strong> click the canvas to add gears. Meshing gears auto-link.');
           toolPanel.innerHTML = gearsTools();
           bindGearsTools();
         } else if (disc === 'projectile') {
-          if (proj.trails.length === 0) initProj();
-          updateModePill('rocket', 'Projectile');
+          setModePill('rocket', 'Projectile');
           setStageHint([
-            '<i class="fas fa-sliders-h"></i> Set angle &amp; speed',
-            '<i class="fas fa-moon"></i> Try Moon gravity',
+            '<i class="fas fa-mouse"></i> Click-drag from cannon → launch',
+            '<i class="fas fa-mouse"></i> Drag target → move goal',
           ]);
-          setInfoBanner('<strong>Projectile:</strong> without drag, the trajectory is a perfect parabola. Turn on air drag and watch the arc become asymmetric — the ball falls faster than it rises.');
-          toolPanel.innerHTML = projTools();
-          bindProjTools();
+          setInfoBanner('<strong>Animated launches:</strong> drag from the cannon to aim, release to fire. Last 3 shots stay on screen.');
+          toolPanel.innerHTML = projectileTools();
+          bindProjectileTools();
         }
       }
 
       // ============================================================
-      //  Canvas events
+      //  Canvas interactions
       // ============================================================
       function canvasCoords(e) {
         const rect = canvas.getBoundingClientRect();
@@ -1805,87 +1859,351 @@
         };
       }
 
-      let mouseDown = false;
+      function pointToSegment(px, py, x1, y1, x2, y2) {
+        const dx = x2 - x1, dy = y2 - y1;
+        const l2 = dx * dx + dy * dy;
+        if (l2 === 0) return Math.hypot(px - x1, py - y1);
+        let t = ((px - x1) * dx + (py - y1) * dy) / l2;
+        t = Math.max(0, Math.min(1, t));
+        return Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy));
+      }
 
+      // Mouse down
       canvas.addEventListener('mousedown', (e) => {
-        if (state.disc === 'truss' && e.button === 0) {
-          const { x, y } = canvasCoords(e);
-          trussClick(x, y);
-        }
-        mouseDown = true;
-      });
+        const { x, y } = canvasCoords(e);
+        state.mouse.down = true;
+        state.mouse.button = e.button;
 
-      canvas.addEventListener('contextmenu', (e) => {
-        e.preventDefault();
         if (state.disc === 'truss') {
-          const { x, y } = canvasCoords(e);
-          trussRightClick(x, y);
+          if (truss.mode === 'test') return;
+          if (e.button === 0) {
+            const nodeIdx = trussHitNode(x, y);
+            if (nodeIdx !== -1) {
+              truss.dragFrom = nodeIdx;
+              truss.dragPos = { x, y };
+            } else {
+              const gx = Math.round(x / truss.GRID) * truss.GRID;
+              const gyy = Math.round(y / truss.GRID) * truss.GRID;
+              truss.nodes.push({ x: gx, y: gyy, oldX: gx, oldY: gyy, fixed: false });
+            }
+          } else if (e.button === 2) {
+            const memIdx = trussHitMember(x, y);
+            if (memIdx !== -1) truss.members.splice(memIdx, 1);
+          }
+        } else if (state.disc === 'beam') {
+          if (e.button === 0) {
+            const padX = 100;
+            const beamLen = W - 2 * padX;
+            const loadIdx = beamHitLoad(x, y);
+            if (loadIdx !== -1) {
+              beam.dragLoad = loadIdx;
+            } else {
+              const frac = Math.max(0.05, Math.min(0.95, (x - padX) / beamLen));
+              beam.loads.push({ pos: frac, mag: 10 });
+            }
+          } else if (e.button === 2) {
+            const loadIdx = beamHitLoad(x, y);
+            if (loadIdx !== -1) beam.loads.splice(loadIdx, 1);
+          }
+        } else if (state.disc === 'circuit') {
+          if (e.button === 0) {
+            const slotIdx = circuitHitSlot(x, y);
+            if (slotIdx !== -1) {
+              if (circuit.selectedSlot === slotIdx) {
+                const s = circuit.slots[slotIdx];
+                if (s.type === 'switch') s.value = s.value ? 0 : 1;
+                circuit.selectedSlot = null;
+              } else if (circuit.selectedSlot !== null) {
+                const a = circuit.selectedSlot;
+                const b = slotIdx;
+                const exists = circuit.wires.some(([p, q]) =>
+                  (p === a && q === b) || (p === b && q === a));
+                if (!exists) circuit.wires.push([a, b]);
+                circuit.selectedSlot = null;
+              } else {
+                circuit.selectedSlot = slotIdx;
+              }
+              toolPanel.innerHTML = circuitTools();
+              bindCircuitTools();
+            }
+          }
+        } else if (state.disc === 'gears') {
+          if (e.button === 0) {
+            const hit = gearHit(x, y);
+            if (hit !== -1) {
+              gearState.dragGear = hit;
+            } else {
+              if (gearState.hoverGear) {
+                const g = gearState.hoverGear;
+                const topY = g.y - gearRadius(g.teeth) - 30;
+                const botY = g.y + gearRadius(g.teeth) + 30;
+                if (Math.hypot(x - g.x, y - topY) < 15) {
+                  g.teeth = Math.min(48, g.teeth + 4);
+                } else if (Math.hypot(x - g.x, y - botY) < 15) {
+                  g.teeth = Math.max(8, g.teeth - 4);
+                } else {
+                  gearState.gears.push({
+                    x, y, teeth: 20, angle: 0,
+                    color: '#8db3d0', driver: false,
+                  });
+                }
+              } else {
+                gearState.gears.push({
+                  x, y, teeth: 20, angle: 0,
+                  color: '#8db3d0', driver: false,
+                });
+              }
+            }
+          }
+        } else if (state.disc === 'projectile') {
+          if (e.button === 0) {
+            proj.dragStart = { x, y };
+            proj.dragEnd = { x, y };
+          }
         }
       });
 
+      // Mouse move
       canvas.addEventListener('mousemove', (e) => {
         const { x, y } = canvasCoords(e);
-        state.mouse = { x, y, in: true };
+        state.mouse = { ...state.mouse, x, y, in: true };
 
         if (state.disc === 'truss') {
-          const rect = canvas.getBoundingClientRect();
           cursorReadout.textContent = `(${Math.round(x)}, ${Math.round(y)})`;
-        } else if (state.disc === 'beam') {
-          // Update load position by dragging
-          if (mouseDown) {
-            const padX = 80;
-            const beamLengthPx = W - 2 * padX;
-            const frac = Math.max(0.05, Math.min(0.95, (x - padX) / beamLengthPx));
-            beam.loadPos = frac;
-            const posInput = document.getElementById('beamPosInput');
-            const posChip = document.getElementById('beamPosChip');
-            if (posInput) posInput.value = frac;
-            if (posChip) posChip.textContent = (frac * 100).toFixed(0) + '%';
+          truss.hoverMember = trussHitMember(x, y);
+          truss.hoverNode = trussHitNode(x, y);
+          if (truss.dragFrom !== null) {
+            truss.dragPos = { x, y };
           }
-          cursorReadout.textContent = `Position ${((x - 80) / (W - 160) * 100).toFixed(0)}%`;
-        } else {
-          cursorReadout.textContent = `(${Math.round(x)}, ${Math.round(y)})`;
+        } else if (state.disc === 'beam') {
+          if (beam.dragLoad !== null && state.mouse.down) {
+            const padX = 100;
+            const beamLen = W - 2 * padX;
+            const frac = Math.max(0.05, Math.min(0.95, (x - padX) / beamLen));
+            beam.loads[beam.dragLoad].pos = frac;
+          }
+          beam.hoverLoad = beamHitLoad(x, y);
+        } else if (state.disc === 'gears') {
+          if (gearState.dragGear !== null && state.mouse.down) {
+            const g = gearState.gears[gearState.dragGear];
+            g.x = x;
+            g.y = y;
+          }
+          const hitIdx = gearHit(x, y);
+          gearState.hoverGear = hitIdx !== -1 ? gearState.gears[hitIdx] : null;
+        } else if (state.disc === 'projectile') {
+          if (proj.dragStart && state.mouse.down) {
+            proj.dragEnd = { x, y };
+          }
         }
       });
 
-      canvas.addEventListener('mouseup', () => { mouseDown = false; });
-      canvas.addEventListener('mouseleave', () => {
-        mouseDown = false;
-        state.mouse.in = false;
+      // Mouse up
+      canvas.addEventListener('mouseup', (e) => {
+        const { x, y } = canvasCoords(e);
+        state.mouse.down = false;
+
+        if (state.disc === 'truss') {
+          if (truss.dragFrom !== null) {
+            const targetIdx = trussHitNode(x, y, 25);
+            if (targetIdx !== -1 && targetIdx !== truss.dragFrom) {
+              const exists = truss.members.some((m) =>
+                (m.a === truss.dragFrom && m.b === targetIdx) ||
+                (m.a === targetIdx && m.b === truss.dragFrom));
+              if (!exists) {
+                truss.members.push({ a: truss.dragFrom, b: targetIdx, mat: truss.material });
+              }
+            }
+            truss.dragFrom = null;
+            truss.dragPos = null;
+          }
+        } else if (state.disc === 'beam') {
+          beam.dragLoad = null;
+        } else if (state.disc === 'gears') {
+          gearState.dragGear = null;
+        } else if (state.disc === 'projectile') {
+          if (proj.dragStart && proj.dragEnd) {
+            const dx = proj.dragEnd.x - proj.dragStart.x;
+            const dy = proj.dragEnd.y - proj.dragStart.y;
+            const len = Math.hypot(dx, dy);
+            if (len > 20) {
+              proj.angle = Math.atan2(-dy, dx) * 180 / Math.PI;
+              proj.speed = Math.min(80, Math.max(5, len / 4));
+              const pts = simulateProjectile(proj.angle, proj.speed, proj.gravity, proj.drag, proj.wind);
+              const colors = ['#2c7aa0', '#c76b3b', '#5a8a4a', '#8a5ac7', '#f5b342'];
+              proj.animating = {
+                points: pts,
+                startTime: performance.now(),
+                color: colors[proj.trails.length % colors.length],
+              };
+            }
+            proj.dragStart = null;
+            proj.dragEnd = null;
+          }
+        }
       });
+
+      // Double-click
+      canvas.addEventListener('dblclick', (e) => {
+        if (state.disc !== 'truss') return;
+        if (truss.mode === 'test') return;
+        const { x, y } = canvasCoords(e);
+        const idx = trussHitNode(x, y);
+        if (idx !== -1) {
+          const sIdx = truss.supports.indexOf(idx);
+          if (sIdx !== -1) {
+            truss.supports.splice(sIdx, 1);
+          } else if (truss.supports.length < 2) {
+            truss.supports.push(idx);
+          }
+        }
+      });
+
+      // Right-click
+      canvas.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        if (state.disc !== 'truss' && state.disc !== 'beam') return;
+        const { x, y } = canvasCoords(e);
+
+        if (state.disc === 'truss') {
+          if (truss.mode === 'test') return;
+          const memIdx = trussHitMember(x, y);
+          if (memIdx !== -1) { truss.members.splice(memIdx, 1); return; }
+          const nodeIdx = trussHitNode(x, y);
+          if (nodeIdx !== -1) {
+            if (truss.nodes[nodeIdx].fixed) return;
+            truss.members = truss.members.filter((m) => m.a !== nodeIdx && m.b !== nodeIdx);
+            const sIdx = truss.supports.indexOf(nodeIdx);
+            if (sIdx !== -1) truss.supports.splice(sIdx, 1);
+            truss.nodes.splice(nodeIdx, 1);
+            truss.members = truss.members.map((m) => ({
+              ...m,
+              a: m.a > nodeIdx ? m.a - 1 : m.a,
+              b: m.b > nodeIdx ? m.b - 1 : m.b,
+            }));
+            truss.supports = truss.supports.map((s) => s > nodeIdx ? s - 1 : s);
+          }
+        } else if (state.disc === 'beam') {
+          const loadIdx = beamHitLoad(x, y);
+          if (loadIdx !== -1) beam.loads.splice(loadIdx, 1);
+        }
+      });
+
+      // Mouse leave
+      canvas.addEventListener('mouseleave', () => {
+        state.mouse.in = false;
+        state.mouse.down = false;
+        truss.dragFrom = null;
+        truss.dragPos = null;
+        beam.dragLoad = null;
+        gearState.dragGear = null;
+        if (proj.dragStart) {
+          proj.dragStart = null;
+          proj.dragEnd = null;
+        }
+      });
+
+      // Hit tests
+      function beamHitLoad(x, y) {
+        const padX = 100;
+        const beamLen = W - 2 * padX;
+        const beamY = H / 2 - 40;
+        let best = -1, bd = 30;
+        beam.loads.forEach((l, i) => {
+          const lx = padX + l.pos * beamLen;
+          const ly = beamY - 30;
+          const d = Math.hypot(lx - x, ly - y);
+          if (d < bd) { bd = d; best = i; }
+        });
+        return best;
+      }
+
+      function circuitHitSlot(x, y) {
+        const cx = W / 2, cy = H / 2;
+        const slotRadius = 130;
+        let best = -1, bd = 40;
+        circuit.slots.forEach((slot, i) => {
+          const ang = (i / circuit.slots.length) * Math.PI * 2 - Math.PI / 2;
+          const sx = cx + Math.cos(ang) * slotRadius;
+          const sy = cy + Math.sin(ang) * slotRadius;
+          const d = Math.hypot(sx - x, sy - y);
+          if (d < bd) { bd = d; best = i; }
+        });
+        return best;
+      }
+
+      function gearHit(x, y) {
+        let best = -1, bd = 0;
+        gearState.gears.forEach((g, i) => {
+          const r = gearRadius(g.teeth);
+          const d = Math.hypot(g.x - x, g.y - y);
+          if (d < r && d > bd) { bd = d; best = i; }
+        });
+        return best;
+      }
 
       // ============================================================
       //  Main loop
       // ============================================================
       function draw(t) {
         resize();
+        
+        // Background clear
         ctx.fillStyle = '#0b2b3f';
         ctx.fillRect(0, 0, W, H);
 
-        if (state.disc === 'truss') drawTruss();
-        else if (state.disc === 'beam') drawBeam();
-        else if (state.disc === 'circuit') drawCircuit();
+        // Update Truss Physics
+        if (state.disc === 'truss') {
+          if (truss.mode === 'test' && truss.truck) {
+            if (truss.truck.alive) {
+              const elapsed = (performance.now() - truss.truck.startTime) / 1000;
+              // Poly Bridge driving speed
+              truss.truck.x = -TRUCKS[truss.selectedTruck].w + elapsed * 140;
+              
+              if (truss.truck.x > 120 && truss.truck.x < W - 120) {
+                truss.truck.y = getTruckY(truss.truck.x) - 2;
+              } else {
+                truss.truck.y = getDeckY() - 2;
+              }
+
+              if (truss.truck.x > W + 100) {
+                truss.truck.alive = false;
+                setTimeout(() => {
+                  if (truss.mode === 'test') {
+                    setInfoBanner('<strong>Success!</strong> The vehicle crossed!');
+                    endTrussTest();
+                  }
+                }, 500);
+              }
+            } else if (truss.truck.fallStart) {
+              const fallElapsed = (performance.now() - truss.truck.fallStart) / 1000;
+              truss.truck.y = (truss.truck.y || 415) + fallElapsed * fallElapsed * 200;
+              if (truss.truck.y > H + 50 && truss.truck.x < W) {
+                setInfoBanner('<strong>Bridge failed!</strong> The structure collapsed under the weight.');
+              }
+            }
+          }
+
+          if (truss.mode === 'test') {
+            simulateTruss();
+          }
+          drawTruss(t);
+        } 
+        else if (state.disc === 'beam') drawBeam(t);
+        else if (state.disc === 'circuit') drawCircuit(t);
         else if (state.disc === 'gears') drawGears(t);
         else if (state.disc === 'projectile') drawProjectile(t);
 
         requestAnimationFrame(draw);
       }
 
-      // ============================================================
-      //  Init
-      // ============================================================
+      // Init
       discBar.querySelectorAll('.disc-btn').forEach((b) => {
         b.addEventListener('click', () => switchDiscipline(b.dataset.disc));
       });
 
       initTruss();
-      initCircuit();
       switchDiscipline('truss');
-
-      window.addEventListener('resize', () => {
-        // Just trigger resize on next frame
-      });
-
       requestAnimationFrame(draw);
     })();
   </script>

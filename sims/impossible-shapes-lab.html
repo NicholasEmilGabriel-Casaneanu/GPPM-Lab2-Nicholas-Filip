@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Impossible Shapes Lab — All-Science Sims</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="sim-theme.css">
+  <style>
+    body {
+      background-color: #121212;
+      margin: 0;
+      overflow: hidden;
+    }
+    .sim-page {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      max-width: none;
+    }
+    
+    /* Top Left Back Button */
+    .sim-back {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 20;
+      background: rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,255,255,0.2);
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      color: white;
+      text-decoration: none;
+      font-size: 0.8rem;
+      font-weight: 600;
+      backdrop-filter: blur(4px);
+      transition: all 0.2s;
+    }
+    .sim-back:hover {
+      background: rgba(255,255,255,0.1);
+    }
+    .sim-back i { margin-right: 0.5rem; }
+
+    /* Top Center Shape Switcher */
+    .shape-switcher {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      display: flex;
+      gap: 0.5rem;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 0.5rem;
+      border-radius: 30px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      pointer-events: auto;
+    }
+    .shape-btn {
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.6);
+      padding: 0.6rem 1rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .shape-btn:hover {
+      color: white;
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .shape-btn.is-active {
+      background: white;
+      color: #121212;
+    }
+
+    /* Canvas Area */
+    .stage-wrap {
+      flex: 1;
+      position: relative;
+      cursor: grab;
+      user-select: none;
+      background: radial-gradient(circle at center, #2a3b4c 0%, #0f171e 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .stage-wrap.is-rotating { cursor: grabbing; }
+    .stage-wrap canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    /* Bottom Hint */
+    .stage-hint {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 1rem;
+      pointer-events: none;
+      opacity: 0.6;
+      transition: opacity 0.3s;
+    }
+    .stage-wrap:hover .stage-hint { opacity: 1; }
+    .stage-hint .hint {
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .stage-hint .hint i { color: #f5b342; }
+
+    @media (max-width: 768px) {
+      .shape-switcher {
+        top: 70px;
+        flex-wrap: wrap;
+        justify-content: center;
+        width: 90%;
+      }
+      .shape-btn {
+        font-size: 0.7rem;
+        padding: 0.4rem 0.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="sim-page">
+    <a class="sim-back" href="../index.html"><i class="fas fa-arrow-left"></i> Back</a>
+
+    <div class="shape-switcher" id="shapeSwitcher">
+      <button class="shape-btn is-active" data-shape="penrose">Penrose Triangle</button>
+      <button class="shape-btn" data-shape="trident">Impossible Trident</button>
+      <button class="shape-btn" data-shape="necker">Necker Cube</button>
+      <button class="shape-btn" data-shape="kanizsa">Kanizsa Triangle</button>
+      <button class="shape-btn" data-shape="zollner">Zöllner Illusion</button>
+      <button class="shape-btn" data-shape="muller">Müller-Lyer</button>
+    </div>
+
+    <div class="stage-wrap" id="stage">
+      <canvas id="canvas"></canvas>
+
+      <div class="stage-hint">
+        <span class="hint"><i class="fas fa-mouse"></i> Drag to rotate</span>
+        <span class="hint"><i class="fas fa-mouse"></i> Scroll to zoom</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      const stage = document.getElementById('stage');
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const shapeSwitcher = document.getElementById('shapeSwitcher');
+
+      // ============================================================
+      //  State
+      // ============================================================
+      const state = {
+        shapeName: 'penrose',
+        rotX: -0.5,
+        rotY: 0.6,
+        zoom: 0.7, // Much lower default zoom to fit the screen
+      };
+
+      // ============================================================
+      //  Lighting & Materials
+      // ============================================================
+      const lightDir = normalize([0.5, 0.8, 1]); 
+      const ambient = 0.35; 
+
+      const MATS = {
+        penrose: { base: [160, 82, 45], highlight: [210, 140, 90], shadow: [80, 30, 10] }, // Wood
+        trident: { base: [120, 130, 140], highlight: [200, 210, 220], shadow: [50, 60, 70] }, // Metal
+        necker:  { base: [40, 40, 40],   highlight: [80, 80, 80],   shadow: [10, 10, 10] },   // Dark Wire
+        kanizsa: { base: [255, 255, 255], highlight: [255, 255, 255], shadow: [150, 150, 150] }, // White Plastic
+        zollner: { base: [200, 50, 50],  highlight: [255, 100, 100], shadow: [100, 10, 10] },   // Red
+        muller:  { base: [50, 150, 200], highlight: [100, 200, 255], shadow: [20, 80, 120] },   // Blue
+      };
+
+      // ============================================================
+      //  Shapes
+      // ============================================================
+      const SHAPES = {
+        penrose: makePenroseTriangle(),
+        trident: makeImpossibleTrident(),
+        necker: makeNeckerCube(),
+        kanizsa: makeKanizsaTriangle(),
+        zollner: makeZollnerIllusion(),
+        muller: makeMullerLyerIllusion(),
+      };
+
+      function makePenroseTriangle() {
+        const v = [], f = [], e = [];
+        const thick = 0.4, length = 2;
+        const addBar = (p1, p2, p3, p4, q1, q2, q3, q4) => {
+          const offset = v.length;
+          v.push(p1, p2, p3, p4, q1, q2, q3, q4);
+          f.push(
+            { idx: [offset, offset+1, offset+2, offset+3] }, { idx: [offset+4, offset+5, offset+6, offset+7] },
+            { idx: [offset, offset+1, offset+5, offset+4] }, { idx: [offset+1, offset+2, offset+6, offset+5] },
+            { idx: [offset+2, offset+3, offset+7, offset+6] }, { idx: [offset+3, offset, offset+4, offset+7] }
+          );
+        };
+        addBar([-length*0.866, -length*0.5-thick, -thick], [length*0.866, -length*0.5-thick, -thick], [length*0.866, -length*0.5+thick, -thick], [-length*0.866, -length*0.5+thick, -thick], [-length*0.866, -length*0.5-thick, thick], [length*0.866, -length*0.5-thick, thick], [length*0.866, -length*0.5+thick, thick], [-length*0.866, -length*0.5+thick, thick]);
+        addBar([length*0.866-thick, -length*0.5, -thick], [length*0.866-thick, length, -thick], [length*0.866+thick, length, -thick], [length*0.866+thick, -length*0.5, -thick], [length*0.866-thick, -length*0.5, thick], [length*0.866-thick, length, thick], [length*0.866+thick, length, thick], [length*0.866+thick, -length*0.5, thick]);
+        addBar([-length*0.866-thick, -length*0.5, -thick], [-length*0.866-thick, length, -thick], [-length*0.866+thick, length, -thick], [-length*0.866+thick, -length*0.5, -thick], [-length*0.866-thick, -length*0.5, thick], [-length*0.866-thick, length, thick], [-length*0.866+thick, length, thick], [-length*0.866+thick, -length*0.5, thick]);
+        addBar([-length*0.866, length, -thick], [length*0.866, length, -thick], [length*0.866, length+thick*2, -thick], [-length*0.866, length+thick*2, -thick], [-length*0.866, length, thick], [length*0.866, length, thick], [length*0.866, length+thick*2, thick], [-length*0.866, length+thick*2, thick]);
+        extractEdges(v, f, e);
+        return { vertices: v, faces: f, edges: e };
+      }
+
+      function makeImpossibleTrident() {
+        const v = [], f = [], e = [];
+        const prongY = 1.5;
+        v.push([-1, -1, -0.5], [1, -1, -0.5], [1, -1, 0.5], [-1, -1, 0.5], [-1, 0, -0.5], [1, 0, -0.5], [1, 0, 0.5], [-1, 0, 0.5]);
+        f.push({ idx: [0,1,2,3] }, { idx: [4,5,6,7] }, { idx: [0,1,5,4] }, { idx: [1,2,6,5] }, { idx: [2,3,7,6] }, { idx: [3,0,4,7] });
+        v.push([-1, 0, -0.5], [-0.4, 0, -0.5], [-0.4, prongY, -0.5], [-1, prongY, -0.5], [-1, 0, 0.5], [-0.4, 0, 0.5], [-0.4, prongY, 0.5], [-1, prongY, 0.5]);
+        let lo = v.length - 8;
+        f.push({ idx: [lo, lo+1, lo+2, lo+3] }, { idx: [lo+4, lo+5, lo+6, lo+7] }, { idx: [lo, lo+1, lo+5, lo+4] }, { idx: [lo+1, lo+2, lo+6, lo+5] }, { idx: [lo+2, lo+3, lo+7, lo+6] }, { idx: [lo+3, lo, lo+4, lo+7] });
+        v.push([0.4, 0, -0.5], [1, 0, -0.5], [1, prongY, -0.5], [0.4, prongY, -0.5], [0.4, 0, 0.5], [1, 0, 0.5], [1, prongY, 0.5], [0.4, prongY, 0.5]);
+        let ro = v.length - 8;
+        f.push({ idx: [ro, ro+1, ro+2, ro+3] }, { idx: [ro+4, ro+5, ro+6, ro+7] }, { idx: [ro, ro+1, ro+5, ro+4] }, { idx: [ro+1, ro+2, ro+6, ro+5] }, { idx: [ro+2, ro+3, ro+7, ro+6] }, { idx: [ro+3, ro, ro+4, ro+7] });
+        v.push([-0.3, 0, -0.5], [0.3, 0, -0.5], [0.3, prongY, -0.5], [-0.3, prongY, -0.5], [-0.3, 0, 0.5], [0.3, 0, 0.5], [0.3, prongY, 0.5], [-0.3, prongY, 0.5]);
+        let mo = v.length - 8;
+        f.push({ idx: [mo, mo+1, mo+2, mo+3] }, { idx: [mo+4, mo+5, mo+6, mo+7] }, { idx: [mo, mo+1, mo+5, mo+4] }, { idx: [mo+1, mo+2, mo+6, mo+5] }, { idx: [mo+2, mo+3, mo+7, mo+6] }, { idx: [mo+3, mo, mo+4, mo+7] });
+        v.push([-1, -1.5, -0.5], [1, -1.5, -0.5], [1, -1, -0.5], [-1, -1, -0.5], [-1, -1.5, 0.5], [1, -1.5, 0.5], [1, -1, 0.5], [-1, -1, 0.5]);
+        let bo = v.length - 8;
+        f.push({ idx: [bo, bo+1, bo+2, bo+3] }, { idx: [bo+4, bo+5, bo+6, bo+7] }, { idx: [bo, bo+1, bo+5, bo+4] }, { idx: [bo+1, bo+2, bo+6, bo+5] }, { idx: [bo+2, bo+3, bo+7, bo+6] }, { idx: [bo+3, bo, bo+4, bo+7] });
+        extractEdges(v, f, e);
+        return { vertices: v, faces: f, edges: e };
+      }
+
+      function makeNeckerCube() {
+        const h = 1;
+        const v = [[-h,-h,-h], [h,-h,-h], [h,h,-h], [-h,h,-h], [-h,-h,h], [h,-h,h], [h,h,h], [-h,h,h]];
+        const f = [{ idx: [4,5,6,7] }, { idx: [1,0,3,2] }, { idx: [5,1,2,6] }, { idx: [0,4,7,3] }, { idx: [7,6,2,3] }, { idx: [0,1,5,4] }];
+        const e = [];
+        extractEdges(v, f, e);
+        return { vertices: v, faces: f, edges: e };
+      }
+
+      function makeKanizsaTriangle() {
+        const v = [], f = [], e = [];
+        const addPacMan = (cx, cy, rot) => {
+          const segments = 16, r = 0.6, thick = 0.1;
+          const bIdx = v.length;
+          v.push([cx, cy, -thick]);
+          for(let i=0; i<=segments; i++) {
+            const a = rot + (i/segments) * Math.PI * 1.5 + Math.PI * 0.25;
+            v.push([cx + Math.cos(a)*r, cy + Math.sin(a)*r, -thick]);
+          }
+          const tIdx = v.length;
+          v.push([cx, cy, thick]);
+          for(let i=0; i<=segments; i++) {
+            const a = rot + (i/segments) * Math.PI * 1.5 + Math.PI * 0.25;
+            v.push([cx + Math.cos(a)*r, cy + Math.sin(a)*r, thick]);
+          }
+          for(let i=0; i<segments; i++) {
+            f.push({ idx: [bIdx, bIdx+1+i, bIdx+2+i] }, { idx: [tIdx, tIdx+2+i, tIdx+1+i] }, { idx: [bIdx+1+i, tIdx+1+i, tIdx+2+i, bIdx+2+i] });
+          }
+          f.push({ idx: [bIdx, bIdx+segments+1, tIdx+segments+1, tIdx] }, { idx: [bIdx, tIdx, tIdx+1, bIdx+1] });
+        };
+        addPacMan(0, 0.8, Math.PI);
+        addPacMan(-0.8, -0.6, Math.PI * 1.66);
+        addPacMan(0.8, -0.6, Math.PI * 1.33);
+        extractEdges(v, f, e);
+        return { vertices: v, faces: f, edges: e };
+      }
+
+      function makeZollnerIllusion() {
+        const v = [], f = [], e = [];
+        const addBar = (cx) => {
+          const w = 0.1, h = 1.5, d = 0.1;
+          const o = v.length;
+          v.push([cx-w, -h, -d], [cx+w, -h, -d], [cx+w, h, -d], [cx-w, h, -d], [cx-w, -h, d], [cx+w, -h, d], [cx+w, h, d], [cx-w, h, d]);
+          f.push({ idx: [o, o+1, o+2, o+3] }, { idx: [o+4, o+5, o+6, o+7] }, { idx: [o, o+1, o+5, o+4] }, { idx: [o+1, o+2, o+6, o+5] }, { idx: [o+2, o+3, o+7, o+6] }, { idx: [o+3, o, o+4, o+7] });
+        };
+        const addHash = (cx, cy, angle) => {
+          const w = 0.08, h = 0.3, d = 0.15;
+          const cos = Math.cos(angle), sin = Math.sin(angle);
+          const pt = (dx, dy, dz) => [cx + dx*cos - dy*sin, cy + dx*sin + dy*cos, dz];
+          const o = v.length;
+          v.push(pt(-w, -h, -d), pt(w, -h, -d), pt(w, h, -d), pt(-w, h, -d), pt(-w, -h, d), pt(w, -h, d), pt(w, h, d), pt(-w, h, d));
+          f.push({ idx: [o, o+1, o+2, o+3] }, { idx: [o+4, o+5, o+6, o+7] }, { idx: [o, o+1, o+5, o+4] }, { idx: [o+1, o+2, o+6, o+5] }, { idx: [o+2, o+3, o+7, o+6] }, { idx: [o+3, o, o+4, o+7] });
+        };
+        [-1.2, -0.4, 0.4, 1.2].forEach(cx => {
+          addBar(cx);
+          for (let y = -1.3; y <= 1.3; y += 0.4) addHash(cx, y, Math.PI / 4);
+        });
+        extractEdges(v, f, e);
+        return { vertices: v, faces: f, edges: e };
+      }
+
+      function makeMullerLyerIllusion() {
+        const v = [], f = [], e = [];
+        const addLine = (y) => {
+          const o = v.length;
+          v.push([-1.5, y-0.05, -0.1], [1.5, y-0.05, -0.1], [1.5, y+0.05, -0.1], [-1.5, y+0.05, -0.1], [-1.5, y-0.05, 0.1], [1.5, y-0.05, 0.1], [1.5, y+0.05, 0.1], [-1.5, y+0.05, 0.1]);
+          f.push({ idx: [o, o+1, o+2, o+3] }, { idx: [o+4, o+5, o+6, o+7] }, { idx: [o, o+1, o+5, o+4] }, { idx: [o+1, o+2, o+6, o+5] }, { idx: [o+2, o+3, o+7, o+6] }, { idx: [o+3, o, o+4, o+7] });
+        };
+        const addArrow = (x, y, dir) => {
+          const w = 0.05, h = 0.3, d = 0.1;
+          const o = v.length;
+          v.push([x-w, y, -d], [x+w, y, -d], [x+w+dir*0.2, y+h, -d], [x-w+dir*0.2, y+h, -d], [x-w, y, d], [x+w, y, d], [x+w+dir*0.2, y+h, d], [x-w+dir*0.2, y+h, d]);
+          f.push({ idx: [o, o+1, o+2, o+3] }, { idx: [o+4, o+5, o+6, o+7] }, { idx: [o, o+1, o+5, o+4] }, { idx: [o+1, o+2, o+6, o+5] }, { idx: [o+2, o+3, o+7, o+6] }, { idx: [o+3, o, o+4, o+7] });
+        };
+        addLine(0.5); addArrow(-1.5, 0.5, 1); addArrow(1.5, 0.5, -1);
+        addLine(-0.5); addArrow(-1.5, -0.5, -1); addArrow(1.5, -0.5, 1);
+        extractEdges(v, f, e);
+        return { vertices: v, faces: f, edges: e };
+      }
+
+      function extractEdges(v, f, e) {
+        for(let i=0; i<f.length; i++) {
+          const idx = f[i].idx;
+          for(let j=0; j<idx.length; j++) {
+            const a = idx[j], b = idx[(j+1)%idx.length];
+            if(!e.some(edge => (edge[0]===a && edge[1]===b) || (edge[0]===b && edge[1]===a))) e.push([a, b]);
+          }
+        }
+      }
+
+      // ============================================================
+      //  Math & Projection
+      // ============================================================
+      function rotatePoint(p, rx, ry) {
+        let [x, y, z] = p;
+        const cx = Math.cos(ry), sx = Math.sin(ry);
+        const x1 = x * cx + z * sx;
+        const z1 = -x * sx + z * cx;
+        x = x1; z = z1;
+        const cy = Math.cos(rx), sy = Math.sin(rx);
+        const y1 = y * cy - z * sy;
+        const z2 = y * sy + z * cy;
+        y = y1; z = z2;
+        return [x, y, z];
+      }
+
+      function project(p, W, H) {
+        const [x, y, z] = p;
+        const dist = 8;
+        // The zoom scaling was previously too high, so we reduce the base scale factor from 0.38 to 0.22
+        const scale = (Math.min(W, H) * 0.22) * state.zoom;
+        const persp = dist / (dist - z);
+        return { 
+          x: W / 2 + x * scale * persp, 
+          y: H / 2 - y * scale * persp, 
+          z 
+        };
+      }
+
+      function normalize(v) {
+        const l = Math.hypot(v[0], v[1], v[2]);
+        return l === 0 ? [0, 0, 0] : [v[0]/l, v[1]/l, v[2]/l];
+      }
+      function cross(a, b) { return [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]]; }
+      function sub(a, b) { return [a[0]-b[0], a[1]-b[1], a[2]-b[2]]; }
+      function dot(a, b) { return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; }
+
+      // ============================================================
+      //  Render Engine
+      // ============================================================
+      let dpr = 1;
+      function resize() {
+        const rect = stage.getBoundingClientRect();
+        dpr = Math.min(2, window.devicePixelRatio || 1);
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+      }
+
+      function draw() {
+        const W = canvas.width / dpr;
+        const H = canvas.height / dpr;
+        
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // Reset scale
+        ctx.clearRect(0, 0, W, H);
+
+        const shape = SHAPES[state.shapeName];
+        const mat = MATS[state.shapeName];
+        const vertsRot = shape.vertices.map((v) => rotatePoint(v, state.rotX, state.rotY));
+        const verts2d = vertsRot.map((v) => project(v, W, H));
+
+        // Lighting Calculations
+        const faceInfo = shape.faces.map((f) => {
+          const p0 = vertsRot[f.idx[0]];
+          const p1 = vertsRot[f.idx[1]];
+          const p2 = vertsRot[f.idx[2]];
+          let n = normalize(cross(sub(p1, p0), sub(p2, p0)));
+          
+          let intensity = dot(n, lightDir);
+          if (intensity < 0) intensity = 0;
+          
+          const lightFactor = ambient + (1 - ambient) * intensity;
+          const r = Math.round(mat.shadow[0] + (mat.highlight[0] - mat.shadow[0]) * lightFactor);
+          const g = Math.round(mat.shadow[1] + (mat.highlight[1] - mat.shadow[1]) * lightFactor);
+          const b = Math.round(mat.shadow[2] + (mat.highlight[2] - mat.shadow[2]) * lightFactor);
+
+          return { ...f, normal: n, visible: n[2] > 0, color: `rgb(${r}, ${g}, ${b})` };
+        });
+
+        // Depth Sorting
+        const drawFaces = faceInfo
+          .map((f) => ({ ...f, depth: f.idx.reduce((s, i) => s + vertsRot[i][2], 0) / f.idx.length }))
+          .sort((a, b) => a.depth - b.depth);
+
+        // Draw Faces
+        drawFaces.forEach((f) => {
+          if (!f.visible) return; // Backface culling
+          
+          const pts = f.idx.map((i) => verts2d[i]);
+          ctx.beginPath();
+          pts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+          ctx.closePath();
+          
+          ctx.fillStyle = f.color;
+          ctx.fill();
+          
+          ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        });
+
+        // Floor Shadow
+        ctx.save();
+        ctx.translate(W/2, H/2 + (Math.min(W,H) * 0.25)); // Push shadow down
+        ctx.scale(1, 0.3); 
+        const shadowGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, Math.min(W,H) * 0.25 * state.zoom);
+        shadowGrad.addColorStop(0, 'rgba(0,0,0,0.6)');
+        shadowGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = shadowGrad;
+        ctx.beginPath();
+        ctx.arc(0, 0, Math.min(W,H) * 0.25 * state.zoom, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // ============================================================
+      //  Interactions
+      // ============================================================
+      let dragging = false, dragStart = null, rotStart = null;
+
+      stage.addEventListener('pointerdown', (e) => {
+        if (e.button !== 0) return;
+        dragging = true;
+        dragStart = { x: e.clientX, y: e.clientY };
+        rotStart = { x: state.rotX, y: state.rotY };
+        stage.classList.add('is-rotating');
+        stage.setPointerCapture(e.pointerId);
+      });
+
+      stage.addEventListener('pointermove', (e) => {
+        if (dragging) {
+          const dx = e.clientX - dragStart.x;
+          const dy = e.clientY - dragStart.y;
+          state.rotY = rotStart.y + dx * 0.01;
+          state.rotX = rotStart.x + dy * 0.01;
+          draw();
+        }
+      });
+
+      stage.addEventListener('pointerup', () => { dragging = false; stage.classList.remove('is-rotating'); });
+      stage.addEventListener('pointercancel', () => { dragging = false; stage.classList.remove('is-rotating'); });
+
+      stage.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        state.zoom = Math.max(0.3, Math.min(3.0, state.zoom * (e.deltaY > 0 ? 0.9 : 1.1)));
+        draw();
+      }, { passive: false });
+
+      // Shape Selection
+      shapeSwitcher.querySelectorAll('.shape-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          shapeSwitcher.querySelectorAll('.shape-btn').forEach((b) => b.classList.remove('is-active'));
+          btn.classList.add('is-active');
+          state.shapeName = btn.dataset.shape;
+          
+          // Auto-reset view when changing shape
+          state.rotX = -0.5;
+          state.rotY = 0.6;
+          state.zoom = 0.7;
+          
+          draw();
+        });
+      });
+
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'r' || e.key === 'R') {
+          state.rotX = -0.5;
+          state.rotY = 0.6;
+          state.zoom = 0.7;
+          draw();
+        }
+      });
+
+      // Init
+      window.addEventListener('resize', () => { resize(); draw(); });
+      setTimeout(() => { resize(); draw(); }, 50);
+
+    })();
+  </script>
+</body>
+</html>
